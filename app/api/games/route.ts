@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { assertCanCreate, toGameListItem } from "@/lib/games";
+import { assertCanCreate, listVisibleGames, toGameListItem } from "@/lib/games";
 import { gameStore } from "@/lib/arkiv";
 import { requireUser } from "@/lib/worldid";
 import { getPostHogClient } from "@/lib/posthog-server";
@@ -12,7 +12,7 @@ import type { CreateGameBody } from "@/lib/types/server";
 
 export const runtime = "nodejs";
 
-/** List all public games, optionally filtered to the current user. */
+/** List public worlds plus the caller's own (private included), with vote tallies. `?owner=me` limits to the caller's. */
 export async function GET(req: NextRequest) {
   const user = await requireUser();
   if (!user) {
@@ -21,8 +21,7 @@ export async function GET(req: NextRequest) {
 
   const ownerMe = req.nextUrl.searchParams.get("owner") === "me";
   try {
-    const games = await gameStore().listGames(ownerMe ? user.id : undefined);
-    return NextResponse.json(games.map(toGameListItem));
+    return NextResponse.json(await listVisibleGames(user.id, ownerMe));
   } catch (err) {
     console.error("[GET /api/games]", err);
     return NextResponse.json({ error: "Failed to list games." }, { status: 500 });

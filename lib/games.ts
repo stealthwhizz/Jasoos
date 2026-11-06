@@ -13,6 +13,8 @@ import type {
   FullGameResponse,
   GameListItem,
   GenerationQuota,
+  VoteTally,
+  VoteValue,
 } from "@/lib/types/client";
 import type {
   GameRecord,
@@ -20,6 +22,7 @@ import type {
   ParsedDataUrl,
   SessionUser,
   SavedScreenRequest,
+  Vote,
 } from "@/lib/types/server";
 import type { SceneData } from "@/lib/universe";
 
@@ -242,14 +245,72 @@ export async function buildFullGameResponse(
  * Convert a game record to the list-item shape for `GET /api/games`.
  * @param game - Full game record.
  */
-export function toGameListItem(game: GameRecord): GameListItem {
+export function toGameListItem(game: GameRecord, votes: VoteTally = NO_VOTES): GameListItem {
   return {
     id: game.id,
     owner: game.owner,
     title: game.title,
     thumbnailUrl: game.thumbnail_url,
     createdAt: game.created_at,
+    visibility: game.visibility ?? "public",
+    votes,
   };
+}
+
+const NO_VOTES: VoteTally = { up: 0, down: 0, mine: 0 };
+
+/** Public worlds are open to every signed-in human; private ones only to their owner. */
+export function canViewGame(game: GameRecord, userId: string): boolean {
+  return game.visibility !== "private" || game.owner === userId;
+}
+
+/**
+ * Totals likes and dislikes per world and marks the viewer's own vote.
+ * @param votes - Every stored vote (at most one per human per world).
+ * @param userId - The viewer, whose vote fills `mine`.
+ */
+export function tallyVotes(votes: Vote[], userId: string): Map<string, VoteTally> {
+  const tallies = new Map<string, VoteTally>();
+  for (const vote of votes) {
+    const tally = tallies.get(vote.gameId) ?? { ...NO_VOTES };
+    if (vote.value === 1) tally.up++;
+    else tally.down++;
+    if (vote.humanHash === userId) tally.mine = vote.value;
+    tallies.set(vote.gameId, tally);
+  }
+  return tallies;
+}
+
+/**
+ * The worlds this player may see, newest first, each with its vote tally. Other players'
+ * private worlds are left out entirely.
+ */
+export async function listVisibleGames(userId: string, ownerOnly = false): Promise<GameListItem[]> {
+  const store = gameStore();
+  const [games, votes] = await Promise.all([store.listGames(ownerOnly ? userId : undefined), store.listVotes()]);
+  const tallies = tallyVotes(votes, userId);
+  return games.filter((game) => canViewGame(game, userId)).map((game) => toGameListItem(game, tallies.get(game.id)));
+}
+
+/**
+ * Records one human's like/dislike (0 withdraws it) and returns the world's new tally.
+ * @throws Error with `status` 404 when the world is missing or private to someone else,
+ *   403 when the owner votes on their own world (no boosting yourself).
+ */
+export async function voteOnGame(gameId: string, userId: string, value: VoteValue): Promise<VoteTally> {
+  const game = await getGameRecord(gameId);
+  if (!game || !canViewGame(game, userId)) {
+    throw Object.assign(new Error("Game not found."), { status: 404 });
+  }
+  if (game.owner === userId) {
+    throw Object.assign(new Error("You can't vote on your own world."), { status: 403 });
+  }
+  const store = gameStore();
+  await store.castVote(gameId, userId, value);
+  // Tally from the other votes plus this one, so a lagging read cannot show the old vote.
+  const others = (await store.listVotes()).filter((v) => !(v.gameId === gameId && v.humanHash === userId));
+  const mine: Vote[] = value === 0 ? [] : [{ gameId, humanHash: userId, value }];
+  return tallyVotes([...others, ...mine], userId).get(gameId) ?? { ...NO_VOTES };
 }
 
 /**
