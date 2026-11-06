@@ -12,6 +12,7 @@ Use the same project value when querying. All new entities expire 90 days after 
 | `screen` | `gameId`, `sceneId`, `createdAt`, `worldKey`, signed `x`, `y` | `data`: gzipped scene metadata; `record`: compatibility scene row with image URLs |
 | `unlock` | `worldKey`, `humanHash` | No key or plaintext evidence is stored here |
 | `accusation` | `gameId`, `humanHash` | `accused` (u64 index 0–2), `correct` (bool) |
+| `vote` | `gameId`, `humanHash` | `value` (i32: 1 like, -1 dislike). One per human per world: changing a vote patches it, withdrawing deletes it |
 
 Screens use coordinates -1..1, id `s<x>_<y>`, with at most nine total (origin plus
 eight additional screens). Existing street `scene` entities remain readable and count
@@ -31,7 +32,7 @@ can reveal the answer to someone querying the chain; sealing the bible does not 
 
 Run `npm install` then `npm run arkiv:query`. It reads `.env.local` for project/RPC
 configuration, but requires no signer or app server. An access key helps avoid public
-RPC rate limits. Counts include game, scene, screen, unlock and accusation.
+RPC rate limits. Counts include game, scene, screen, unlock, accusation and vote.
 
 ```ts
 import { and, eq } from "@arkiv-network/sdk/query";
@@ -49,3 +50,12 @@ await client.select({ $key: true, $attributes: true })
 
 Listings page in batches of 100, the node maximum. Deletion gathers all keys before
 removing them so changing offsets cannot skip entities.
+
+Visibility lives inside the game `record` (`visibility: "public" | "private"`; older records
+without it are public). `GET /api/games` drops other players' private worlds, and
+`GET /api/games/[id]` answers 404 for them. Votes on a world:
+
+```ts
+reader.select({ gameId: true, humanHash: true, value: true }).from(VoteEntity)
+  .where(and(eq("project", project), eq("entityType", "vote"), eq("gameId", gameId)))
+```

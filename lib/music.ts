@@ -440,11 +440,19 @@ export class MusicEngine {
   private muted = false;
   private ducked = false;
   private disposed = false;
+  /** Pending context suspend after a mute fade; cancelled by an unmute. */
+  private suspendTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /** True once {@link dispose} ran; such an engine never plays again, so callers must replace it. */
+  get isDisposed(): boolean {
+    return this.disposed;
+  }
 
   /** Begin (or switch to) a theme. Idempotent for the same theme id. */
   start(theme: MusicTheme): void {
     if (this.disposed || typeof window === "undefined") return;
-    if (this.theme?.id === theme.id && this.timer !== null) return;
+    // Same theme already armed (or parked while muted): nothing to do.
+    if (this.theme?.id === theme.id && (this.timer !== null || this.muted)) return;
     this.ensureGraph();
     if (!this.ctx) return;
 
@@ -456,13 +464,36 @@ export class MusicEngine {
     this.feedback!.gain.setTargetAtTime(theme.echoFeedback, t, 0.5);
     this.restartDrone(theme);
     if (this.timer !== null) clearTimeout(this.timer);
-    this.scheduleLoop();
+    this.timer = null;
+    if (this.muted) this.setMuted(true); // graph exists now: silence and park it
+    else this.scheduleLoop();
   }
 
-  /** Music toggle from the HUD. */
+  /**
+   * Music toggle from the HUD. Muting does more than fade the gain: it stops
+   * scheduling bars and suspends the AudioContext after the fade, so nothing
+   * (drone, echo tail, queued notes) can keep sounding while music is off.
+   */
   setMuted(muted: boolean): void {
+    if (this.disposed) return;
     this.muted = muted;
     this.applyDuck();
+    if (this.suspendTimer !== null) clearTimeout(this.suspendTimer);
+    this.suspendTimer = null;
+    const ctx = this.ctx;
+    if (!ctx) return;
+    if (muted) {
+      if (this.timer !== null) clearTimeout(this.timer);
+      this.timer = null;
+      // Let the fade finish, then freeze the whole graph.
+      this.suspendTimer = setTimeout(() => {
+        this.suspendTimer = null;
+        if (this.muted && this.ctx === ctx) void ctx.suspend().catch(() => {});
+      }, DUCK_FADE * 1000 + 250);
+      return;
+    }
+    void ctx.resume().catch(() => {});
+    if (this.theme && this.timer === null) this.scheduleLoop();
   }
 
   /** Fade out while the NPC voice line plays; fade back in after. */
@@ -477,6 +508,8 @@ export class MusicEngine {
     this.disposed = true;
     if (this.timer !== null) clearTimeout(this.timer);
     this.timer = null;
+    if (this.suspendTimer !== null) clearTimeout(this.suspendTimer);
+    this.suspendTimer = null;
     if (this.ctx && this.master) {
       const t = this.ctx.currentTime;
       this.master.gain.cancelScheduledValues(t);
@@ -503,7 +536,7 @@ export class MusicEngine {
     this.master.connect(ctx.destination);
 
     this.duck = ctx.createGain();
-    this.duck.gain.value = 1;
+    this.duck.gain.value = this.muted || this.ducked ? 0 : 1;
     this.duck.connect(this.master);
 
     this.filter = ctx.createBiquadFilter();
@@ -527,7 +560,8 @@ export class MusicEngine {
     // keyboard/pointer input, so resume on the first interaction.
     if (ctx.state === "suspended") {
       const unlock = () => {
-        void ctx.resume().catch(() => {});
+        // Never wake a muted or disposed engine on the player's first click.
+        if (!this.muted && !this.disposed && this.ctx === ctx) void ctx.resume().catch(() => {});
         window.removeEventListener("pointerdown", unlock);
         window.removeEventListener("keydown", unlock);
       };
@@ -564,7 +598,8 @@ export class MusicEngine {
 
   /** Schedule the current bar, then re-arm for the next one. */
   private scheduleLoop(): void {
-    if (this.disposed || !this.ctx || !this.theme) return;
+    this.timer = null;
+    if (this.disposed || this.muted || !this.ctx || !this.theme) return;
     this.playBar(this.ctx.currentTime + 0.05);
     this.bar += 1;
     this.timer = setTimeout(
