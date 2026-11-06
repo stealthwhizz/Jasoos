@@ -109,3 +109,9 @@ export type SpriteRequest = {
   /** Reference frame public URL — fetched server-side when `referenceFrame` is absent. */
   referenceFrameUrl?: string | null;
 };
+
+/** A human's single committed accusation for a saved world. */
+export type Accusation = { gameId: string; humanHash: string; accused: number; correct: boolean };
+
+/** POST /api/finale body; the saved bible judges the accusation. */
+export type FinaleRequest = { gameId?: string | null; accused?: number; reason?: string };

@@ -174,3 +174,14 @@ export type WorldDialogueState = {
   thinking: boolean;
   mood?: string;
 };
+
+/** Signed configuration for an IDKit proof request. */
+export type WidgetConfig = {
+  app_id: `app_${string}`;
+  action: string;
+  environment: "production" | "staging";
+  rp_context: import("@worldcoin/idkit").RpContext;
+};
+
+/** Evidence revealed only after the human's unlock is persisted. */
+export type EvidenceResponse = { key: string; evidenceNote?: string; unlocks: number };

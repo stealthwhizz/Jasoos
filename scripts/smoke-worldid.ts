@@ -4,6 +4,7 @@
 import { signRequest } from "@worldcoin/idkit/signing";
 import { requireEnv, timed } from "./env";
 
+async function main() {
 const env = requireEnv("smoke:worldid", ["WORLD_APP_ID", "WORLD_RP_ID", "WORLD_RP_SIGNING_KEY"]);
 const action = process.env.WORLD_ACTION_ID || "create-world";
 
@@ -15,3 +16,7 @@ const [res, ms] = await timed(() =>
   fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }),
 );
 console.log({ url, status: res.status, latencyMs: ms, body: (await res.text()).slice(0, 300) });
+
+}
+
+main().catch((error) => { console.error(error); process.exitCode = 1; });

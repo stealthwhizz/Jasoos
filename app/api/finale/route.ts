@@ -5,19 +5,10 @@ import { getGameRecord, uploadDataUrl } from "@/lib/games";
 import { generateFinale, seal, unseal } from "@/lib/world-engine";
 import { withRequestIds } from "@/lib/zg-client";
 import type { Mystery } from "@/lib/universe";
-import type { FinaleData } from "@/lib/types/server";
+import type { FinaleData, FinaleRequest } from "@/lib/types/server";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
-
-type FinaleRequest = {
-  /** The saved world. Its bible (not one from the client) judges the accusation. */
-  gameId?: string | null;
-  /** Index (0–2) of the character the player accuses. Absent: a defeat (heat or time ran out). */
-  accused?: number;
-  /** For defeats: which fail state fired, in plain words. */
-  reason?: string;
-};
 
 /**
  * `POST /api/finale` — ends a run. With `accused`, the server unseals the culprit and returns the
@@ -26,7 +17,8 @@ type FinaleRequest = {
  * later runs get the saved one (`generated: false`), so ending runs cannot spend 0G credits.
  */
 export async function POST(req: NextRequest) {
-  if (!(await requireUser())) {
+  const user = await requireUser();
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -50,6 +42,18 @@ export async function POST(req: NextRequest) {
     }
     const { bible } = game;
     const { culprit } = unseal<Mystery>(bible.story.sealed);
+
+    if (body.accused !== undefined) {
+      try {
+        const recorded = await gameStore().recordAccusation({
+          gameId: game.id, humanHash: user.id, accused: body.accused, correct: body.accused === culprit,
+        });
+        if (!recorded) return NextResponse.json({ error: "You already accused someone in this world." }, { status: 409 });
+      } catch (error) {
+        console.error("[/api/finale] accusation persistence failed", error);
+        return NextResponse.json({ error: "Could not record your accusation. Try again." }, { status: 503 });
+      }
+    }
 
     if (body.accused === culprit) {
       if (game.sealed_victory) {
