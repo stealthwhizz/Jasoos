@@ -13,6 +13,11 @@ import type {
   FullGameResponse,
   GameListItem,
   GenerationQuota,
+  UpdateGameRequest,
+  VoteRequest,
+  VoteTally,
+  VoteValue,
+  WorldVisibility,
 } from "./client";
 import type { Premise } from "./shared";
 import type { GameBible, SceneData } from "../universe";
@@ -25,6 +30,11 @@ export type {
   FullGameResponse,
   GameListItem,
   GenerationQuota,
+  UpdateGameRequest,
+  VoteRequest,
+  VoteTally,
+  VoteValue,
+  WorldVisibility,
 };
 
 /** Alias: server-side name for the create-game POST body. */
@@ -47,6 +57,8 @@ export type GameRecord = {
   /** Victory `FinaleData`, sealed; `/api/finale` saves it after the owner's first correct accusation. */
   sealed_victory?: string;
   thumbnail_url: string | null;
+  /** Missing on worlds saved before visibility existed; those are public. */
+  visibility?: WorldVisibility;
   created_at: string;
   updated_at: string;
 };
@@ -114,6 +126,9 @@ export type SpriteRequest = {
 
 /** A human's single committed accusation for a saved world. */
 export type Accusation = { gameId: string; humanHash: string; accused: number; correct: boolean };
+
+/** One human's stored vote on a world (`value` is never 0: withdrawing deletes it). */
+export type Vote = { gameId: string; humanHash: string; value: 1 | -1 };
 
 /** POST /api/finale body; the saved bible judges the accusation. */
 export type FinaleRequest = { gameId?: string | null; accused?: number; reason?: string };

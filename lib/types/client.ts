@@ -97,7 +97,26 @@ export type GameListItem = {
   title: string;
   thumbnailUrl: string | null;
   createdAt: string;
+  /** Private worlds are listed only to their owner. */
+  visibility: WorldVisibility;
+  /** Community likes and dislikes; one vote per verified human. */
+  votes: VoteTally;
 };
+
+/** Who can find a world. Worlds saved before this field existed count as public. */
+export type WorldVisibility = "public" | "private";
+
+/** One human's vote on a world: 1 like, -1 dislike, 0 no vote. */
+export type VoteValue = 1 | -1 | 0;
+
+/** Vote totals for a world plus the viewer's own vote. */
+export type VoteTally = { up: number; down: number; mine: VoteValue };
+
+/** `PATCH /api/games/[id]` body: the owner changes who can see the world. */
+export type UpdateGameRequest = { visibility: WorldVisibility };
+
+/** `PUT /api/games/[id]/vote` body. Sending 0 withdraws the vote. */
+export type VoteRequest = { value: VoteValue };
 
 /** Free-tier world creation limits for the signed-in user. */
 export type GenerationQuota = {

@@ -16,13 +16,13 @@ import { privateKeyToAccount } from "viem/accounts";
 import { withRetry, DEFAULT_RETRY_OPTS } from "@/lib/retry";
 import { MAX_STREET_SCREENS } from "@/lib/constants";
 import { seal, unseal } from "@/lib/world-engine";
-import type { Accusation, GameRecord, GameSceneRow } from "@/lib/types/server";
+import type { Accusation, GameRecord, GameSceneRow, Vote, VoteValue } from "@/lib/types/server";
 
 /** Fields set when a game is created; the rest are filled in by the store. */
 export type NewGame = Pick<GameRecord, "owner" | "title" | "idea" | "bible" | "premise">;
 /** Fields that change after creation. */
 export type GamePatch = Partial<
-  Pick<GameRecord, "sprite_url" | "finale" | "thumbnail_url" | "sealed_victory">
+  Pick<GameRecord, "sprite_url" | "finale" | "thumbnail_url" | "sealed_victory" | "visibility">
 >;
 /** A scene as saved, before the store assigns ids. */
 export type NewScene = Omit<GameSceneRow, "id" | "game_id">;
@@ -41,6 +41,13 @@ export interface GameStore {
   /** Live evidence opens for this world. */
   countUnlocks(worldKey: string): Promise<number>;
   readonly name: "arkiv" | "memory";
+  /**
+   * Sets this human's vote on a world, replacing any earlier one; 0 removes it. Shares the signer
+   * queue so double clicks cannot leave two votes for one human.
+   */
+  castVote(gameId: string, humanHash: string, value: VoteValue): Promise<void>;
+  /** Every vote in this project, for tallying the gallery. */
+  listVotes(): Promise<Vote[]>;
   /** Newest first; all players' games when `owner` is omitted. */
   listGames(owner?: string): Promise<GameRecord[]>;
   countGames(owner: string): Promise<number>;
@@ -112,6 +119,8 @@ const ScreenEntity = defineSchema({
 });
 
 const UnlockEntity = defineSchema({ ...base, worldKey: str().indexed(), humanHash: str().indexed() });
+/** One human's like (+1) or dislike (-1) on a world; at most one per human per world. */
+const VoteEntity = defineSchema({ ...base, gameId: str().indexed(), humanHash: str().indexed(), value: i32() });
 /**
  * One accusation per human per world. The guessed suspect is sealed (`sealedAccused`): stored in
  * the clear, a correct accusation would publish the culprit to anyone querying the chain.
@@ -185,6 +194,33 @@ function createArkivStore(signerKey: string): GameStore {
           project, entityType: "accusation", ...rest, sealedAccused: seal(accused),
         }, { expiration: ExpirationTime.fromDays(GAME_DAYS) }), DEFAULT_RETRY_OPTS);
         return { accused: accusation.accused, created: true };
+      });
+    },
+    async castVote(gameId, humanHash, value) {
+      await serial(async () => {
+        const page = await withRetry(() => reader.select({ $key: true }).from(VoteEntity).where(and(
+          scope("vote"), eq("gameId", gameId), eq("humanHash", humanHash)
+        )).limit(1).fetch(), DEFAULT_RETRY_OPTS);
+        const existing = page.entities[0]?.$key as Hex | undefined;
+        if (value === 0) {
+          if (existing) await withRetry(() => writer.deleteEntity({ entityKey: existing }), DEFAULT_RETRY_OPTS);
+          return;
+        }
+        // Changing a vote patches the same entity, so one human never counts twice.
+        await withRetry(() => existing
+          ? writer.patchEntity(VoteEntity, existing, { set: { value: i32(value) } })
+          : writer.createEntity(VoteEntity, { project, entityType: "vote", gameId, humanHash, value: i32(value) },
+            { expiration: ExpirationTime.fromDays(GAME_DAYS) }), DEFAULT_RETRY_OPTS);
+      });
+    },
+    async listVotes() {
+      const rows = await fetchUpTo(reader.select({ gameId: true, humanHash: true, value: true })
+        .from(VoteEntity).where(scope("vote")).orderBy(asc("$key")));
+      return rows.flatMap((row) => {
+        const value = Number(row.value.value);
+        return value === 1 || value === -1
+          ? [{ gameId: String(row.gameId.value), humanHash: String(row.humanHash.value), value }]
+          : [];
       });
     },
     async hasUnlock(worldKey, humanHash) {
@@ -335,8 +371,15 @@ function createMemoryStore(): GameStore {
   const scenes = new Map<string, GameSceneRow[]>();
   const accusations = new Map<string, Accusation>();
   const unlocks = new Map<string, Set<string>>();
+  const votes = new Map<string, Vote>();
   return {
     name: "memory",
+    async castVote(gameId, humanHash, value) {
+      const key = `${gameId}:${humanHash}`;
+      if (value === 0) votes.delete(key);
+      else votes.set(key, { gameId, humanHash, value });
+    },
+    async listVotes() { return [...votes.values()]; },
     async recordAccusation(accusation) {
       const key = `${accusation.gameId}:${accusation.humanHash}`;
       const existing = accusations.get(key);
