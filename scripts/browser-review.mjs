@@ -84,6 +84,10 @@ async function newPage(viewport, label) {
     }
   });
   const page = await context.newPage();
+  diagnostics.completedStreams = [];
+  await page.exposeFunction("__recordCompletedStream", (url) =>
+    diagnostics.completedStreams.push(url),
+  );
   page.setDefaultTimeout(10000);
   page.on("console", (message) => {
     if (message.type() === "error")
@@ -110,8 +114,10 @@ async function newPage(viewport, label) {
         this.addEventListener("message", (event) => {
           try {
             const body = JSON.parse(event.data);
-            if (body.type === "done" || body.type === "error")
+            if (body.type === "done" || body.type === "error") {
               window.__completedEventStreams.push(this.url);
+              void window.__recordCompletedStream(this.url);
+            }
           } catch {
             window.__malformedEventStreams.push(this.url);
           }
@@ -188,7 +194,7 @@ async function injectFailure(
 }
 
 async function reviewDiagnostics(page, diagnostics, name, width) {
-  const completedStreams = await page.evaluate(() => window.__completedEventStreams);
+  const completedStreams = diagnostics.completedStreams;
   const expected = [];
   const unexpectedRequests = diagnostics.failedRequests.filter((request) => {
     const fault = diagnostics.injectedFailures.find((entry) => entry.url === request.url);
@@ -521,10 +527,30 @@ for (const viewport of viewports) {
       width,
     );
     await capture(page, "interior", width);
+    await page.getByRole("button", { name: "What happened tonight?", exact: true }).click();
+    check(
+      "suggested question focuses draft without sending",
+      (await page.getByRole("textbox", { name: /^Say something/ }).inputValue()) ===
+        "What happened tonight?" && (await page.getByRole("log").locator("p").count()) === 0,
+      null,
+      width,
+    );
     const first = await ask(page, "What happened here tonight?");
     check("first reply preserves clue progression", first.clueRevealed === false, first, width);
     const second = await ask(page, "What did you notice about the tiffin?");
     check("second reply reveals clue", second.clueRevealed === true, second, width);
+    await page.waitForFunction(() => {
+      const log = document.querySelector('[role="log"]');
+      return log && Math.abs(log.scrollHeight - log.clientHeight - log.scrollTop) < 2;
+    });
+    check(
+      "latest dialogue is scrolled into view",
+      await page
+        .getByRole("log")
+        .evaluate((log) => Math.abs(log.scrollHeight - log.clientHeight - log.scrollTop) < 2),
+      null,
+      width,
+    );
     await capture(page, "dialogue", width);
     const conversation = page.getByRole("log", { name: "Conversation with Sakharam" });
     check(
@@ -589,6 +615,22 @@ for (const viewport of viewports) {
       await picker.inputValue(),
       width,
     );
+    const suspectCards = page.getByRole("group", { name: "Suspect selection" });
+    await suspectCards.getByRole("button", { name: /Meera/ }).click();
+    check(
+      "suspect card selects the same server culprit ID",
+      (await picker.inputValue()) === "npc-meera" &&
+        (await suspectCards.getByRole("button", { name: /Meera/ }).getAttribute("aria-pressed")) ===
+          "true",
+      null,
+      width,
+    );
+    check(
+      "evidence tracker reflects all three actual clues",
+      (await page.locator(".evidence-slot.collected").count()) === 3,
+      null,
+      width,
+    );
     await capture(page, "accusation", width);
     const accusation = page.waitForResponse((response) => response.url().endsWith("/accuse"));
     await page.getByRole("button", { name: "Submit accusation" }).click();
@@ -603,6 +645,21 @@ for (const viewport of viewports) {
     );
     check("accusation locks after success", await picker.isDisabled(), null, width);
     await capture(page, "finale", width);
+    const missingImageUrl = `${result.finaleUrl}?review=unavailable`;
+    await injectFailure(page, diagnostics, "**/*review=unavailable", "transport");
+    await page.getByRole("img", { name: "The case finale" }).evaluate((image, url) => {
+      image.src = url;
+    }, missingImageUrl);
+    await page
+      .getByText("Case solved. The finale image is unavailable.", { exact: true })
+      .waitFor();
+    check(
+      "failed finale artwork retains solved secret",
+      (await page.getByText(result.secret, { exact: true }).count()) === 1,
+      null,
+      width,
+    );
+    await capture(page, "finale-image-unavailable", width);
     await reviewDiagnostics(page, diagnostics, "journey has no unexpected browser failures", width);
   } catch (error) {
     check("journey completed", false, error.message, width);
@@ -1124,6 +1181,42 @@ try {
   await accusationErrors.context.close();
 }
 
+for (const viewport of viewports) {
+  const { page, context } = await newPage(viewport, `gallery-${viewport.width}`);
+  try {
+    await page.goto("/gallery");
+    await page.locator(".world-card").first().waitFor();
+    await capture(page, "gallery", viewport.width);
+    await page.route("**/api/gallery", (route) => route.fulfill({ json: [] }));
+    await page.reload();
+    await page.getByText("No live cases yet.").waitFor();
+    await capture(page, "gallery-empty", viewport.width);
+    await page.unroute("**/api/gallery");
+    await page.route("**/api/gallery", (route) =>
+      route.fulfill({ status: 503, json: { error: "Deliberate archive failure" } }),
+    );
+    await page.reload();
+    await page.getByRole("button", { name: "Retry gallery" }).waitFor();
+    await capture(page, "gallery-error", viewport.width);
+    await page.unroute("**/api/gallery");
+    await page.getByRole("button", { name: "Retry gallery" }).click();
+    await page.locator(".world-card").first().waitFor();
+    check("gallery recovers after retry", true, null, viewport.width);
+    await page.goto("/");
+    const ticker = page.getByText("Generation ticker", { exact: true });
+    await ticker.click();
+    check(
+      "generation provenance panel collapses",
+      !(await page.getByText("Model calls appear here as the world builds.").isVisible()),
+      null,
+      viewport.width,
+    );
+  } catch (error) {
+    check("gallery suite completes", false, error.message, viewport.width);
+  } finally {
+    await context.close();
+  }
+}
 await browser.close();
 checkpoint();
 await writeFile(resolve(output, "report.json"), JSON.stringify(report, null, 2) + "\n");
