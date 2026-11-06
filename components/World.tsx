@@ -316,7 +316,6 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
   const placedRoomsRef = useRef<Set<number>>(new Set());
   const voiceCache = useRef<Map<string, Promise<string | null>>>(new Map());
   const dialogueCache = useRef<Map<string, Promise<DialogueResponse>>>(new Map());
-  const defeatFinalePromise = useRef<Promise<FinaleData | null> | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const musicRef = useRef<MusicEngine | null>(null);
   /** Last announced track id, the "now playing" toast fires once per theme. */
@@ -415,13 +414,6 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
     const id = gameIdRef.current;
     if (!id || !canGenerateRef.current) return;
     put(`/api/games/${id}/sprite`, { sprite: dataUrl }).catch(() => {});
-  }, []);
-
-  /** Fire-and-forget persist of a generated finale image + copy. */
-  const saveFinale = useCallback((outcome: FinaleOutcome, f: FinaleData) => {
-    const id = gameIdRef.current;
-    if (!id || !canGenerateRef.current) return;
-    put(`/api/games/${id}/finales/${outcome}`, f).catch(() => {});
   }, []);
 
   const fetchVoice = useCallback(
@@ -652,7 +644,6 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
     placedRoomsRef.current = new Set();
     voiceCache.current = new Map();
     dialogueCache.current = new Map();
-    defeatFinalePromise.current = null;
     savedFinalesRef.current = {};
     setScene(null);
     setSprite(null);
@@ -707,10 +698,6 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
     setGenCalls(game.genCalls);
     setKnownStreets(streetsFromScenes(game.scenes));
     setWalkedStreets([]);
-
-    if (game.finales.defeat) {
-      defeatFinalePromise.current = Promise.resolve(game.finales.defeat);
-    }
   }, []);
 
   const startSprite = useCallback(
@@ -735,24 +722,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
     [addCalls, saveSprite]
   );
 
-  /** Prefetch only the defeat finale: the victory one reveals the secret and stays on the server. */
-  const startFinales = useCallback(
-    (theBible: GameBible) => {
-      if (!canGenerateRef.current || savedFinalesRef.current.defeat) return;
-      defeatFinalePromise.current = post<{ finale: FinaleData }>("/api/finale", {
-        bible: theBible,
-      })
-        .then(({ finale: f }) => {
-          addCalls(GEN_CALL_COST.finale);
-          saveFinale("defeat", f);
-          return f;
-        })
-        .catch(() => null);
-    },
-    [addCalls, saveFinale]
-  );
-
-  /** Paint origin, sprite, neighbors, and finales for a newly created game row. */
+  /** Paint origin, sprite, and neighbors for a newly created game row. */
   const bootWorld = useCallback(
     async (theBible: GameBible, chosen: Premise, spriteUrl: string | null) => {
       setBootStatus("Painting the first screen… then teaching the engine to see it…");
@@ -766,9 +736,8 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
       lowTimeWarnedRef.current = false;
       setPhase("playing");
       startSprite(chosen, origin, spriteUrl);
-      startFinales(theBible);
     },
-    [ensureSceneReady, ensureScreen, showScene, startFinales, startSprite]
+    [ensureSceneReady, ensureScreen, showScene, startSprite]
   );
 
   /** Fetch a saved game and enter play (or resume boot for incomplete owner games). */
@@ -790,9 +759,6 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
           lowTimeWarnedRef.current = false;
           setPhase("playing");
           startSprite(game.premise, origin, game.spriteUrl);
-          if (game.isOwner) {
-            startFinales(game.bible);
-          }
           return;
         }
 
@@ -807,7 +773,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
         router.push("/");
       }
     },
-    [bootWorld, ensureSceneReady, hydrateLoadedGame, resetRunState, router, showScene, startFinales, startSprite]
+    [bootWorld, ensureSceneReady, hydrateLoadedGame, resetRunState, router, showScene, startSprite]
   );
 
   /** Create flow step 1: bible + game row, then redirect to `/play/[id]` for boot. */
@@ -1152,21 +1118,17 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
       setDialogue(null);
       setFinaleLoading(true);
       try {
-        let f: FinaleData | null =
-          accused === undefined
-            ? (savedFinalesRef.current.defeat ?? (await defeatFinalePromise.current) ?? null)
-            : null;
-        // Accusations always go to the server, which alone knows the culprit.
-        if (!f && (accused !== undefined || canGenerateRef.current)) {
+        let f: FinaleData | null = accused === undefined ? (savedFinalesRef.current.defeat ?? null) : null;
+        // The server judges accusations and generates each world's endings at most once.
+        if (!f) {
           const res = await post<{ finale: FinaleData; generated: boolean }>("/api/finale", {
-            bible,
+            gameId: gameIdRef.current,
             accused,
             reason,
-            gameId: gameIdRef.current,
           });
           f = res.finale;
           if (res.generated) addCalls(GEN_CALL_COST.finale);
-          if (accused === undefined) saveFinale("defeat", f);
+          if (f.outcome === "defeat") savedFinalesRef.current.defeat = f;
         }
         if (!f) throw new Error("Finale unavailable.");
         posthog.capture("game_ended", {
@@ -1200,7 +1162,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
         setFinaleLoading(false);
       }
     },
-    [bible, finale, finaleLoading, speak, fetchVoice, stopVoice, addCalls, saveFinale, cluesFound, genCalls, screensDreamed]
+    [bible, finale, finaleLoading, speak, fetchVoice, stopVoice, addCalls, cluesFound, genCalls, screensDreamed]
   );
 
   useEffect(() => {

@@ -63,47 +63,29 @@ describe("sealed mystery", () => {
   });
 });
 
-describe("POST /api/finale accusations", () => {
+const newGame = (culprit: number) =>
+  gameStore().createGame({
+    owner: "owner",
+    title: "Tiffin",
+    idea: "tiffin",
+    bible: bibleWithCulprit(culprit),
+    premise: {} as never,
+  });
+
+describe("POST /api/finale", () => {
   it("a wrong accusation is a defeat that names the accused, without revealing the culprit", async () => {
-    const { status, json } = await finale({ bible: bibleWithCulprit(1), accused: 0 });
+    const game = await newGame(1);
+    const { status, json } = await finale({ gameId: game.id, accused: 0 });
     expect(status).toBe(200);
     expect(json.finale.outcome).toBe("defeat");
     expect(json.finale.resolution).toContain("Asha");
     expect(json.finale.resolution).not.toContain("Bilal");
   });
 
-  it("the right accusation wins", async () => {
-    const { json } = await finale({ bible: bibleWithCulprit(1), accused: 1 });
-    expect(json.finale.outcome).toBe("victory");
-    expect(json.generated).toBe(true);
-  });
-
-  it("rejects an accused index outside the 3 characters", async () => {
-    const { status } = await finale({ bible: bibleWithCulprit(1), accused: 3 });
-    expect(status).toBe(422);
-  });
-
-  it("judges by the saved bible, not one swapped in by the client", async () => {
-    const game = await gameStore().createGame({
-      owner: "owner",
-      title: "Tiffin",
-      idea: "tiffin",
-      bible: bibleWithCulprit(2),
-      premise: {} as never,
-    });
-    const { json } = await finale({ bible: bibleWithCulprit(0), accused: 0, gameId: game.id });
-    expect(json.finale.outcome).toBe("defeat");
-  });
-
-  it("stores the owner's victory sealed and replays it to a visitor without generating", async () => {
-    const game = await gameStore().createGame({
-      owner: "owner",
-      title: "Tiffin",
-      idea: "tiffin",
-      bible: bibleWithCulprit(1),
-      premise: {} as never,
-    });
-    const won = await finale({ bible: game.bible, accused: 1, gameId: game.id });
+  it("stores the victory sealed and replays it to anyone without generating", async () => {
+    const game = await newGame(1);
+    const won = await finale({ gameId: game.id, accused: 1 });
+    expect(won.json).toMatchObject({ finale: { outcome: "victory" }, generated: true });
     expect(won.json.finale.image).not.toMatch(/^data:/);
 
     const saved = await gameStore().getGame(game.id);
@@ -112,8 +94,26 @@ describe("POST /api/finale accusations", () => {
 
     player.id = "visitor";
     vi.mocked(generateFinale).mockClear();
-    const replay = await finale({ bible: game.bible, accused: 1, gameId: game.id });
+    const replay = await finale({ gameId: game.id, accused: 1 });
     expect(replay.json).toEqual({ finale: won.json.finale, generated: false });
     expect(generateFinale).not.toHaveBeenCalled();
+  });
+
+  it("generates a world's defeat once; later defeats of any kind reuse it", async () => {
+    const game = await newGame(2);
+    const first = await finale({ gameId: game.id, reason: "time ran out" });
+    player.id = "visitor";
+    const wrong = await finale({ gameId: game.id, accused: 0 });
+    const again = await finale({ gameId: game.id, reason: "time ran out" });
+    expect(generateFinale).toHaveBeenCalledTimes(1);
+    expect(wrong.json).toEqual({ finale: first.json.finale, generated: false });
+    expect(again.json.generated).toBe(false);
+  });
+
+  it("rejects a missing game, an unknown game and an accused index outside the 3 characters", async () => {
+    const game = await newGame(1);
+    expect((await finale({ accused: 1 })).status).toBe(422);
+    expect((await finale({ gameId: "0x" + "0".repeat(64), accused: 1 })).status).toBe(404);
+    expect((await finale({ gameId: game.id, accused: 3 })).status).toBe(422);
   });
 });

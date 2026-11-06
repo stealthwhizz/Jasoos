@@ -70,9 +70,6 @@ export type PutSpriteBody = {
   sprite: string;
 };
 
-/** PUT `/api/games/[id]/finales/[outcome]` request body. */
-export type PutFinaleBody = FinaleData;
-
 /** Parsed data URL ready to save to the asset store. */
 export type ParsedDataUrl = {
   mimeType: string;
@@ -88,11 +85,6 @@ export type GameIdRouteContext = {
 /** Next.js App Router context for `/api/games/[id]/scenes/[sceneId]`. */
 export type GameSceneRouteContext = {
   params: Promise<{ id: string; sceneId: string }>;
-};
-
-/** Next.js App Router context for `/api/games/[id]/finales/[outcome]`. */
-export type FinaleRouteContext = {
-  params: Promise<{ id: string; outcome: string }>;
 };
 
 /** POST `/api/screen` request body. */

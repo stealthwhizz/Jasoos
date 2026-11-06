@@ -56,7 +56,8 @@ Wrap transient-prone outbound calls with the shared retry helper in [`lib/retry.
 New game persistence routes follow REST conventions:
 
 - `GET/POST /api/games`, `GET/DELETE /api/games/[id]`
-- `PUT /api/games/[id]/scenes/[sceneId]`, `PUT …/sprite`, `PUT …/finales/[outcome]`
+- `PUT /api/games/[id]/scenes/[sceneId]`, `PUT …/sprite`
+- `POST /api/finale` ends a run: it judges accusations and saves each world's victory (sealed) and defeat finale once
 - `GET /api/profile` — generation quota lives on the user resource, not the games collection
 
 Use correct status codes: `200`, `201`, `204`, `401`, `403`, `404`, `422`.
