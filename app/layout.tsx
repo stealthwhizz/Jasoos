@@ -1,32 +1,40 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
-import Link from "next/link";
+import { Geist, Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
+
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["500", "600", "700", "800"],
+});
 
 export const metadata: Metadata = {
-  title: "ETHJasoos",
-  description: "One sentence becomes a walkable detective world.",
+  title: "ETH Jasoos - an AI story you play",
+  description:
+    "A fast, image-first choice game set in India. Every scene is generated in real time.",
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang="en">
-      <body className="font-sans">
-        <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-6">
-          <Link href="/" className="text-lg font-semibold tracking-tight">
-            ETHJasoos
-          </Link>
-          <nav className="flex gap-6 text-sm text-neutral-500">
-            <Link href="/" className="hover:text-neutral-900">
-              Create
-            </Link>
-            <Link href="/gallery" className="hover:text-neutral-900">
-              Gallery
-            </Link>
-          </nav>
-        </header>
-        <main className="mx-auto max-w-5xl px-6 pb-24">{children}</main>
-      </body>
+    <html
+      lang="en"
+      className={cn(
+        "h-full antialiased font-sans",
+        geist.variable,
+        bricolage.variable
+      )}
+    >
+      <body className="min-h-full">{children}</body>
     </html>
   );
 }
