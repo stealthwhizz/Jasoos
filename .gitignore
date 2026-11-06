@@ -10,3 +10,6 @@ progress.md
 .DS_Store
 .data/
 .claude/
+
+# agent board read state (tools/board)
+/.board/
