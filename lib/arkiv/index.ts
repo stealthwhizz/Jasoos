@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Accusation, Manifest, WorldSummary } from "@/lib/types";
+import type { Accusation, Manifest, PublicManifest, WorldSummary } from "@/lib/types";
 import { env, processStore } from "@/lib/env";
 import { fixtureManifest } from "@/fixtures/world";
 
@@ -81,4 +81,11 @@ export async function recordAccusation(acc: Accusation, correct: boolean): Promi
 export async function hasAccused(worldKey: string, humanHash: string): Promise<boolean> {
   fixturesOnly("hasAccused");
   return store.accusations.some((a) => a.worldKey === worldKey && a.humanHash === humanHash);
+}
+
+/** Removes the mystery (secret and culprit) so the manifest is safe to send to a browser. */
+export function toPublicManifest(m: Manifest): PublicManifest {
+  const { mystery, ...bible } = m.bible;
+  void mystery;
+  return { ...m, bible };
 }
