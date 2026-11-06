@@ -85,3 +85,19 @@ describe("hidden-note codec", () => {
     expect(new Set(words).size).toBe(words.length);
   });
 });
+
+describe("plainNote", () => {
+  it("strips Markdown the model adds without changing the hidden code", async () => {
+    const { plainNote, encodeNote, decodeNote } = await import("@/lib/engine/codec");
+    const raw = "The air is **cool** and **quiet**, save for the **large** fans. *Perhaps* the `heat` is __low__.";
+    expect(plainNote(raw)).toBe("The air is cool and quiet, save for the large fans. Perhaps the heat is low.");
+    expect(plainNote("# Ledger\nPaid in full.")).toBe("Ledger\nPaid in full.");
+    expect(plainNote("snake_case_name stays")).toBe("snake_case_name stays");
+    const cover = "Maybe the large box is below the stairs. It is often quiet and almost empty. The small lamp is sure to be strange and tidy, really. Usually the shop is shut early, perhaps soon.";
+    const encoded = encodeNote("KEY", cover, "ABC");
+    if (encoded) {
+      const bolded = encoded.replace(/\b(\w+)\b/g, (w) => (w.length > 4 ? `**${w}**` : w));
+      expect(decodeNote(plainNote(bolded), "ABC")).toEqual(decodeNote(encoded, "ABC"));
+    }
+  });
+});
