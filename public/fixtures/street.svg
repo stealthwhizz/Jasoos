@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540">
+  <rect width="960" height="540" fill="#1e2a3a"/>
+  <rect y="360" width="960" height="180" fill="#3b4656"/>
+  <g fill="#2b3a4f" stroke="#4a5d78" stroke-width="2">
+    <rect x="60" y="120" width="240" height="240"/>
+    <rect x="360" y="90" width="240" height="270"/>
+    <rect x="660" y="140" width="240" height="220"/>
+  </g>
+  <g fill="#f5c46b">
+    <rect x="150" y="270" width="60" height="90"/>
+    <rect x="450" y="270" width="60" height="90"/>
+    <rect x="750" y="270" width="60" height="90"/>
+  </g>
+  <g fill="#e8edf3" font-family="system-ui, sans-serif" font-size="18" text-anchor="middle">
+    <text x="180" y="160">Irani Cafe</text>
+    <text x="480" y="130">Dabba Depot</text>
+    <text x="780" y="180">Pawn Shop</text>
+    <text x="480" y="520" font-size="14" fill="#9aa7b8">placeholder street (fixture)</text>
+  </g>
+</svg>
