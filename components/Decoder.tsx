@@ -22,7 +22,8 @@ export function Decoder({ note }: { note: Note }) {
   parts.push(note.text.slice(at));
 
   return (
-    <div className="space-y-2 rounded-xl bg-neutral-100 p-4 text-sm">
+    <div className="decoder-panel space-y-2 text-sm">
+      <p className="eyebrow">Evidence / intercepted note</p>
       <p className="font-serif">{parts}</p>
       {result ? (
         <p className="font-medium">
