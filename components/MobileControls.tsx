@@ -46,6 +46,8 @@ function actionLabel(near: Hotspot): string {
       return `Talk to ${near.name}`;
     case "item":
       return `Pick up ${near.name}`;
+    case "inspect":
+      return `Inspect ${near.name}`;
     default:
       return near.name;
   }

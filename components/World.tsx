@@ -940,6 +940,14 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
         return;
       }
 
+      // Minimal inspect: show what a detective notices (a fuller inspect panel is #12).
+      if (h.kind === "inspect") {
+        playSfx("click");
+        setAmbient(`${h.name}: ${h.hint}`);
+        setTimeout(() => setAmbient(null), 5000);
+        return;
+      }
+
       if (h.kind === "npc" && scene.npc) {
         const opening = scene.npc.opening;
         const params = voiceParams("wary");

@@ -28,6 +28,8 @@ function interactionLabel(near: Hotspot, touchControls: boolean): string {
       return `${prefix} talk to ${near.name}`;
     case "item":
       return `${prefix} pick up ${near.name}`;
+    case "inspect":
+      return `${prefix} inspect ${near.name}`;
     default:
       return `${prefix} ${near.name}`;
   }
