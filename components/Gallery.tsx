@@ -6,31 +6,52 @@ import type { WorldSummary } from "@/lib/types";
 
 /** Live worlds. TODO(C): read Arkiv straight from the browser; fall back to /api/gallery. */
 export function Gallery() {
+  const [error, setError] = useState(false);
   const [worlds, setWorlds] = useState<WorldSummary[] | null>(null);
 
   useEffect(() => {
     fetch("/api/gallery")
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error("Gallery unavailable");
+        return r.json();
+      })
       .then(setWorlds)
-      .catch(() => setWorlds([]));
+      .catch(() => setError(true));
   }, []);
 
-  if (!worlds) return <p className="text-neutral-400">Loading live cases…</p>;
+  if (error)
+    return (
+      <div role="alert" className="case-panel">
+        The case archive is unavailable.{" "}
+        <button className="case-button secondary" onClick={() => window.location.reload()}>
+          Retry gallery
+        </button>
+      </div>
+    );
+  if (!worlds)
+    return (
+      <div role="status" aria-label="Loading live cases" className="gallery-grid">
+        {[1, 2, 3].map((n) => (
+          <div key={n} className="case-panel skeleton" />
+        ))}
+      </div>
+    );
   if (worlds.length === 0) return <p className="text-neutral-400">No live cases yet.</p>;
 
   return (
-    <ul className="grid gap-6 sm:grid-cols-2">
+    <ul className="gallery-grid">
       {worlds.map((w) => (
         <li key={w.worldKey}>
-          <Link
-            href={`/world/${w.worldKey}`}
-            className="block overflow-hidden rounded-2xl bg-white shadow-sm transition-shadow hover:shadow-md"
-          >
+          <Link href={`/world/${w.worldKey}`} prefetch={false} className="world-card">
             <img src={w.thumbnailUrl} alt="" className="aspect-video w-full object-cover" />
-            <div className="space-y-1 p-5">
+            <div className="world-card-content">
+              <p className="eyebrow">OPEN CASE / EXPLORE</p>
               <h2 className="font-semibold">{w.title}</h2>
               <p className="line-clamp-2 text-sm text-neutral-500">{w.premise}</p>
-              <p className="text-xs text-neutral-400">{w.visits} visits</p>
+              <div className="world-card-footer">
+                <span>{w.visits} visits</span>
+                <span>Investigate ↗</span>
+              </div>
             </div>
           </Link>
         </li>
