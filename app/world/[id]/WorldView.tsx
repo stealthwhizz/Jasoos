@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { PublicManifest } from "@/lib/types";
 import { GameCanvas } from "@/components/GameCanvas";
 import { DialoguePanel } from "@/components/DialoguePanel";
+import { AccusationPanel } from "@/components/AccusationPanel";
 import { Decoder } from "@/components/Decoder";
 
 export function WorldView({ manifest }: { manifest: PublicManifest }) {
@@ -51,7 +52,8 @@ export function WorldView({ manifest }: { manifest: PublicManifest }) {
             <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-5">
               <p className="font-medium">This room image could not be generated.</p>
               <p className="mt-1 text-sm text-neutral-600">
-                The case is still playable. Generation record: {interior.model} · {interior.requestId}
+                The case is still playable. Generation record: {interior.model} ·{" "}
+                {interior.requestId}
               </p>
             </div>
           ) : (
@@ -86,7 +88,7 @@ export function WorldView({ manifest }: { manifest: PublicManifest }) {
           </p>
         </>
       )}
-      {/* TODO(B): accusation picker after 3 clues, POST /api/worlds/[id]/accuse, then the finale (R8). */}
+      <AccusationPanel manifest={manifest} unlocked={clues.size >= 3} />
     </div>
   );
 }

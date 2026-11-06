@@ -64,3 +64,11 @@ This file is the shared handoff for the team. The PRD remains the source of trut
 - Browser interactions, screenshots, all interior states and full dialogue/accusation journey remain unverified. R5/R6 are not signed off.
 - PR operations blocked: gh is unauthenticated and connected GitHub search returns 422 repository inaccessible. Intended PR base is A while it is unmerged.
 - Next action: rendered fixture review, sprite null-trim/error fallback review, then R8 accusation/finale. No shared types or A/C implementation files were edited by B.
+
+### 2026-11-06 — B / browser validation and R8
+- R5: Chromium fixture journey verified ArrowUp collision (feet y=363, blocked boundary y=360), A/D movement and E interaction into all three rooms. Transparent fixture sprite rendered; injected opaque sprite trimmed to [30,20,40,60], drawn at 64x96 with feet alignment. No console/page errors in the sprite check.
+- R6: ready interiors exercised in the real fixture journey; pending and failed states exercised in a temporary server fixture harness, removed afterward. Screenshots in artifacts/browser. This does not validate live pending-to-ready updates.
+- R8: client picker appears after three distinct NPC clues, sends culpritId to existing server route, shows 401 without consuming the guess, handles 403, locks after incorrect/correct responses, and reveals secret/finale only on a correct response. Browser journey used the actual fixture APIs; fixture verification was invoked through the browser request context, not a live IDKit flow. Incorrect and repeated outcomes showed no secret and disabled submission.
+- Sequential checks: 31 tests passed / 3 TODO; typecheck, lint, production build and diff check passed. Journey pageerror collection was empty; full console collection was performed for sprite test only.
+- Existing PR #1 is now accessible; update it rather than opening another.
+- Remaining: live World ID flow (C), atomic accusation persistence (C), server-side clue gating (not enforced by existing route), generated worlds without finale assets (A/C), null-trim sprite fallback, blur/diagonal measurements and responsive/accessibility review. Browser checks use Chromium only.
