@@ -1,0 +1,488 @@
+{
+  "date": "2026-11-06T10:50:17.951Z",
+  "baseURL": "http://127.0.0.1:3002",
+  "fixtureOnly": true,
+  "browser": "158.0.8127.18",
+  "checks": [
+    {
+      "name": "interior download has a labelled playable state",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "interview works during download artwork state",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "interior-download: no horizontal overflow",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "interior-download: automated accessibility",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "artwork retry retains the interview",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "interior-download-recovered: no horizontal overflow",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "interior-download-recovered: automated accessibility",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "interior download has no uncaught errors",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "interior pending has a labelled playable state",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "interview works during pending artwork state",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "interior-pending: no horizontal overflow",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "interior-pending: automated accessibility",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "interior pending has no uncaught errors",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "interior failed has a labelled playable state",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "interview works during failed artwork state",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "interior-failed: no horizontal overflow",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "interior-failed: automated accessibility",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "interior failed has no uncaught errors",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "interior download has a labelled playable state",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "interview works during download artwork state",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "interior-download: no horizontal overflow",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "interior-download: automated accessibility",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "artwork retry retains the interview",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "interior-download-recovered: no horizontal overflow",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "interior-download-recovered: automated accessibility",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "interior download has no uncaught errors",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "interior pending has a labelled playable state",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "interview works during pending artwork state",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "interior-pending: no horizontal overflow",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "interior-pending: automated accessibility",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "interior pending has no uncaught errors",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "interior failed has a labelled playable state",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "interview works during failed artwork state",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "interior-failed: no horizontal overflow",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "interior-failed: automated accessibility",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "interior failed has no uncaught errors",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "interior download has a labelled playable state",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "interview works during download artwork state",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "interior-download: no horizontal overflow",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "interior-download: automated accessibility",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    },
+    {
+      "name": "artwork retry retains the interview",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "interior-download-recovered: no horizontal overflow",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "interior-download-recovered: automated accessibility",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    },
+    {
+      "name": "interior download has no uncaught errors",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    },
+    {
+      "name": "interior pending has a labelled playable state",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "interview works during pending artwork state",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "interior-pending: no horizontal overflow",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "interior-pending: automated accessibility",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    },
+    {
+      "name": "interior pending has no uncaught errors",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    },
+    {
+      "name": "interior failed has a labelled playable state",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "interview works during failed artwork state",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "interior-failed: no horizontal overflow",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "interior-failed: automated accessibility",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    },
+    {
+      "name": "interior failed has no uncaught errors",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    }
+  ],
+  "diagnostics": [
+    {
+      "label": "interior-download-1440",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_FAILED"
+      ],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3002/fixtures/interior-depot.svg",
+          "error": "net::ERR_FAILED"
+        }
+      ]
+    },
+    {
+      "label": "interior-pending-1440",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": []
+    },
+    {
+      "label": "interior-failed-1440",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": []
+    },
+    {
+      "label": "interior-download-768",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_FAILED"
+      ],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3002/fixtures/interior-depot.svg",
+          "error": "net::ERR_FAILED"
+        }
+      ]
+    },
+    {
+      "label": "interior-pending-768",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": []
+    },
+    {
+      "label": "interior-failed-768",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": []
+    },
+    {
+      "label": "interior-download-390",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_FAILED"
+      ],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3002/fixtures/interior-depot.svg",
+          "error": "net::ERR_FAILED"
+        }
+      ]
+    },
+    {
+      "label": "interior-pending-390",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": []
+    },
+    {
+      "label": "interior-failed-390",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": []
+    }
+  ],
+  "accessibility": [
+    {
+      "name": "interior-download",
+      "width": 1440,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "interior-download-recovered",
+      "width": 1440,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "interior-pending",
+      "width": 1440,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "interior-failed",
+      "width": 1440,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "interior-download",
+      "width": 768,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "interior-download-recovered",
+      "width": 768,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "interior-pending",
+      "width": 768,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "interior-failed",
+      "width": 768,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "interior-download",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "interior-download-recovered",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "interior-pending",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "interior-failed",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    }
+  ],
+  "summary": {
+    "PASS": 54,
+    "FAIL": 0,
+    "UNVERIFIED": 0
+  }
+}

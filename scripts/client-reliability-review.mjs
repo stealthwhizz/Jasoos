@@ -154,7 +154,8 @@ try {
             null,
             viewport.width,
           );
-          await page.locator("canvas").focus();
+          await page.waitForFunction(() => document.activeElement?.tagName === "CANVAS");
+        await page.locator("canvas").focus();
           await page.keyboard.press("e");
           await page.getByRole("heading", { name: "Dabba Depot", exact: true }).waitFor();
           check(
@@ -172,6 +173,92 @@ try {
           await capture(page, `visit-${mode}-recovered`, viewport.width);
         } catch (error) {
           check(`visit ${mode} completed`, false, error.message, viewport.width);
+        } finally {
+          await context.close();
+        }
+      }
+  if (suites.includes("interior"))
+    for (const viewport of viewports)
+      for (const state of ["download", "pending", "failed"]) {
+        const { page, context, diagnostics } = await pageFor(
+          viewport,
+          `interior-${state}-${viewport.width}`,
+        );
+        try {
+          if (state === "download")
+            await page.route("**/fixtures/interior-depot.svg", (route) => route.abort("failed"));
+          else
+            await page.route("**/world/fixture-monsoon-tiffin", async (route) => {
+              const response = await route.fetch();
+              let replacements = 0;
+              const body = (await response.text()).replace(
+                /<script([^>]*)>([\s\S]*?)<\/script>/g,
+                (script, attributes, content) => {
+                  if (!content.startsWith("self.__next_f.push(")) return script;
+                  const data = JSON.parse(content.slice("self.__next_f.push(".length, -1));
+                  if (typeof data[1] !== "string") return script;
+                  data[1] = data[1].replace(
+                    /("id":"interior-depot"[^}]*"status":")ready(")/g,
+                    (_all, before, after) => {
+                      replacements++;
+                      return before + state + after;
+                    },
+                  );
+                  return `<script${attributes}>self.__next_f.push(${JSON.stringify(data)})</script>`;
+                },
+              );
+              assert(
+                replacements > 0,
+                "Injected fixture state must actually replace the serialized asset",
+              );
+              await route.fulfill({ response, body });
+            });
+          await page.goto("/world/fixture-monsoon-tiffin");
+          await page.waitForFunction(() => document.activeElement?.tagName === "CANVAS");
+        await page.locator("canvas").focus();
+          await page.keyboard.press("e");
+          const message =
+            state === "download"
+              ? "The room artwork could not be loaded."
+              : state === "pending"
+                ? "Still building this room"
+                : "This room image could not be generated.";
+          await page.getByText(message, { exact: true }).waitFor();
+          check(
+            `interior ${state} has a labelled playable state`,
+            await page.getByRole("textbox", { name: /^Say something/ }).isVisible(),
+            null,
+            viewport.width,
+          );
+          await page
+            .getByRole("textbox", { name: /^Say something/ })
+            .fill("What happened tonight?");
+          await page.getByRole("button", { name: "Ask", exact: true }).click();
+          await page.getByRole("log").locator("p").nth(1).waitFor();
+          check(`interview works during ${state} artwork state`, true, null, viewport.width);
+          await capture(page, `interior-${state}`, viewport.width);
+          if (state === "download") {
+            await page.unroute("**/fixtures/interior-depot.svg");
+            await page.getByRole("button", { name: "Retry room image" }).click();
+            await page
+              .getByRole("img", { name: /Racks of tiffin boxes/ })
+              .evaluate((image) => image.decode());
+            check(
+              "artwork retry retains the interview",
+              (await page.getByRole("log").locator("p").count()) === 2,
+              null,
+              viewport.width,
+            );
+            await capture(page, "interior-download-recovered", viewport.width);
+          }
+          check(
+            `interior ${state} has no uncaught errors`,
+            diagnostics.pageErrors.length === 0,
+            diagnostics.pageErrors,
+            viewport.width,
+          );
+        } catch (error) {
+          check(`interior ${state} completed`, false, error.message, viewport.width);
         } finally {
           await context.close();
         }

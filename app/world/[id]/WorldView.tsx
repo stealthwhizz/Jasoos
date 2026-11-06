@@ -5,6 +5,7 @@ import type { PublicManifest } from "@/lib/types";
 import { GameCanvas } from "@/components/GameCanvas";
 import { DialoguePanel } from "@/components/DialoguePanel";
 import { AccusationPanel } from "@/components/AccusationPanel";
+import { InteriorArtwork } from "@/components/InteriorArtwork";
 import { Decoder } from "@/components/Decoder";
 
 export function WorldView({ manifest }: { manifest: PublicManifest }) {
@@ -83,38 +84,11 @@ export function WorldView({ manifest }: { manifest: PublicManifest }) {
               ← Back to the street
             </button>
           </div>
-          {!interior || interior.status === "pending" ? (
-            <div
-              role="status"
-              className="flex min-h-56 items-center justify-center rounded-xl bg-neutral-100 p-6 text-center"
-            >
-              <div>
-                <p className="font-medium">Still building this room</p>
-                <p className="mt-1 text-sm text-neutral-500">
-                  The interior is generating. You can keep talking while it finishes.
-                </p>
-              </div>
-            </div>
-          ) : interior.status === "failed" ? (
-            <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-5">
-              <p className="font-medium">This room image could not be generated.</p>
-              <p className="mt-1 text-sm text-neutral-600">
-                The case is still playable. Generation record: {interior.model} ·{" "}
-                {interior.requestId}
-              </p>
-            </div>
-          ) : (
-            <figure>
-              <img
-                src={interior.url}
-                alt={location.interiorDescription}
-                className="w-full rounded-xl"
-              />
-              <figcaption className="mt-1 font-mono text-xs text-neutral-400">
-                {interior.model} · {interior.requestId}
-              </figcaption>
-            </figure>
-          )}
+          <InteriorArtwork
+            key={`${location.id}:${interior?.status}:${interior?.url}`}
+            asset={interior}
+            description={location.interiorDescription}
+          />
           <DialoguePanel
             key={location.npc.id}
             worldId={worldId}
