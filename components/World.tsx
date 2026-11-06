@@ -614,6 +614,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
       const unplacedRooms = claimedRoom !== null ? [claimedRoom] : [];
 
       const p = post<{ scene: SceneData } & ZgTraced>("/api/screen", {
+        gameId: gameIdRef.current,
         bible: theBible,
         x,
         y,

@@ -129,6 +129,15 @@ describe("durable accusation gate", () => {
     expect((await finale({ gameId: game.id, accused: 1 })).status).toBe(409);
     expect(generateFinale).toHaveBeenCalledTimes(1);
   });
+  it("lets the same suspect be retried after the finale fails, but never a different one", async () => {
+    const game = await newGame(1);
+    vi.mocked(generateFinale).mockRejectedValueOnce(new Error("0G unavailable"));
+    expect((await finale({ gameId: game.id, accused: 1 })).status).toBe(500);
+    const retry = await finale({ gameId: game.id, accused: 1 });
+    expect(retry.status).toBe(200);
+    expect(retry.json.finale.outcome).toBe("victory");
+    expect((await finale({ gameId: game.id, accused: 0 })).status).toBe(409);
+  });
   it("does not reveal or generate an ending if the accusation cannot be written", async () => {
     const game = await newGame(1);
     vi.spyOn(gameStore(), "recordAccusation").mockRejectedValue(new Error("Arkiv unavailable"));

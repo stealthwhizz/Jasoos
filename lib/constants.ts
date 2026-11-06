@@ -22,6 +22,9 @@ export const SESSION_TIME_LIMIT_SEC = Number(
   process.env.NEXT_PUBLIC_SESSION_TIME_LIMIT_SEC ?? "300"
 );
 
+/** Street screens one world may have: the origin plus 8 generated (0G cost cap, #21). */
+export const MAX_STREET_SCREENS = 9;
+
 /** Max retry attempts after the initial call (e.g. 3 → 500ms, 1s, 2s backoff). */
 export const RETRY_MAX = 3;
 

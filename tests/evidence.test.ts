@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { GET, POST } from "@/app/api/worlds/[id]/evidence/route";
+import { GET, POST } from "@/app/api/games/[id]/evidence/route";
 import { gameStore } from "@/lib/arkiv";
 import { seal } from "@/lib/world-engine";
 import type { GameBible } from "@/lib/universe";

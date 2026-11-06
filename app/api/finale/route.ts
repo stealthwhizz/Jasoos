@@ -45,10 +45,14 @@ export async function POST(req: NextRequest) {
 
     if (body.accused !== undefined) {
       try {
-        const recorded = await gameStore().recordAccusation({
+        const onRecord = await gameStore().recordAccusation({
           gameId: game.id, humanHash: user.id, accused: body.accused, correct: body.accused === culprit,
         });
-        if (!recorded) return NextResponse.json({ error: "You already accused someone in this world." }, { status: 409 });
+        // One suspect per human per world. Repeating the same suspect is a retry (say the finale
+        // failed to generate) and goes through; naming anyone else is refused.
+        if (onRecord.accused !== body.accused) {
+          return NextResponse.json({ error: "You already accused someone in this world." }, { status: 409 });
+        }
       } catch (error) {
         console.error("[/api/finale] accusation persistence failed", error);
         return NextResponse.json({ error: "Could not record your accusation. Try again." }, { status: 503 });

@@ -89,6 +89,8 @@ export type GameSceneRouteContext = {
 
 /** POST `/api/screen` request body. */
 export type ScreenRequest = {
+  /** The saved world. Only its owner may generate, up to MAX_STREET_SCREENS street screens. */
+  gameId: string;
   bible: GameBible;
   x: number;
   y: number;

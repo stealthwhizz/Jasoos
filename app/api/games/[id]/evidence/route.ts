@@ -41,7 +41,7 @@ export async function POST(req: Request, context: GameIdRouteContext) {
     }
     return NextResponse.json({ key: mystery.key, evidenceNote: mystery.evidenceNote, unlocks: await store.countUnlocks(id) });
   } catch (error) {
-    console.error("[/api/worlds/[id]/evidence]", error);
+    console.error("[/api/games/[id]/evidence]", error);
     return NextResponse.json({ error: "Evidence could not be opened. Try again." }, { status: 503 });
   }
 }

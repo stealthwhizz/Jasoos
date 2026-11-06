@@ -9,7 +9,7 @@ Without `ARKIV_SIGNER_KEY`, the same GameStore interface uses process-local memo
 - `PUT /api/games/[id]/scenes/[sceneId]` saves owner-generated interiors as `scene`
   and street tiles as `screen`. Existing `scene` street tiles still replay. Images
   live under `ASSET_DIR`, referenced by URLs, not inline on chain.
-- `POST /api/worlds/[id]/evidence` verifies a proof for `evidence-<id>` and writes
+- `POST /api/games/[id]/evidence` verifies a proof for `evidence-<id>` and writes
   `unlock` **before** revealing the key. Returning unlockers reuse their record without
   a new proof. A write failure returns 503 and no key.
 - `POST /api/finale` writes `accusation` before generating or replaying the ending.

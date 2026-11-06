@@ -14,6 +14,7 @@ import { bool, bytes, defineSchema, i32, str, u64 } from "@arkiv-network/sdk/sch
 import { hexToBytes, http, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { withRetry, DEFAULT_RETRY_OPTS } from "@/lib/retry";
+import { MAX_STREET_SCREENS } from "@/lib/constants";
 import type { Accusation, GameRecord, GameSceneRow } from "@/lib/types/server";
 
 /** Fields set when a game is created; the rest are filled in by the store. */
@@ -27,8 +28,11 @@ export type NewScene = Omit<GameSceneRow, "id" | "game_id">;
 
 /** What routes need from persistence. */
 export interface GameStore {
-  /** Atomically checks and records an accusation within this server's signer queue. */
-  recordAccusation(accusation: Accusation): Promise<boolean>;
+  /**
+   * Records this human's accusation, or returns the one already on record. Check and write share
+   * the signer queue, so concurrent requests cannot both record. `accused` is the suspect on record.
+   */
+  recordAccusation(accusation: Accusation): Promise<{ accused: number; created: boolean }>;
   /** Returning unlockers need no second World ID proof. */
   hasUnlock(worldKey: string, humanHash: string): Promise<boolean>;
   /** Idempotently persists an evidence unlock before returning its key. */
@@ -159,14 +163,15 @@ function createArkivStore(signerKey: string): GameStore {
     async recordAccusation(accusation) {
       // Keep check + write in the same queue: concurrent requests cannot both win the check.
       return serial(async () => {
-        const count = await withRetry(() => reader.count().from(AccusationEntity).where(and(
+        const page = await withRetry(() => reader.select({ accused: true }).from(AccusationEntity).where(and(
           scope("accusation"), eq("gameId", accusation.gameId), eq("humanHash", accusation.humanHash)
-        )).fetch(), DEFAULT_RETRY_OPTS);
-        if (count > BigInt(0)) return false;
+        )).limit(1).fetch(), DEFAULT_RETRY_OPTS);
+        const existing = page.entities[0];
+        if (existing) return { accused: Number(existing.accused.value), created: false };
         await withRetry(() => writer.createEntity(AccusationEntity, {
           project, entityType: "accusation", ...accusation, accused: u64(accusation.accused),
         }, { expiration: ExpirationTime.fromDays(GAME_DAYS) }), DEFAULT_RETRY_OPTS);
-        return true;
+        return { accused: accusation.accused, created: true };
       });
     },
     async hasUnlock(worldKey, humanHash) {
@@ -321,9 +326,10 @@ function createMemoryStore(): GameStore {
     name: "memory",
     async recordAccusation(accusation) {
       const key = `${accusation.gameId}:${accusation.humanHash}`;
-      if (accusations.has(key)) return false;
+      const existing = accusations.get(key);
+      if (existing) return { accused: existing.accused, created: false };
       accusations.set(key, accusation);
-      return true;
+      return { accused: accusation.accused, created: true };
     },
     async hasUnlock(worldKey, humanHash) { return unlocks.get(worldKey)?.has(humanHash) ?? false; },
     async unlockEvidence(worldKey, humanHash) {
@@ -384,10 +390,12 @@ function createMemoryStore(): GameStore {
 /** Reject extra screens at persistence too, so direct save requests cannot bypass the cap. */
 function assertScreenCapacity(scenes: GameSceneRow[], scene: NewScene): void {
   if (scene.kind !== "street") return;
-  if (!Number.isInteger(scene.x) || !Number.isInteger(scene.y) || Math.abs(scene.x!) > 1 || Math.abs(scene.y!) > 1 || scene.scene_id !== `s${scene.x}_${scene.y}`) {
-    throw Object.assign(new Error("Screen must be within the 3x3 grid with a matching id."), { status: 422 });
+  // The overworld is unbounded; only the id must match its grid cell.
+  if (!Number.isInteger(scene.x) || !Number.isInteger(scene.y) || scene.scene_id !== `s${scene.x}_${scene.y}`) {
+    throw Object.assign(new Error("Screen id must match its grid coordinate."), { status: 422 });
   }
-  if (!scenes.some((s) => s.scene_id === scene.scene_id) && scenes.filter((s) => s.kind === "street").length >= 9) {
+  const streets = scenes.filter((s) => s.kind === "street").length;
+  if (!scenes.some((s) => s.scene_id === scene.scene_id) && streets >= MAX_STREET_SCREENS) {
     throw Object.assign(new Error("This world has reached its eight additional screen limit."), { status: 422 });
   }
 }

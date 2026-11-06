@@ -21,6 +21,8 @@ vi.mock("@arkiv-network/sdk", async (original) => ({
   createWalletClient: () => ({
     async createEntity(_schema: unknown, attributes: Record<string, unknown>) {
       state.writes.push(attributes); state.count++;
+      // Written accusations become readable rows, as on the node (the suspect read back as u64).
+      if (attributes.entityType === "accusation") state.rows.push({ accused: { value: BigInt(1) } } as never);
       return { entityKey: `0x${"ab".repeat(32)}` };
     },
     async deleteEntity({ entityKey }: { entityKey: string }) { state.deleted.push(entityKey); } }),
@@ -50,8 +52,12 @@ describe("Arkiv node page limit", () => {
 
 
 it("serializes live accusation checks and writes the exact public contract once", async () => {
+  state.rows = [];
   const accusation = { gameId: "world", humanHash: "human", accused: 1, correct: true };
-  expect(await Promise.all([gameStore().recordAccusation(accusation), gameStore().recordAccusation(accusation)])).toEqual([true, false]);
+  expect(await Promise.all([gameStore().recordAccusation(accusation), gameStore().recordAccusation(accusation)])).toEqual([
+    { accused: 1, created: true },
+    { accused: 1, created: false },
+  ]);
   expect(state.writes).toHaveLength(1);
   expect(state.writes[0]).toMatchObject({ entityType: "accusation", gameId: "world", humanHash: "human", correct: true });
   expect(state.writes[0].accused).toBeDefined();
