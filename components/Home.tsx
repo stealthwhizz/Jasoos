@@ -45,6 +45,9 @@ export function Home() {
   const [idea, setIdea] = useState("");
   const [games, setGames] = useState<GameListItem[]>([]);
   const [canCreate, setCanCreate] = useState(false);
+  const [quota, setQuota] = useState<{ used: number; limit: number; unlimited: boolean } | null>(
+    null
+  );
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
@@ -64,6 +67,7 @@ export function Home() {
           posthog.identify(profile.userId);
           setGames(gameList);
           setCanCreate(profile.generation.canCreate);
+          setQuota(profile.generation);
         })
         .catch((e: unknown) => setError(e instanceof Error ? e.message : "Failed to load gallery."))
         .finally(() => setLoading(false)),
@@ -292,14 +296,22 @@ export function Home() {
                   placeholder={
                     canCreate
                       ? "e.g. A rain-flooded night market in Mumbai. I'm a courier carrying a sealed tiffin box someone will kill for…"
-                      : "Creating new worlds is currently unavailable. We are working on ramping up capacity and will be available soon!"
+                      : quota && quota.limit > 0
+                        ? `You've built all ${quota.limit} of your free worlds. Each verified human gets ${quota.limit}, so the gallery stays fair. You can still play every world below.`
+                        : "Creating new worlds is turned off on this server. You can still play every world below."
                   }
                   className="resize-none"
                 />
               </CardContent>
               <CardFooter className="flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-[11px] font-medium text-inksoft/70">
-                  {canCreate ? "⌘↵ to build" : "Gallery-only for now"}
+                  {canCreate
+                    ? quota && !quota.unlimited && quota.limit > 0
+                      ? `⌘↵ to build · ${quota.limit - quota.used} of ${quota.limit} free worlds left`
+                      : "⌘↵ to build"
+                    : quota && quota.limit > 0
+                      ? `${quota.used} of ${quota.limit} free worlds used`
+                      : "Gallery-only for now"}
                 </span>
                 <Button onClick={startCreate} disabled={!canCreate || !idea.trim()}>
                   Build a new world
