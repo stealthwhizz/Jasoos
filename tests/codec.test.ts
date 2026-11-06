@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { ALPHABET, SLOTS, decodeNote, encodeNote, scrubNote } from "@/lib/engine/codec";
 import { CODEBOOK } from "@/lib/engine/codebook";
-import { fixtureNotes } from "@/fixtures/world";
+
+// Encodes "KEY" with lib/engine/codec.
+const fixtureNotes = [
+  {
+    text: "Shut early today, the store was quiet. A large brass lamp sold in a rapid deal, perhaps to a rich man from the road. He is frequently weary and ill, and normally calm, but tonight he looked scared. He paid quickly, nearly too soon, and left the whole case empty. Strange, really.",
+    hasHidden: true,
+  },
+];
 
 // A cover note with exactly enough codebook words, built from varied pairs.
 const cover = (offset: number) =>

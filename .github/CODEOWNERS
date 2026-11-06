@@ -1,22 +1,17 @@
 # TODO(C): replace the placeholder handles with real GitHub usernames.
 # A: Amogh — engine and 0G
 /lib/engine/   @AMOGH_GITHUB
-/lib/zg/       @AMOGH_GITHUB
-/fixtures/     @AMOGH_GITHUB
 
 # B: Suraj — components and pages
 /components/   @SURAJ_GITHUB
 /app/*.tsx     @SURAJ_GITHUB
-/app/gallery/  @SURAJ_GITHUB
-/app/world/    @SURAJ_GITHUB
 
 # C: Kishore — chain, identity, submission
-/lib/arkiv/    @KISHORE_GITHUB
-/lib/worldid/  @KISHORE_GITHUB
+/lib/arkiv.ts   @KISHORE_GITHUB
+/lib/worldid.ts @KISHORE_GITHUB
 /app/api/      @KISHORE_GITHUB
 /arkiv/        @KISHORE_GITHUB
 /README.md     @KISHORE_GITHUB
 
 # Engine routes inside app/api go back to A (later rules win).
 /app/api/dialogue/          @AMOGH_GITHUB
-/app/api/worlds/*/events/   @AMOGH_GITHUB

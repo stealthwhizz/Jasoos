@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Note } from "@/lib/types";
+import type { Note } from "@/lib/types/client";
 import { decodeNote, type DecodeResult } from "@/lib/engine/codec";
 
 /** R22 UI: highlights the hidden word choices in a note and reads out the secret. */

@@ -12,6 +12,11 @@ import type { Premise } from "./shared";
 /** Premise card / world metadata shown in the UI. */
 export type { Premise } from "./shared";
 
+/** A note in the world; `text` may hide a codebook message for the Decoder. */
+export type Note = {
+  text: string;
+};
+
 /** One completed story beat for legacy linear mode context. */
 export type HistoryEntry = {
   caption: string;

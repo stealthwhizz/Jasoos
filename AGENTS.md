@@ -36,8 +36,6 @@ Keep types in **one place per layer**. Do not define duplicate shapes inline in 
 Every model call goes to 0G Private Computer through the OpenAI SDK.
 
 - The explorable world uses [`lib/zg-client.ts`](lib/zg-client.ts), the 0G client. For text and vision use `generateContentWithRetry`; for images use `generateImage`. Do not call `ai().chat.completions.create` directly in new code.
-- The older engine under `lib/engine/` uses `zgCall` in [`lib/zg/index.ts`](lib/zg/index.ts), which falls back to OpenAI when `OPENAI_API_KEY` is set. `lib/zg-client.ts` has no OpenAI fallback yet.
-- Backup calls must stay visible (the ticker labels them `openai/<model>`), so a demo never hides that 0G was not used.
 
 ## Server-side retries
 
@@ -84,10 +82,8 @@ Sign-in is World ID ([`lib/worldid.ts`](lib/worldid.ts)). When World ID keys are
 `package.json` only defines `dev`, `build`, `start` and `lint`. Run the rest with npx:
 
 - Typecheck: `npx tsc --noEmit`
-- Tests: `npx vitest run` (or one file, e.g. `npx vitest run tests/zg-fallback.test.ts`)
+- Tests: `npx vitest run` (or one file, e.g. `npx vitest run tests/codec.test.ts`)
 - Lint: `npm run lint`
-
-**Known breakage:** `lib/arkiv.ts`, `lib/worldid.ts` and `lib/types.ts` take over the `@/lib/arkiv`, `@/lib/worldid` and `@/lib/types` import paths from the older `lib/arkiv/`, `lib/worldid/` and `lib/types/index.ts`. Code that expects the older modules (`lib/engine/`, `lib/zg/`, `/api/worlds/*`, `/api/verify`, `/api/gallery`, `/api/status`, `app/world/`) no longer typechecks, so `npx tsc --noEmit` and `npm run build` fail until the two sets are merged or the older code is removed.
 
 ## The board (pinned GitHub issue #3)
 
