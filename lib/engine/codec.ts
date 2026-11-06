@@ -30,18 +30,27 @@ function slots(text: string) {
 const toBits = (nibbles: number[]) => nibbles.flatMap((n) => [3, 2, 1, 0].map((s) => (n >> s) & 1));
 const matchCase = (like: string, word: string) =>
   like[0] === like[0]!.toUpperCase() ? word[0]!.toUpperCase() + word.slice(1) : word;
+/** Shifts each letter's nibble by the matching key letter (`dir` 1 encrypts, -1 decrypts). */
+const shift = (nibbles: number[], key: string, dir: 1 | -1) =>
+  nibbles.map((n, i) => (n + dir * ALPHABET.indexOf(key[i]!) + 16) % 16);
+/** Decoding without a key is decoding with the zero key. */
+const NO_KEY = ALPHABET[0]!.repeat(SECRET_LEN);
 
 export function isValidSecret(secret: string): boolean {
   return secret.length === SECRET_LEN && [...secret].every((ch) => ALPHABET.includes(ch));
 }
 
-/** Writes the secret into the cover's word choices. Null if the cover has too few slots. */
-export function encodeNote(secret: string, coverText: string): string | null {
+/**
+ * Writes `secret`, encrypted with `key`, into the cover's word choices. The check value is over the
+ * plain letters, so only the right key verifies on decode. Null if the cover has too few slots.
+ */
+export function encodeNote(secret: string, coverText: string, key: string): string | null {
   if (!isValidSecret(secret)) throw new Error(`Secret must be ${SECRET_LEN} of ${ALPHABET}`);
+  if (!isValidSecret(key)) throw new Error(`Key must be ${SECRET_LEN} of ${ALPHABET}`);
   const found = slots(coverText);
   if (found.length < SLOTS) return null;
-  const nibbles = [...secret].map((ch) => ALPHABET.indexOf(ch));
-  const bits = toBits([...nibbles, check(nibbles)]);
+  const plain = [...secret].map((ch) => ALPHABET.indexOf(ch));
+  const bits = toBits([...shift(plain, key, 1), check(plain)]);
   let out = "";
   let at = 0;
   found.slice(0, SLOTS).forEach((s, i) => {
@@ -52,14 +61,18 @@ export function encodeNote(secret: string, coverText: string): string | null {
   return out + coverText.slice(at);
 }
 
-/** Reads the first SLOTS codebook words as bits and verifies the check value. */
-export function decodeNote(text: string): DecodeResult {
+/**
+ * Reads the first SLOTS codebook words as bits, decrypts them with `key`, and verifies the check.
+ * No key or a wrong key reads as "nothing hidden" 15 times in 16.
+ */
+export function decodeNote(text: string, key: string = NO_KEY): DecodeResult {
+  if (!isValidSecret(key)) return { hidden: false, marks: [] };
   const found = slots(text).slice(0, SLOTS);
   if (found.length < SLOTS) return { hidden: false, marks: [] };
   const nibbles = Array.from({ length: SECRET_LEN + 1 }, (_, i) =>
     found.slice(i * 4, i * 4 + 4).reduce((n, s) => (n << 1) | s.bit, 0),
   );
-  const data = nibbles.slice(0, SECRET_LEN);
+  const data = shift(nibbles.slice(0, SECRET_LEN), key, -1);
   if (check(data) !== nibbles[SECRET_LEN]) return { hidden: false, marks: [] };
   return {
     hidden: true,
@@ -68,9 +81,9 @@ export function decodeNote(text: string): DecodeResult {
   };
 }
 
-/** Makes sure an ordinary note does not decode by chance, by flipping its last check bit. */
-export function scrubNote(text: string): string {
-  if (!decodeNote(text).hidden) return text;
+/** Makes sure an ordinary note does not decode by chance under `key`, by flipping its last check bit. */
+export function scrubNote(text: string, key: string = NO_KEY): string {
+  if (!decodeNote(text, key).hidden) return text;
   const s = slots(text)[SLOTS - 1]!;
   const flipped = matchCase(text.slice(s.start, s.end), s.pair[1 - s.bit]!);
   return text.slice(0, s.start) + flipped + text.slice(s.end);

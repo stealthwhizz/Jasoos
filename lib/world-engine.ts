@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
+import { createCipheriv, createDecipheriv, createHash, randomBytes, randomInt } from "node:crypto";
 import { generateContentWithRetry, generateImage, toDataUrl, Type } from "./zg-client";
 import {
   resolveSpeaker,
@@ -20,6 +20,8 @@ import type {
 } from "./universe";
 import { normalizeScreenEdges, type Direction } from "./screen-edges";
 import { serverSecret } from "./worldid";
+import { ALPHABET, SECRET_LEN, encodeNote, scrubNote } from "./engine/codec";
+import { CODEBOOK } from "./engine/codebook";
 
 export type { Direction } from "./screen-edges";
 
@@ -170,8 +172,21 @@ const roomPlanSchema = {
       items: plannedActionSchema,
       description: "1-2 environmental interactions inside. At least one should carry risk.",
     },
+    object: {
+      type: Type.OBJECT,
+      description: "The ONE thing a detective would search in this room.",
+      properties: {
+        name: { type: Type.STRING, description: "2-6 words, e.g. 'A brass tiffin box with a dented lid'." },
+        description: { type: Type.STRING, description: "One sentence: what it looks like up close." },
+        note: {
+          type: Type.STRING,
+          description: `An ordinary note found on or in it (a pinned shop message, a scribbled pager slip, a ledger page): 60-100 words of everyday small talk that never mentions the crime. Use at least 20 words from this list, spelled exactly as written: ${CODEBOOK.flat().join(", ")}.`,
+        },
+      },
+      required: ["name", "description", "note"],
+    },
   },
-  required: ["name", "hint", "description", "storyRole", "hazard", "items", "actions"],
+  required: ["name", "hint", "description", "storyRole", "hazard", "items", "actions", "object"],
 };
 
 const bibleSchema = {
@@ -279,6 +294,11 @@ const bibleSchema = {
       description:
         "Exactly 3 enterable places. Room 1 houses the keeper of clue 1, room 2 of clue 2, room 3 of clue 3.",
     },
+    evidenceRoom: {
+      type: Type.INTEGER,
+      description:
+        "Which room (1, 2 or 3) holds the sealed evidence box. That room's object must be a locked or sealed container (strongbox, sealed tiffin, locked drawer).",
+    },
     npcs: {
       type: Type.ARRAY,
       items: npcPlanSchema,
@@ -315,6 +335,7 @@ const bibleSchema = {
     "street",
     "rooms",
     "npcs",
+    "evidenceRoom",
   ],
 };
 
@@ -401,8 +422,68 @@ export async function generateBible(idea: string): Promise<GameBible> {
       ? culprit - 1
       : bible.npcs.findIndex((npc) => secret.includes(npc.name));
   if (culpritIndex < 0) throw new Error("Planner named no culprit.");
-  const mystery: Mystery = { secret, culprit: culpritIndex };
-  return { ...bible, story: { goal, clues, sealed: seal(mystery) } };
+  const { evidenceRoom, key, evidenceNote } = plantClues(bible, culpritIndex);
+  const mystery: Mystery = { secret, culprit: culpritIndex, key, evidenceNote };
+  return { ...bible, evidenceRoom, story: { goal, clues, sealed: seal(mystery) } };
+}
+
+const STRONGBOX = {
+  name: "A locked strongbox",
+  description: "Iron bands, a fresh scratch by the lock, and a seal nobody here will break.",
+};
+
+/**
+ * R27–R29: gives every room a searchable object, marks the evidence room, draws the case key,
+ * hides the culprit's code (keyed) in another room's note and scrubs the decoy. Mutates
+ * `bible.rooms`; the returned key and evidence note must be sealed with the rest of the mystery.
+ * `bible.evidenceRoom` comes in as the planner's 1-based pick and goes out 0-based.
+ */
+export function plantClues(
+  bible: Pick<GameBible, "rooms" | "npcs" | "evidenceRoom">,
+  culprit: number
+): { evidenceRoom: number; key: string; evidenceNote?: string } {
+  const picked = bible.evidenceRoom ?? 0;
+  const valid = Number.isInteger(picked) && picked >= 1 && picked <= 3;
+  // Without a valid pick, room 1 holds a fixed strongbox (spec fallback).
+  const evidenceRoom = valid ? picked - 1 : 0;
+  bible.rooms.forEach((room, i) => {
+    const o = room.object;
+    if (i === evidenceRoom) {
+      room.object = valid && o?.name ? { name: o.name, description: o.description } : STRONGBOX;
+    } else if (!o?.name) {
+      room.object = { name: "A cluttered shelf", description: "Receipts, dust and a cold cup." };
+    }
+  });
+
+  let key = "";
+  // The zero key is what a keyless Decoder tries, so never draw it.
+  while (!key || key === ALPHABET[0]!.repeat(SECRET_LEN)) {
+    key = Array.from({ length: SECRET_LEN }, () => ALPHABET[randomInt(ALPHABET.length)]).join("");
+  }
+  const letters = [...bible.npcs[culprit]!.name.toUpperCase()].filter((ch) => ALPHABET.includes(ch));
+  const code = letters.join("").padEnd(SECRET_LEN, ALPHABET[0]).slice(0, SECRET_LEN);
+
+  // Prefer hiding the code in an innocent character's room.
+  const others = [0, 1, 2]
+    .filter((i) => i !== evidenceRoom)
+    .sort((a, b) => Number(a === culprit) - Number(b === culprit));
+  let hiddenIn = -1;
+  for (const i of others) {
+    const object = bible.rooms[i]!.object!;
+    const encoded = object.note ? encodeNote(code, object.note, key) : null;
+    if (encoded) {
+      object.note = encoded;
+      hiddenIn = i;
+      break;
+    }
+  }
+  for (const i of others) {
+    const object = bible.rooms[i]!.object!;
+    if (i !== hiddenIn && object.note) object.note = scrubNote(object.note, key);
+  }
+  // shortcut: no retry call when the note has too few codebook words; the code goes in the box instead.
+  const evidenceNote = hiddenIn < 0 ? `Initials scratched inside: ${[...code].join("-")}` : undefined;
+  return { evidenceRoom, key, evidenceNote };
 }
 
 /**
@@ -432,6 +513,9 @@ export function bibleBrief(b: GameBible): string {
     const npc = b.npcs[i];
     lines.push(
       `ROOM ${i + 1} — ${r.name}: ${r.description} Story role: ${r.storyRole} Hazard: ${r.hazard}`,
+      ...(r.object
+        ? [`  SEARCHABLE: ${r.object.name}: ${r.object.description}${i === b.evidenceRoom ? " (the sealed evidence box)" : ""}`]
+        : []),
       `  NPC ${i + 1}: ${npc.name}, ${npc.role}. ${npc.persona} Knows: ${npc.knows} Wants: ${npc.wants} Fears: ${npc.fears} TURNS HOSTILE IF: ${npc.turnsHostileIf}`,
       `  CLUE ${i + 1} (guarded by ${npc.name}): ${b.story.clues[i]}`
     );
@@ -530,8 +614,25 @@ const screenVisionSchema = {
         required: ["name", "hint", "outcome", "grantsItem", "risk", "suspicion", "rect"],
       },
     },
+    inspect: {
+      type: Type.ARRAY,
+      description:
+        "0-4 things a detective would look at closely in this frame (a notice board, a shrine, a parked cart). Only things actually visible.",
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          name: { type: Type.STRING, description: "2-4 words." },
+          hint: {
+            type: Type.STRING,
+            description: "One sentence: what a detective notices up close, true to the story.",
+          },
+          rect: rectSchema,
+        },
+        required: ["name", "hint", "rect"],
+      },
+    },
   },
-  required: ["title", "ambient", "edges", "buildings", "items", "actions"],
+  required: ["title", "ambient", "edges", "buildings", "items", "actions", "inspect"],
 };
 
 /**
@@ -611,8 +712,7 @@ export async function generateScreen(
       temperature: 0.6,
     },
   });
-  if (!res.text) throw new Error("Empty screen vision from text model.");
-  const spec = JSON.parse(res.text) as {
+  type VisionSpec = {
     title: string;
     ambient: string;
     edges: EdgeOpenness;
@@ -627,7 +727,22 @@ export async function generateScreen(
       suspicion: number;
       rect: Rect;
     }[];
+    inspect?: { name: string; hint: string; rect: Rect }[];
   };
+  let spec: VisionSpec;
+  try {
+    spec = JSON.parse(res.text || "") as VisionSpec;
+  } catch {
+    // Empty or broken vision: keep the painted screen as plain ground (no hotspots, closed edges).
+    spec = {
+      title: bible.street.name,
+      ambient: "",
+      edges: { n: false, e: false, s: false, w: false },
+      buildings: [],
+      items: [],
+      actions: [],
+    };
+  }
 
   const hotspots: Hotspot[] = [];
   let roomClaimed = false;
@@ -668,6 +783,15 @@ export async function generateScreen(
       grantsItem: a.grantsItem?.trim() || undefined,
       suspicion: clampSuspicion(a.suspicion) || undefined,
       risk: a.risk?.trim() || undefined,
+    })
+  );
+  (spec.inspect ?? []).slice(0, 4).forEach((t, i) =>
+    hotspots.push({
+      id: `${id}-look${i}`,
+      kind: "inspect",
+      name: t.name,
+      hint: t.hint,
+      rect: clampRect(t.rect),
     })
   );
 

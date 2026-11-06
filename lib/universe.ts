@@ -16,9 +16,9 @@ export type NpcDef = {
 
 export type Hotspot = {
   id: string;
-  kind: "building" | "npc" | "exit" | "item" | "action";
+  kind: "building" | "npc" | "exit" | "item" | "action" | "inspect";
   name: string;
-  /** Short hint shown when the player is near ("A tea stall, lamps lit"). */
+  /** Short hint shown when the player is near ("A tea stall, lamps lit"). For `inspect`: what a detective notices. */
   hint: string;
   rect: Rect;
   /** For buildings: the prompt seed used to generate the interior. */
@@ -55,6 +55,10 @@ export type Mystery = {
   secret: string;
   /** Index (0–2) of the NPC behind the secret. */
   culprit: number;
+  /** 3 codec letters, drawn by the server; the sealed evidence box reveals it (R27, R29). */
+  key?: string;
+  /** The culprit's code in plain words, set only when the hidden note could not be encoded. */
+  evidenceNote?: string;
 };
 
 /* ------------------------------------------------------------------ */
@@ -101,6 +105,17 @@ export type NpcPlan = {
   voice: string;
 };
 
+/** The one searchable thing in a room (R28). */
+export type RoomObject = {
+  name: string;
+  description: string;
+  /**
+   * Text written on or inside it, if any. In one non-evidence room it hides the culprit's code
+   * (keyed, see `lib/engine/codec.ts`); in the other it is a decoy. The evidence box has none.
+   */
+  note?: string;
+};
+
 export type RoomPlan = {
   /** e.g. "Chai Tapri", "Old Bookshop" — the enterable place. */
   name: string;
@@ -114,6 +129,8 @@ export type RoomPlan = {
   hazard: string;
   items: PlannedItem[];
   actions: PlannedAction[];
+  /** Optional: worlds saved before the detective clues have none. */
+  object?: RoomObject;
 };
 
 export type FailState = {
@@ -148,6 +165,8 @@ export type GameBible = {
   /** Exactly 3 — room i is guarded by npcs[i] and holds story.clues[i]. */
   rooms: RoomPlan[];
   npcs: NpcPlan[];
+  /** Index (0–2) of the room whose `object` is the sealed evidence box. Optional for older worlds. */
+  evidenceRoom?: number;
   /**
    * Soundtrack id from the fixed music library (`lib/music.ts`), chosen by
    * the model during bible generation to fit the world's mood. Optional:
