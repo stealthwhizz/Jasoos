@@ -1,0 +1,230 @@
+{
+  "date": "2026-11-06T11:00:21.798Z",
+  "baseURL": "http://127.0.0.1:3002",
+  "fixtureOnly": true,
+  "browser": "158.0.8127.18",
+  "checks": [
+    {
+      "name": "stalled reads stop at the real 30-second client deadline",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": {
+        "elapsedMs": 30866
+      }
+    },
+    {
+      "name": "request-deadline: no horizontal overflow",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "request-deadline: automated accessibility",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "timeout recovery retains the prompt",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "request deadlines have no uncaught errors",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "request-deadline-recovered: no horizontal overflow",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "request-deadline-recovered: automated accessibility",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "stalled reads stop at the real 30-second client deadline",
+      "status": "PASS",
+      "width": 768,
+      "evidence": {
+        "elapsedMs": 30598
+      }
+    },
+    {
+      "name": "request-deadline: no horizontal overflow",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "request-deadline: automated accessibility",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "timeout recovery retains the prompt",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "request deadlines have no uncaught errors",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "request-deadline-recovered: no horizontal overflow",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "request-deadline-recovered: automated accessibility",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "stalled reads stop at the real 30-second client deadline",
+      "status": "PASS",
+      "width": 390,
+      "evidence": {
+        "elapsedMs": 30590
+      }
+    },
+    {
+      "name": "request-deadline: no horizontal overflow",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "request-deadline: automated accessibility",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    },
+    {
+      "name": "timeout recovery retains the prompt",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "request deadlines have no uncaught errors",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    },
+    {
+      "name": "request-deadline-recovered: no horizontal overflow",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "request-deadline-recovered: automated accessibility",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    }
+  ],
+  "diagnostics": [
+    {
+      "label": "deadline-1440",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3002/api/gallery",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://127.0.0.1:3002/api/status",
+          "error": "net::ERR_ABORTED"
+        }
+      ]
+    },
+    {
+      "label": "deadline-768",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3002/api/gallery",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://127.0.0.1:3002/api/status",
+          "error": "net::ERR_ABORTED"
+        }
+      ]
+    },
+    {
+      "label": "deadline-390",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3002/api/gallery",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://127.0.0.1:3002/api/status",
+          "error": "net::ERR_ABORTED"
+        }
+      ]
+    }
+  ],
+  "accessibility": [
+    {
+      "name": "request-deadline",
+      "width": 1440,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "request-deadline-recovered",
+      "width": 1440,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "request-deadline",
+      "width": 768,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "request-deadline-recovered",
+      "width": 768,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "request-deadline",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "request-deadline-recovered",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    }
+  ],
+  "summary": {
+    "PASS": 21,
+    "FAIL": 0,
+    "UNVERIFIED": 0
+  }
+}

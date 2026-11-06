@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { fetchClientJsonValue } from "./clientRequest";
 import { parseGallery } from "./galleryData";
 import type { WorldSummary } from "@/lib/types";
 
@@ -13,10 +14,10 @@ export function Gallery() {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch("/api/gallery", { signal: controller.signal })
-      .then((r) => {
-        if (!r.ok) throw new Error("Gallery unavailable");
-        return r.json();
+    fetchClientJsonValue("/api/gallery", "Gallery unavailable", { signal: controller.signal })
+      .then(({ response, body }) => {
+        if (!response.ok) throw new Error("Gallery unavailable");
+        return body;
       })
       .then(parseGallery)
       .then((worlds) => {

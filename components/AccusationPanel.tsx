@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { fetchClientJsonValue } from "./clientRequest";
 import { parseAccusationResult } from "./accusationResult";
 import { WorldIdButton } from "./WorldIdButton";
 import type { PublicManifest } from "@/lib/types";
@@ -28,11 +29,15 @@ export function AccusationPanel({
     setBusy(true);
     setMessage("");
     try {
-      const res = await fetch(`/api/worlds/${encodeURIComponent(manifest.worldId)}/accuse`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ culpritId }),
-      });
+      const { response: res, body: resultBody } = await fetchClientJsonValue(
+        `/api/worlds/${encodeURIComponent(manifest.worldId)}/accuse`,
+        "The accusation could not be confirmed. Please try again.",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ culpritId }),
+        },
+      );
       if (res.status === 401) {
         setNeedsVerification(true);
         setMessage(
@@ -47,7 +52,7 @@ export function AccusationPanel({
         return;
       }
       if (!res.ok) throw new Error("The accusation could not be confirmed. Please try again.");
-      const body = parseAccusationResult(await res.json());
+      const body = parseAccusationResult(resultBody);
       setLocked(true);
       setNeedsVerification(false);
       if (body.correct) {

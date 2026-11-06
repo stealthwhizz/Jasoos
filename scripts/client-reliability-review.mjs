@@ -311,6 +311,61 @@ try {
         await context.close();
       }
     }
+  if (suites.includes("deadline"))
+    for (const viewport of viewports) {
+      const { page, context, diagnostics } = await pageFor(viewport, `deadline-${viewport.width}`);
+      const held = [];
+      try {
+        await page.route("**/api/status", (route) => {
+          held.push(route);
+        });
+        await page.route("**/api/gallery", (route) => {
+          held.push(route);
+        });
+        const started = Date.now();
+        await page.goto("/");
+        await page
+          .getByRole("textbox", { name: "Your scene" })
+          .fill("Keep this case draft through a timeout");
+        await page
+          .getByRole("button", { name: "Retry creation status" })
+          .waitFor({ timeout: 35000 });
+        await page.getByRole("button", { name: "Retry gallery" }).waitFor({ timeout: 35000 });
+        const elapsedMs = Date.now() - started;
+        check(
+          "stalled reads stop at the real 30-second client deadline",
+          elapsedMs >= 29000 && elapsedMs < 36000,
+          { elapsedMs },
+          viewport.width,
+        );
+        await capture(page, "request-deadline", viewport.width);
+        for (const route of held) await route.abort("failed").catch(() => {});
+        await page.unroute("**/api/status");
+        await page.unroute("**/api/gallery");
+        await page.getByRole("button", { name: "Retry creation status" }).click();
+        await page.getByRole("button", { name: "Retry gallery" }).click();
+        await page.getByRole("button", { name: "Verify demo session" }).waitFor();
+        await page.locator(".world-card").first().waitFor();
+        check(
+          "timeout recovery retains the prompt",
+          (await page.getByRole("textbox", { name: "Your scene" }).inputValue()) ===
+            "Keep this case draft through a timeout",
+          null,
+          viewport.width,
+        );
+        check(
+          "request deadlines have no uncaught errors",
+          diagnostics.pageErrors.length === 0,
+          diagnostics.pageErrors,
+          viewport.width,
+        );
+        await capture(page, "request-deadline-recovered", viewport.width);
+      } catch (error) {
+        check("request deadline completed", false, error.message, viewport.width);
+      } finally {
+        await context.close();
+      }
+    }
 } finally {
   await browser.close();
   report.summary = report.checks.reduce((summary, check) => (summary[check.status]++, summary), {
