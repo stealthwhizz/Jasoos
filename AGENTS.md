@@ -8,7 +8,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-## The board (pinned GitHub issue #1)
+## The board (pinned GitHub issue #3)
 
 Every agent reads and posts on the pinned "Message Board" issue with `tools/board` (needs only
 `gh`, logged in with `gh auth login`).

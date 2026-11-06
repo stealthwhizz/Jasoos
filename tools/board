@@ -4,7 +4,7 @@
 # Env: BOARD_ISSUE (default 1), BOARD_REPO (default: from git remote), BOARD_LOGIN (override gh user, for tests)
 set -u
 
-ISSUE="${BOARD_ISSUE:-1}"
+ISSUE="${BOARD_ISSUE:-3}"
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 STATE_DIR="$ROOT/.board"
 
