@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ChevronDown,
+  DoorOpen,
   Eye,
   Flame,
   Hourglass,
@@ -51,6 +52,8 @@ export type WorldHudProps = {
   voiceOn: boolean;
   onToggleVoice: () => void;
   onLeaveWorld: () => void;
+  /** Set only inside a room: returns to the street, as a visible button (and Escape). */
+  onLeaveRoom?: () => void;
   /** Accuse one of the bible's 3 characters (index 0–2); the server judges it. */
   onAccuse: (npcIndex: number) => void;
   dialogue: unknown;
@@ -109,6 +112,7 @@ export function WorldHud({
   voiceOn,
   onToggleVoice,
   onLeaveWorld,
+  onLeaveRoom,
   onAccuse,
   dialogue,
   knownStreets,
@@ -270,6 +274,18 @@ export function WorldHud({
       >
         {voiceOn ? <Volume2 size={15} /> : <VolumeX size={15} />}
       </Button>
+      {onLeaveRoom && (
+        <Button
+          variant="neutral"
+          size="sm"
+          sound="close"
+          hoverSound="hover"
+          onClick={onLeaveRoom}
+          title="Back to the street (Esc)"
+        >
+          <DoorOpen size={15} /> Back to the street
+        </Button>
+      )}
       <Button
         variant="neutral"
         size="sm"
@@ -444,6 +460,11 @@ export function WorldHud({
           >
             <Settings2 />
           </MobileHudIconButton>
+          {onLeaveRoom && (
+            <MobileHudIconButton label="Back to the street" onClick={onLeaveRoom}>
+              <DoorOpen />
+            </MobileHudIconButton>
+          )}
           <MobileHudIconButton label="Leave world" onClick={onLeaveWorld}>
             <LogOut />
           </MobileHudIconButton>

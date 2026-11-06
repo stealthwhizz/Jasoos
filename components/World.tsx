@@ -93,6 +93,22 @@ const EDGE_META: Record<
 
 const ORIGIN_ID = "s0_0";
 
+/**
+ * Where the player appears when entering a room: just inside its exit, so they arrive through the
+ * door and can see where it is. Falls back to the default spot when a room has no exit hotspot.
+ */
+function roomEntrySpawn(room: SceneData): { x: number; y: number } | null {
+  const exit = room.hotspots.find((h) => h.kind === "exit");
+  if (!exit) return null;
+  const cx = exit.rect.x + exit.rect.w / 2;
+  const cy = exit.rect.y + exit.rect.h / 2;
+  // Step a quarter of the way toward the room's middle, off the exit itself, so an extra E press
+  // on arrival does not walk straight back out.
+  const x = cx + (50 - cx) * 0.25;
+  const y = cy + (55 - cy) * 0.25;
+  return { x: Math.min(94, Math.max(6, x)), y: Math.min(90, Math.max(8, y)) };
+}
+
 /** Default opening dialogue options when approaching an NPC. */
 const OPENING_OPTIONS = [
   "Who are you, really?",
@@ -812,20 +828,44 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
     }
   }, [mode, initialIdea, beginCreate]);
 
+  /**
+   * Back to the street from a room. Shared by the room's exit hotspot, the HUD button and Escape,
+   * so a player is never stuck when the exit spot is hard to find. Falls back to the starting
+   * street if the room's parent screen is not in memory, instead of silently doing nothing.
+   */
+  const leaveRoom = useCallback(async () => {
+    if (!scene || scene.kind !== "interior") return;
+    stopVoice();
+    setDialogue(null);
+    const parent =
+      scenesRef.current.get(scene.parentId ?? ORIGIN_ID) ?? scenesRef.current.get(ORIGIN_ID);
+    if (!parent) {
+      setAmbient("The street is still loading. Try again in a moment.");
+      setTimeout(() => setAmbient(null), 3000);
+      return;
+    }
+    setSpawn(null);
+    await ensureSceneReady(parent, parent.title);
+    showScene(parent);
+  }, [scene, stopVoice, ensureSceneReady, showScene]);
+
+  // Escape leaves a room (when no conversation is open; the dialogue box handles its own keys).
+  useEffect(() => {
+    if (scene?.kind !== "interior" || dialogue) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") void leaveRoom();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [scene?.kind, dialogue, leaveRoom]);
+
   const onInteract = useCallback(
     async (h: Hotspot) => {
       if (!premise || !scene) return;
       if (secondsLeft <= 0 || finale || finaleLoading) return;
 
       if (h.kind === "exit") {
-        stopVoice();
-        setDialogue(null);
-        const parent = scenesRef.current.get(scene.parentId ?? ORIGIN_ID);
-        if (parent) {
-          setSpawn(null);
-          await ensureSceneReady(parent, parent.title);
-          showScene(parent);
-        }
+        await leaveRoom();
         return;
       }
 
@@ -918,7 +958,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
             interior = await interiorPromises.current.get(`room${h.clueIndex}`);
           }
           if (interior) {
-            setSpawn(null);
+            setSpawn(roomEntrySpawn(interior));
             await ensureSceneReady(interior);
             showScene(interior);
           }
@@ -930,7 +970,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
         }
       }
     },
-    [bible, ensureSceneReady, prefetchInterior, premise, scene, showScene, speak, stopVoice, secondsLeft, finale, finaleLoading]
+    [bible, ensureSceneReady, leaveRoom, prefetchInterior, premise, scene, showScene, speak, secondsLeft, finale, finaleLoading]
   );
 
   /** Walking off an open edge — confirm before generating; walls for visitors without a neighbor. */
@@ -1333,6 +1373,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
         voiceOn={voiceOn}
         onToggleVoice={toggleSound}
         onLeaveWorld={leaveWorld}
+        onLeaveRoom={scene.kind === "interior" ? () => void leaveRoom() : undefined}
         onAccuse={(accused) => runFinale({ accused })}
         dialogue={dialogue}
         knownStreets={knownStreets}
