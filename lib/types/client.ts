@@ -186,3 +186,28 @@ export type WidgetConfig = {
 
 /** Evidence revealed only after the human's unlock is persisted. */
 export type EvidenceResponse = { key: string; evidenceNote?: string; unlocks: number };
+
+/** Decoder state shared by room notes and the case board. */
+export type DecoderProps = { note: Note; evidenceKey?: string; onDecoded?: (code: string) => void };
+/** Persisted evidence access state owned by the current run. */
+export type EvidenceBoxProps = { gameId: string | null; evidence: EvidenceResponse | null; onUnlock: (value: EvidenceResponse) => void };
+/** Complete dialogue controls, including presenting an inventory item. */
+export type DialogueBoxProps = {
+  npc: import("../universe").NpcDef; history: DialogueTurn[]; options: string[];
+  thinking: boolean; speaking: boolean; voiceOn: boolean; mood?: string;
+  inventory: string[]; onToggleVoice: () => void; onSay: (line: string, shownItem?: string) => void; onClose: () => void;
+};
+/** Pointer-driven movement and interact controls. */
+export type MobileControlsProps = {
+  touchInputRef: import("react").MutableRefObject<TouchInput>;
+  nearHotspot: import("../universe").Hotspot | null; paused: boolean;
+  onInteract: (hotspot: import("../universe").Hotspot) => void;
+};
+/** Player pose in normalized image coordinates. */
+export type PlayerState = { x: number; y: number; dir: 1 | -1; moving: boolean };
+/** Cardinal edge crossed by the player. */
+export type ExitDirection = "n" | "e" | "s" | "w";
+/** Movement axes shared with keyboard controls (-1, 0, 1). */
+export type TouchInput = { x: number; y: number };
+/** Programmatically generated UI/game effects. */
+export type SfxName = "click" | "tap" | "toggleOn" | "toggleOff" | "open" | "close" | "pickup" | "success" | "error" | "hover" | "step" | "door" | "unlock" | "fail";

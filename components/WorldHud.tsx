@@ -209,7 +209,7 @@ export function WorldHud({
           {allCluesFound && !finale && accuseControls("ml-1 h-7 px-3 text-[11px]", "text-[11px]")}
         </Card>
       )}
-      {bible && heat > 0 && (
+      {bible && (
         <Card className="flex w-fit flex-row items-center gap-2 px-3 py-1.5">
           <Flame
             size={12}
@@ -220,6 +220,7 @@ export function WorldHud({
             {bible.heatLabel}
           </span>
           <Progress
+            aria-label={bible.heatLabel}
             value={heat}
             className="h-1.5 w-16 [&_[data-slot=progress-indicator]]:bg-health"
           />
@@ -264,7 +265,8 @@ export function WorldHud({
         sound={voiceOn ? "toggleOff" : "toggleOn"}
         hoverSound="hover"
         onClick={onToggleVoice}
-        title={voiceOn ? "Voice on" : "Voice off"}
+        aria-label={voiceOn ? "Mute all sound" : "Enable sound"}
+        title={voiceOn ? "Mute all sound" : "Enable sound"}
       >
         {voiceOn ? <Volume2 size={15} /> : <VolumeX size={15} />}
       </Button>
@@ -393,7 +395,7 @@ export function WorldHud({
                   {allCluesFound && !finale && accuseControls("h-6 px-2 text-[10px]", "text-[10px]")}
                 </Card>
               )}
-              {bible && heat > 0 && (
+              {bible && (
                 <Card className="flex w-fit max-w-full flex-row items-center gap-1.5 px-2 py-1">
                   <Flame
                     size={10}
@@ -404,7 +406,8 @@ export function WorldHud({
                     {bible.heatLabel}
                   </span>
                   <Progress
-                    value={heat}
+                    aria-label={bible.heatLabel}
+            value={heat}
                     className="h-1 min-w-10 flex-1 [&_[data-slot=progress-indicator]]:bg-health"
                   />
                   <span className="text-[10px] font-bold tabular-nums text-foreground">
@@ -476,7 +479,7 @@ export function WorldHud({
                 </MobileHudIconButton>
                 <MobileHudIconButton
                   active={voiceOn}
-                  label={voiceOn ? "Voice on" : "Voice off"}
+                  label={voiceOn ? "Mute all sound" : "Enable sound"}
                   onClick={onToggleVoice}
                 >
                   {voiceOn ? <Volume2 /> : <VolumeX />}
