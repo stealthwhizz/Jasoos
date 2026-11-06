@@ -1137,7 +1137,7 @@ for (const mode of ["transport", "malformed-sse", "error-sse"]) {
 
 const accusationErrors = await newPage({ width: 390, height: 844 }, "accusation-401-incorrect-403");
 try {
-  const { page, context } = accusationErrors;
+  const { page } = accusationErrors;
   await collectClues(page);
   const picker = page.getByRole("combobox", { name: "Culprit" });
   await picker.selectOption("npc-rustom");
@@ -1150,7 +1150,45 @@ try {
     390,
   );
   await capture(page, "verification-required", 390);
-  await context.request.post("/api/verify", { data: { fixture: true } });
+  for (const method of ["GET", "POST"]) {
+    await page.route("**/api/verify", async (route) => {
+      if (route.request().method() !== method) return route.continue();
+      await route.fulfill({ json: method === "GET" ? { fixtures: false } : { verified: false } });
+    });
+    await page.getByRole("button", { name: "Verify to accuse", exact: true }).click();
+    await page
+      .getByText(
+        method === "GET"
+          ? "World ID configuration is unavailable. Please try again."
+          : "Verification unavailable. Please try again.",
+        { exact: true },
+      )
+      .waitFor();
+    check(
+      `accusation rejects malformed ${method} verification success`,
+      (await picker.inputValue()) === "npc-rustom" &&
+        (await page.getByText("Evidence collected: 3 / 3", { exact: true }).count()) === 1 &&
+        (await page.getByRole("button", { name: "Verify to accuse", exact: true }).isEnabled()),
+      null,
+      390,
+    );
+    await page.unroute("**/api/verify");
+  }
+  await page.getByRole("button", { name: "Verify to accuse", exact: true }).click();
+  await page
+    .getByText(
+      "Verification complete. Your suspect selection is saved; submit when you are ready.",
+      { exact: true },
+    )
+    .waitFor();
+  check(
+    "guest verifies in place without losing clues or suspect",
+    (await picker.inputValue()) === "npc-rustom" &&
+      (await page.getByText("Evidence collected: 3 / 3", { exact: true }).count()) === 1,
+    null,
+    390,
+  );
+  await capture(page, "accusation-verified-in-place", 390);
   await page.getByRole("button", { name: "Submit accusation" }).click();
   await page.getByText(/That accusation was incorrect/).waitFor();
   check(

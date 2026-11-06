@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { WorldIdButton } from "./WorldIdButton";
 import type { PublicManifest } from "@/lib/types";
 
 export function AccusationPanel({
@@ -14,6 +15,7 @@ export function AccusationPanel({
   const [busy, setBusy] = useState(false);
   const submitting = useRef(false);
   const [locked, setLocked] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(false);
   const [message, setMessage] = useState("");
   const [outcome, setOutcome] = useState<{ secret: string; finaleUrl?: string } | null>(null);
   const [imageFailed, setImageFailed] = useState(false);
@@ -31,12 +33,14 @@ export function AccusationPanel({
         body: JSON.stringify({ culpritId }),
       });
       if (res.status === 401) {
+        setNeedsVerification(true);
         setMessage(
           "Verify with World ID before making an accusation. Your guess has not been submitted.",
         );
         return;
       }
       if (res.status === 403) {
+        setNeedsVerification(false);
         setLocked(true);
         setMessage("You have already made your accusation in this case.");
         return;
@@ -45,6 +49,7 @@ export function AccusationPanel({
       const body = await res.json();
       if (typeof body.correct !== "boolean") throw new Error("Invalid response");
       setLocked(true);
+      setNeedsVerification(false);
       if (body.correct === true && typeof body.secret === "string") {
         setOutcome({
           secret: body.secret,
@@ -122,6 +127,19 @@ export function AccusationPanel({
       <p role="status" aria-live="polite">
         {message}
       </p>
+      {needsVerification && !locked && (
+        <WorldIdButton
+          buttonLabel="Verify to accuse"
+          actionDescription="Prove you are human to submit one accusation"
+          onError={setMessage}
+          onVerified={() => {
+            setNeedsVerification(false);
+            setMessage(
+              "Verification complete. Your suspect selection is saved; submit when you are ready.",
+            );
+          }}
+        />
+      )}
       {outcome && (
         <div className="finale space-y-3">
           <p className="eyebrow">Case closed / the reveal</p>

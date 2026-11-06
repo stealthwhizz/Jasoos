@@ -1,29 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import {
-  IDKitRequestWidget,
-  proofOfHuman,
-  type IDKitResult,
-  type RpContext,
-} from "@worldcoin/idkit";
+import { IDKitRequestWidget, proofOfHuman, type IDKitResult } from "@worldcoin/idkit";
 
-interface Config {
-  app_id: `app_${string}`;
-  action: string;
-  environment: "production" | "staging";
-  rp_context: RpContext;
-}
-
-async function postProof(body: unknown) {
-  const res = await fetch("/api/verify", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok)
-    throw new Error((await res.json().catch(() => null))?.error ?? "Verification failed.");
-}
+import { fetchClientJson } from "./clientRequest";
+import { parseWorldIdConfig, postWorldIdProof, type WorldIdConfig } from "./worldIdClient";
 
 /**
  * Opens World ID (proof of human), sends the result to /api/verify, and calls onVerified once the
@@ -32,28 +13,37 @@ async function postProof(body: unknown) {
 export function WorldIdButton({
   onVerified,
   onError,
+  buttonLabel = "Verify with World ID",
+  actionDescription = "Prove you are human to create a world",
 }: {
   onVerified: () => void;
   onError: (message: string) => void;
+  buttonLabel?: string;
+  actionDescription?: string;
 }) {
-  const [config, setConfig] = useState<Config | null>(null);
+  const [config, setConfig] = useState<WorldIdConfig | null>(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function start() {
+    if (loading || open) return;
     setLoading(true);
     onError("");
     try {
       // A fresh RP signature per attempt: each one carries its own nonce and expiry.
-      const res = await fetch("/api/verify");
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error ?? "World ID is unavailable.");
-      if (body.fixtures) {
-        await postProof({ fixture: true });
+      const { response, body } = await fetchClientJson<Record<string, unknown>>(
+        "/api/verify",
+        "World ID is unavailable. Please try again.",
+      );
+      if (!response.ok)
+        throw new Error(typeof body.error === "string" ? body.error : "World ID is unavailable.");
+      const configuration = parseWorldIdConfig(body);
+      if ("fixtures" in configuration) {
+        await postWorldIdProof({ fixture: true });
         onVerified();
         return;
       }
-      setConfig(body as Config);
+      setConfig(configuration);
       setOpen(true);
     } catch (err) {
       onError(err instanceof Error ? err.message : "World ID is unavailable.");
@@ -67,10 +57,10 @@ export function WorldIdButton({
       <button
         type="button"
         onClick={start}
-        disabled={loading}
-        className="rounded-full border border-neutral-300 px-5 py-2 text-sm font-medium hover:bg-neutral-100 disabled:opacity-40"
+        disabled={loading || open}
+        className="case-button secondary"
       >
-        {loading ? "Opening World ID…" : "Verify with World ID"}
+        {loading ? "Opening verification…" : buttonLabel}
       </button>
       {config && (
         <IDKitRequestWidget
@@ -82,10 +72,16 @@ export function WorldIdButton({
           environment={config.environment}
           allow_legacy_proofs={false}
           preset={proofOfHuman()}
-          action_description="Prove you are human to create a world"
-          handleVerify={async (result: IDKitResult) => postProof(result)}
-          onSuccess={() => onVerified()}
-          onError={(code) => onError(`World ID error: ${code}`)}
+          action_description={actionDescription}
+          handleVerify={async (result: IDKitResult) => postWorldIdProof(result)}
+          onSuccess={() => {
+            setOpen(false);
+            onVerified();
+          }}
+          onError={(code) => {
+            setOpen(false);
+            onError(`World ID error: ${code}`);
+          }}
         />
       )}
     </>
