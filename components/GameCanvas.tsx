@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
 import type { Hotspot, SceneData } from "@/lib/universe";
 import { getCachedImage, preloadImage } from "@/lib/image-cache";
 
@@ -72,23 +72,26 @@ export function GameCanvas({
   const imgRef = useRef<HTMLImageElement | null>(null);
   const visionRef = useRef<HTMLImageElement | null>(null);
   const showVisionRef = useRef(Boolean(showVision));
-  showVisionRef.current = Boolean(showVision);
   const keysRef = useRef<Record<string, boolean>>({});
   const playerRef = useRef<PlayerState>({ x: 12, y: 70, dir: 1, moving: false });
   const nearRef = useRef<Hotspot | null>(null);
   const exitFiredRef = useRef(false);
   const onExitEdgeRef = useRef(onExitEdge);
-  onExitEdgeRef.current = onExitEdge;
   const onPositionRef = useRef(onPosition);
-  onPositionRef.current = onPosition;
   const pausedRef = useRef(paused);
-  pausedRef.current = paused;
   const touchInputRefProp = useRef(touchInputRef);
-  touchInputRefProp.current = touchInputRef;
   const touchControlsRef = useRef(touchControls);
-  touchControlsRef.current = touchControls;
   const onNearChangeRef = useRef(onNearChange);
-  onNearChangeRef.current = onNearChange;
+  // The rAF loop and key handlers read the latest props through these refs; sync after each render.
+  useLayoutEffect(() => {
+    showVisionRef.current = Boolean(showVision);
+    onExitEdgeRef.current = onExitEdge;
+    onPositionRef.current = onPosition;
+    pausedRef.current = paused;
+    touchInputRefProp.current = touchInputRef;
+    touchControlsRef.current = touchControls;
+    onNearChangeRef.current = onNearChange;
+  });
   const debugRef = useRef(false);
   const mainColorRef = useRef("#ffbf00");
   useEffect(() => {

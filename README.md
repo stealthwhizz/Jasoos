@@ -186,6 +186,26 @@ proofs from the [simulator](https://simulator.worldcoin.org).
 ([faucet](https://hub.arkiv.network/faucet)), and set `ARKIV_ACCESS_KEY` for the
 RPC endpoint without rate limits.
 
+### Deploy (Railway or Render)
+
+The app is one long-running Node server. Generated images are written to
+`ASSET_DIR` on disk, so the host needs a **persistent volume**: a serverless
+host would lose them.
+
+1. Create a Node service from this repo. Build: `npm ci && npm run build`.
+   Start: `npm start` (Next reads the host's `PORT`).
+2. Attach a persistent volume (e.g. mounted at `/data`) and set
+   `ASSET_DIR=/data/assets`.
+3. Set the environment. Required: `ZG_COMPUTE_API_KEY`, a long random
+   `SESSION_SECRET` that **never changes** (it seals every world's answer),
+   `FREE_GAME_LIMIT` (e.g. `3`), the World ID keys with
+   `WORLD_ENVIRONMENT=production` for real World App users, and
+   `ARKIV_SIGNER_KEY` (funded) plus `ARKIV_ACCESS_KEY`. Without the Arkiv key,
+   saved worlds live in memory and vanish on restart. Optional: `SARVAM_API_KEY`
+   and PostHog.
+4. Run one instance only: the in-memory fallback and the Arkiv write queue
+   are per process.
+
 ## Other services (not sponsors)
 
 | Service | Job |
@@ -239,24 +259,20 @@ lakhs of rupees to paise.
 ## Checks
 
 ```bash
-npm run lint
-npx tsc --noEmit
-npx vitest run
+npm run lint        # 0 errors
+npm run typecheck
+npm test
+npm run build
 ```
-
-`npm test` and `npm run typecheck` are also available.
 
 ## Known issues
 
-- **0G request IDs are not shown in the game yet.** `lib/zg-client.ts` returns
-  them, but the HUD shows only the call count. The 0G track asks for request
-  IDs in the main flow.
-- **No 0G account sign-in (iAI bonus).** Players cannot spend their own 0G
-  credits yet.
+- **Players can't spend their own 0G credits.** Every call uses the server's `ZG_COMPUTE_API_KEY`.
 - **World ID evidence spike still needs a real simulator proof.** Per-case actions are implemented;
   registration requirements have not yet been confirmed end to end. See the debrief.
-- **Screen generation cap is pending route integration.** Persistence rejects screens outside the
-  3x3 grid; generation must also check before spending credits (#21).
+- **Screen generation cap is pending route integration.** Persistence bounds the 3x3 grid;
+  generation must also check before spending credits (#21).
+
 - **Dialogue trusts the client for everything except the answer.**
   `/api/dialogue` takes the world plan, `clueFound`, `exchanges`, `heat` and
   `inventory` from the request body. The clue and close rules run on the

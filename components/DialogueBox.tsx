@@ -48,13 +48,13 @@ export function DialogueBox({
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastNpcLine = [...history].reverse().find((t) => t.speaker === "npc");
 
-  const [typed, setTyped] = useState(0);
+  const lineText = lastNpcLine?.text ?? "";
+  // The typed count is stored with its line, so a new NPC line starts at 0 without a reset effect.
+  const [typedState, setTypedState] = useState({ text: "", n: 0 });
+  const typed = typedState.text === lineText ? typedState.n : 0;
+  const setTyped = (update: (n: number) => number) =>
+    setTypedState((s) => ({ text: lineText, n: update(s.text === lineText ? s.n : 0) }));
   const prevSpeaking = useRef(false);
-
-  // Reset typewriter only when a new NPC line arrives.
-  useEffect(() => {
-    setTyped(0);
-  }, [lastNpcLine?.text]);
 
   useEffect(() => {
     if (!lastNpcLine) return;
@@ -76,10 +76,13 @@ export function DialogueBox({
 
   // Keep the full line visible after voice finishes (avoid blank flash).
   useEffect(() => {
-    if (prevSpeaking.current && !speaking && lastNpcLine) {
-      setTyped(lastNpcLine.text.length);
-    }
+    const ended = prevSpeaking.current && !speaking && lastNpcLine;
     prevSpeaking.current = speaking;
+    if (!ended) return;
+    const full = lastNpcLine.text.length;
+    const t = setTimeout(() => setTyped(() => full), 0);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setTyped is rebuilt each render for the current line
   }, [speaking, lastNpcLine]);
 
   // If TTS never starts, reveal the full line after a short wait.
@@ -89,6 +92,7 @@ export function DialogueBox({
       setTyped((n) => (n >= lastNpcLine.text.length ? n : lastNpcLine.text.length));
     }, 800);
     return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-arm only when the line text changes
   }, [voiceOn, lastNpcLine?.text, speaking, thinking]);
 
   useEffect(() => {
