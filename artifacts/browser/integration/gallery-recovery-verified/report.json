@@ -1,0 +1,602 @@
+{
+  "date": "2026-11-06T10:41:30.860Z",
+  "baseURL": "http://127.0.0.1:3003",
+  "fixtureOnly": true,
+  "browser": "158.0.8127.18",
+  "checks": [
+    {
+      "name": "malformed gallery object offers recovery",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "gallery-object-error: no horizontal overflow",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "gallery-object-error: automated accessibility",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "gallery object retry preserves creation draft",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "gallery object has no uncaught errors",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "gallery-object-recovered: no horizontal overflow",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "gallery-object-recovered: automated accessibility",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "malformed gallery null offers recovery",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "gallery-null-error: no horizontal overflow",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "gallery-null-error: automated accessibility",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "gallery null retry preserves creation draft",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "gallery null has no uncaught errors",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "gallery-null-recovered: no horizontal overflow",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "gallery-null-recovered: automated accessibility",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "malformed gallery records offers recovery",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "gallery-records-error: no horizontal overflow",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "gallery-records-error: automated accessibility",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "gallery records retry preserves creation draft",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "gallery records has no uncaught errors",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "gallery-records-recovered: no horizontal overflow",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "gallery-records-recovered: automated accessibility",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "malformed gallery object offers recovery",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "gallery-object-error: no horizontal overflow",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "gallery-object-error: automated accessibility",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "gallery object retry preserves creation draft",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "gallery object has no uncaught errors",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "gallery-object-recovered: no horizontal overflow",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "gallery-object-recovered: automated accessibility",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "malformed gallery null offers recovery",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "gallery-null-error: no horizontal overflow",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "gallery-null-error: automated accessibility",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "gallery null retry preserves creation draft",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "gallery null has no uncaught errors",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "gallery-null-recovered: no horizontal overflow",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "gallery-null-recovered: automated accessibility",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "malformed gallery records offers recovery",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "gallery-records-error: no horizontal overflow",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "gallery-records-error: automated accessibility",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "gallery records retry preserves creation draft",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "gallery records has no uncaught errors",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "gallery-records-recovered: no horizontal overflow",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "gallery-records-recovered: automated accessibility",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "malformed gallery object offers recovery",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "gallery-object-error: no horizontal overflow",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "gallery-object-error: automated accessibility",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    },
+    {
+      "name": "gallery object retry preserves creation draft",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "gallery object has no uncaught errors",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    },
+    {
+      "name": "gallery-object-recovered: no horizontal overflow",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "gallery-object-recovered: automated accessibility",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    },
+    {
+      "name": "malformed gallery null offers recovery",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "gallery-null-error: no horizontal overflow",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "gallery-null-error: automated accessibility",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    },
+    {
+      "name": "gallery null retry preserves creation draft",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "gallery null has no uncaught errors",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    },
+    {
+      "name": "gallery-null-recovered: no horizontal overflow",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "gallery-null-recovered: automated accessibility",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    },
+    {
+      "name": "malformed gallery records offers recovery",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "gallery-records-error: no horizontal overflow",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "gallery-records-error: automated accessibility",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    },
+    {
+      "name": "gallery records retry preserves creation draft",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "gallery records has no uncaught errors",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    },
+    {
+      "name": "gallery-records-recovered: no horizontal overflow",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "gallery-records-recovered: automated accessibility",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    }
+  ],
+  "diagnostics": [
+    {
+      "label": "gallery-object-1440",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3003/api/gallery",
+          "error": "net::ERR_ABORTED"
+        }
+      ]
+    },
+    {
+      "label": "gallery-null-1440",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3003/api/gallery",
+          "error": "net::ERR_ABORTED"
+        }
+      ]
+    },
+    {
+      "label": "gallery-records-1440",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3003/api/gallery",
+          "error": "net::ERR_ABORTED"
+        }
+      ]
+    },
+    {
+      "label": "gallery-object-768",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3003/api/gallery",
+          "error": "net::ERR_ABORTED"
+        }
+      ]
+    },
+    {
+      "label": "gallery-null-768",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3003/api/gallery",
+          "error": "net::ERR_ABORTED"
+        }
+      ]
+    },
+    {
+      "label": "gallery-records-768",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3003/api/gallery",
+          "error": "net::ERR_ABORTED"
+        }
+      ]
+    },
+    {
+      "label": "gallery-object-390",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3003/api/gallery",
+          "error": "net::ERR_ABORTED"
+        }
+      ]
+    },
+    {
+      "label": "gallery-null-390",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3003/api/gallery",
+          "error": "net::ERR_ABORTED"
+        }
+      ]
+    },
+    {
+      "label": "gallery-records-390",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3003/api/gallery",
+          "error": "net::ERR_ABORTED"
+        }
+      ]
+    }
+  ],
+  "accessibility": [
+    {
+      "name": "gallery-object-error",
+      "width": 1440,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "gallery-object-recovered",
+      "width": 1440,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "gallery-null-error",
+      "width": 1440,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "gallery-null-recovered",
+      "width": 1440,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "gallery-records-error",
+      "width": 1440,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "gallery-records-recovered",
+      "width": 1440,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "gallery-object-error",
+      "width": 768,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "gallery-object-recovered",
+      "width": 768,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "gallery-null-error",
+      "width": 768,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "gallery-null-recovered",
+      "width": 768,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "gallery-records-error",
+      "width": 768,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "gallery-records-recovered",
+      "width": 768,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "gallery-object-error",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "gallery-object-recovered",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "gallery-null-error",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "gallery-null-recovered",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "gallery-records-error",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "gallery-records-recovered",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    }
+  ],
+  "summary": {
+    "PASS": 63,
+    "FAIL": 0,
+    "UNVERIFIED": 0
+  }
+}

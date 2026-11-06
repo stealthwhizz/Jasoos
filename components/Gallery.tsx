@@ -2,28 +2,44 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { parseGallery } from "./galleryData";
 import type { WorldSummary } from "@/lib/types";
 
 /** Live worlds. TODO(C): read Arkiv straight from the browser; fall back to /api/gallery. */
 export function Gallery() {
+  const [attempt, setAttempt] = useState(0);
   const [error, setError] = useState(false);
   const [worlds, setWorlds] = useState<WorldSummary[] | null>(null);
 
   useEffect(() => {
-    fetch("/api/gallery")
+    const controller = new AbortController();
+    fetch("/api/gallery", { signal: controller.signal })
       .then((r) => {
         if (!r.ok) throw new Error("Gallery unavailable");
         return r.json();
       })
-      .then(setWorlds)
-      .catch(() => setError(true));
-  }, []);
+      .then(parseGallery)
+      .then((worlds) => {
+        if (!controller.signal.aborted) setWorlds(worlds);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setError(true);
+      });
+    return () => controller.abort();
+  }, [attempt]);
 
   if (error)
     return (
       <div role="alert" className="case-panel">
         The case archive is unavailable.{" "}
-        <button className="case-button secondary" onClick={() => window.location.reload()}>
+        <button
+          className="case-button secondary"
+          onClick={() => {
+            setError(false);
+            setWorlds(null);
+            setAttempt((value) => value + 1);
+          }}
+        >
           Retry gallery
         </button>
       </div>

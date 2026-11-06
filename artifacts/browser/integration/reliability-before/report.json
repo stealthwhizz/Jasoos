@@ -1,0 +1,30 @@
+[
+  {
+    "test": "visit-transport",
+    "errors": [
+      "Failed to fetch"
+    ],
+    "canvas": 1,
+    "retry": 0,
+    "brokenImages": 0,
+    "fallbackText": 0
+  },
+  {
+    "test": "gallery-invalid-shape",
+    "errors": [
+      "c.map is not a function"
+    ],
+    "canvas": 0,
+    "retry": 0,
+    "brokenImages": 0,
+    "fallbackText": 0
+  },
+  {
+    "test": "interior-image",
+    "errors": [],
+    "canvas": 0,
+    "retry": 0,
+    "brokenImages": 1,
+    "fallbackText": 0
+  }
+]
