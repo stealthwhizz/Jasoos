@@ -8,7 +8,7 @@
  * - **Visitors**: finite world — edges without saved neighbors act as walls.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
 import { AnimatePresence, motion } from "framer-motion";
@@ -336,7 +336,9 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
   /** Last announced track id, the "now playing" toast fires once per theme. */
   const musicThemeRef = useRef<string | null>(null);
   const voiceOnRef = useRef(voiceOn);
-  voiceOnRef.current = voiceOn;
+  useLayoutEffect(() => {
+    voiceOnRef.current = voiceOn;
+  });
   /** Fires the low-time ambient toast once per session. */
   const lowTimeWarnedRef = useRef(false);
 
@@ -1131,7 +1133,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
         });
       }
     },
-    [bible, scene, dialogue, heat, cluesFound, speak, fetchVoice, addCalls, noteRequests, inventory, secondsLeft, finale, finaleLoading]
+    [bible, scene, dialogue, heat, cluesFound, speak, fetchVoice, noteRequests, inventory, secondsLeft, finale, finaleLoading]
   );
 
   const allCluesFound = bible ? cluesFound.every(Boolean) : false;
@@ -1192,12 +1194,18 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
     [bible, finale, finaleLoading, speak, fetchVoice, stopVoice, addCalls, noteRequests, cluesFound, genCalls, screensDreamed]
   );
 
-  // `!error` spaces out retries: a failed ending shows its error for 4 s before this fires again.
+  // Ending a run sets state, so it starts in a microtask after the effect (cancelled if the effect
+  // re-runs first). `!error` spaces out retries: a failed ending shows its error for 4 s.
   useEffect(() => {
-    if (heat >= 100 && bible && !finale && !finaleLoading && !error) {
-      const hard = bible.failStates.find((f) => f.kind === "hard");
-      runFinale({ reason: hard?.trigger ?? `the ${bible.heatLabel} meter reached 100` });
-    }
+    if (heat < 100 || !bible || finale || finaleLoading || error) return;
+    const hard = bible.failStates.find((f) => f.kind === "hard");
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) void runFinale({ reason: hard?.trigger ?? `the ${bible.heatLabel} meter reached 100` });
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [heat, bible, finale, finaleLoading, error, runFinale]);
 
   /** Pause the session clock while generation/loading overlays block movement. */
@@ -1230,9 +1238,14 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
 
   /** Session over — trigger defeat when the wall clock hits zero. */
   useEffect(() => {
-    if (secondsLeft === 0 && bible && !finale && !finaleLoading && !error) {
-      runFinale({ reason: "time ran out" });
-    }
+    if (secondsLeft !== 0 || !bible || finale || finaleLoading || error) return;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) void runFinale({ reason: "time ran out" });
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [secondsLeft, bible, finale, finaleLoading, error, runFinale]);
 
   const closeDialogue = useCallback(() => {
@@ -1277,11 +1290,15 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
     );
   }
 
+  // Street screen ids encode their grid cell (`s<x>_<y>`, lib/world-engine.ts generateScreen),
+  // so an interior's minimap cell comes from its parent id without reading the scene cache.
+  const parentCell =
+    scene.kind === "interior" ? /^s(-?\d+)_(-?\d+)$/.exec(scene.parentId ?? "") : null;
   const minimapCoord =
     scene.kind === "street" && scene.coord
       ? scene.coord
-      : scene.kind === "interior" && scene.parentId
-        ? (scenesRef.current.get(scene.parentId)?.coord ?? null)
+      : parentCell
+        ? { x: Number(parentCell[1]), y: Number(parentCell[2]) }
         : null;
 
   return (

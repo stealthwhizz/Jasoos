@@ -52,27 +52,26 @@ export function Home() {
   const [error, setError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [gameList, profile] = await Promise.all([
+  /** Loads the gallery and quota. State is set only in the promise callbacks, so mount can call it. */
+  const refresh = useCallback(
+    () =>
+      Promise.all([
         request<GameListItem[]>("/api/games"),
         request<ProfileResponse>("/api/profile"),
-      ]);
-      setUserId(profile.userId);
-      posthog.identify(profile.userId);
-      setGames(gameList);
-      setCanCreate(profile.generation.canCreate);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load gallery.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      ])
+        .then(([gameList, profile]) => {
+          setUserId(profile.userId);
+          posthog.identify(profile.userId);
+          setGames(gameList);
+          setCanCreate(profile.generation.canCreate);
+        })
+        .catch((e: unknown) => setError(e instanceof Error ? e.message : "Failed to load gallery."))
+        .finally(() => setLoading(false)),
+    []
+  );
 
   useEffect(() => {
-    refresh();
+    void refresh();
   }, [refresh]);
 
   const mine = userId ? games.filter((g) => g.owner === userId) : [];
@@ -105,6 +104,8 @@ export function Home() {
       }
       posthog.capture("own_world_delete_confirmed", { game_id: deleteTarget });
       setDeleteTarget(null);
+      setLoading(true);
+      setError(null);
       await refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Delete failed.");
