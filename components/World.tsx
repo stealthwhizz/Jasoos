@@ -296,6 +296,9 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
   const [showVision, setShowVision] = useState(false);
   const [screensDreamed, setScreensDreamed] = useState(0);
   const [ambient, setAmbient] = useState<string | null>(null);
+  const [inspection, setInspection] = useState<{ name: string; hint: string } | null>(null);
+  const [searchedRooms, setSearchedRooms] = useState<Set<number>>(() => new Set());
+  const [searchedObject, setSearchedObject] = useState<{ name: string; description: string; evidence: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [voiceOn, setVoiceOn] = useState(true);
   // Music preference persists across sessions; SSR renders no HUD, so the
@@ -921,11 +924,9 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
         return;
       }
 
-      // Minimal inspect: show what a detective notices (a fuller inspect panel is #12).
       if (h.kind === "inspect") {
         playSfx("click");
-        setAmbient(`${h.name}: ${h.hint}`);
-        setTimeout(() => setAmbient(null), 5000);
+        setInspection({ name: h.name, hint: h.hint });
         return;
       }
 
@@ -1311,6 +1312,51 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
         }
         onInteract={onInteract}
       />
+
+      {scene.kind === "interior" && typeof scene.clueIndex === "number" && bible?.rooms[scene.clueIndex]?.object && (
+        <Button
+          type="button"
+          className="pointer-events-auto absolute bottom-5 left-1/2 z-20 -translate-x-1/2"
+          disabled={searchedRooms.has(scene.clueIndex)}
+          onClick={() => {
+            const index = scene.clueIndex!;
+            const object = bible.rooms[index]?.object;
+            if (!object) return;
+            setSearchedRooms((previous) => new Set(previous).add(index));
+            setSearchedObject({
+              name: object.name,
+              description: object.description,
+              evidence: bible.evidenceRoom === index,
+            });
+            playSfx("click");
+          }}
+        >
+          {searchedRooms.has(scene.clueIndex) ? "Room searched" : "Search room"}
+        </Button>
+      )}
+
+      <Dialog open={!!inspection} onOpenChange={(open) => !open && setInspection(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-center font-display text-xl">{inspection?.name}</DialogTitle>
+          </DialogHeader>
+          <p className="text-center text-sm text-muted-foreground">{inspection?.hint}</p>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!searchedObject} onOpenChange={(open) => !open && setSearchedObject(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-center font-display text-xl">{searchedObject?.name}</DialogTitle>
+          </DialogHeader>
+          <p className="text-center text-sm">{searchedObject?.description}</p>
+          {searchedObject?.evidence && (
+            <p role="status" className="rounded-md border border-main/40 bg-main/10 p-3 text-center text-sm">
+              Evidence box discovered. Its contents remain sealed until verified access is available.
+            </p>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <WorldHud
         compact={touchControls}
