@@ -12,3 +12,4 @@ Computer. Each call goes through `lib/zg` and shows its request ID in the ticker
   (`docs/PRD.md`) and a written brief. The team reviewed and owns every line.
 - On 2026-11-06, Codex reviewed the eight project Markdown files and PRD, added the shared lane status and web-chat handoff docs, and updated `components/GameCanvas.tsx` and `app/world/[id]/WorldView.tsx` for walk-mask collision and interior loading/failure states.
 - Codex installed Vercel's `vercel-react-best-practices` skill from `vercel-labs/agent-skills` into `.agents/skills/`, with the installation recorded in `skills-lock.json`. The curated catalog endpoint first returned HTTP 403; the skill was then found and installed through the maintained skills catalog CLI.
+- Codex integrated branch A into Suraj's client branch and wired its browser-safe walk-map and sprite helpers into GameCanvas. Automated checks passed after dependencies were installed; browser review remains pending.

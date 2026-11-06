@@ -2,11 +2,13 @@
 
 import { useEffect, useRef } from "react";
 import type { PublicManifest } from "@/lib/types";
+import { isWalkable } from "@/lib/engine/walkMap";
+import { keySprite } from "@/lib/engine/sprite";
 
 const W = 960;
 const H = 540;
 const SPEED = 0.25; // fraction of the scene per second
-const SPRITE_SCALE = 2;
+const SPRITE_HEIGHT = 96;
 const KEYS: Record<string, [number, number]> = {
   ArrowLeft: [-1, 0],
   ArrowRight: [1, 0],
@@ -46,19 +48,28 @@ export function GameCanvas({
     const sprite = loadImage(url("sprite"));
     const pos = { x: 0.5, y: 0.85, facing: 1 }; // feet position, 0..1
     const held = new Set<string>();
-    const { cols, rows, cells } = manifest.walkMap;
-    const hasWalkMap =
-      Number.isInteger(cols) &&
-      cols > 0 &&
-      Number.isInteger(rows) &&
-      rows > 0 &&
-      cells.length === cols * rows;
-
-    const isWalkable = (x: number, y: number) => {
-      if (!hasWalkMap) return true;
-      const col = Math.min(cols - 1, Math.max(0, Math.floor(x * cols)));
-      const row = Math.min(rows - 1, Math.max(0, Math.floor(y * rows)));
-      return cells[row * cols + col] === true;
+    let spriteSource: CanvasImageSource = sprite;
+    let trim: { x: number; y: number; w: number; h: number } | null = null;
+    sprite.onload = () => {
+      const buffer = document.createElement("canvas");
+      buffer.width = sprite.naturalWidth;
+      buffer.height = sprite.naturalHeight;
+      const context = buffer.getContext("2d");
+      if (!context) return;
+      context.drawImage(sprite, 0, 0);
+      try {
+        const pixels = context.getImageData(0, 0, buffer.width, buffer.height);
+        // Already transparent fixture sprites must retain their authored colors.
+        if (pixels.data[3] !== 0) {
+          trim = keySprite(pixels.data, buffer.width, buffer.height);
+          if (trim) {
+            context.putImageData(pixels, 0, 0);
+            spriteSource = buffer;
+          }
+        }
+      } catch {
+        // Cross-origin images without CORS remain drawable in their original form.
+      }
     };
 
     // The door whose bottom edge is closest to the feet, if within reach.
@@ -107,12 +118,12 @@ export function GameCanvas({
       const nextX = Math.min(1, Math.max(0, pos.x + dx * SPEED * dt));
       const nextY = Math.min(1, Math.max(0, pos.y + dy * SPEED * dt * (W / H)));
       // Test each axis separately so the player can slide along walls and map edges.
-      if (dx && isWalkable(nextX, pos.y)) pos.x = nextX;
-      if (dy && isWalkable(pos.x, nextY)) pos.y = nextY;
+      if (dx && isWalkable(manifest.walkMap, nextX, pos.y)) pos.x = nextX;
+      if (dy && isWalkable(manifest.walkMap, pos.x, nextY)) pos.y = nextY;
       if (dx) pos.facing = dx < 0 ? -1 : 1;
 
       ctx.clearRect(0, 0, W, H);
-      if (street.complete) ctx.drawImage(street, 0, 0, W, H);
+      if (street.complete && street.naturalWidth) ctx.drawImage(street, 0, 0, W, H);
       const door = nearDoor();
       if (door) {
         ctx.strokeStyle = "#0071e3";
@@ -120,12 +131,13 @@ export function GameCanvas({
         ctx.strokeRect(door.x * W, door.y * H, door.w * W, door.h * H);
       }
       if (sprite.complete && sprite.naturalWidth) {
-        const sw = sprite.naturalWidth * SPRITE_SCALE;
-        const sh = sprite.naturalHeight * SPRITE_SCALE;
+        const source = trim ?? { x: 0, y: 0, w: sprite.naturalWidth, h: sprite.naturalHeight };
+        const sh = SPRITE_HEIGHT;
+        const sw = source.w / source.h * sh;
         ctx.save();
         ctx.translate(pos.x * W, pos.y * H);
         ctx.scale(pos.facing, 1);
-        ctx.drawImage(sprite, -sw / 2, -sh, sw, sh);
+        ctx.drawImage(spriteSource, source.x, source.y, source.w, source.h, -sw / 2, -sh, sw, sh);
         ctx.restore();
       }
       frame = requestAnimationFrame(tick);
@@ -134,6 +146,7 @@ export function GameCanvas({
 
     return () => {
       cancelAnimationFrame(frame);
+      sprite.onload = null;
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
       window.removeEventListener("blur", clearHeld);

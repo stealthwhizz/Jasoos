@@ -55,3 +55,12 @@ This file is the shared handoff for the team. The PRD remains the source of trut
 3. Record the file paths and observable evidence, not just “done”. Mark integration work complete only after a working end-to-end path is demonstrated.
 4. For shared type/API changes, document the proposed shape here and get agreement from all affected lane owners before implementation.
 5. Keep credentials, proof payloads, and personal data out of this file and Arkiv entities.
+
+### 2026-11-06 — B / R5–R6 engine integration checkpoint
+
+- Preserved all prior work in 045ada2 and merged origin/A at d558b6e into B only. Earlier A-stub status rows are historical: A's implemented engine is now present.
+- GameCanvas uses A's isWalkable helper; opaque sprites are keyed once with keySprite on an offscreen canvas, trimmed and drawn at consistent height with feet alignment and facing. Transparent fixtures retain their colors. CORS read failures retain the original sprite.
+- Validation: npm ci succeeded; npm test passed 31 tests (3 TODO, including quota); typecheck and lint passed. Production build passed on sequential rerun after the initial concurrent build/test run raced on a temporary asset. git diff --check passed.
+- Browser interactions, screenshots, all interior states and full dialogue/accusation journey remain unverified. R5/R6 are not signed off.
+- PR operations blocked: gh is unauthenticated and connected GitHub search returns 422 repository inaccessible. Intended PR base is A while it is unmerged.
+- Next action: rendered fixture review, sprite null-trim/error fallback review, then R8 accusation/finale. No shared types or A/C implementation files were edited by B.
