@@ -414,7 +414,7 @@ button:disabled {
   overflow: auto;
   line-height: 1.7;
 }
-.dialogue-log > p {
+.dialogue-log > div > p {
   padding: 12px 0;
   border-bottom: 1px solid #d7cdb1;
 }

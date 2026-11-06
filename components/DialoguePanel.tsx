@@ -20,10 +20,20 @@ export function DialoguePanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const logRef = useRef<HTMLDivElement>(null);
+  const logContentRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const log = logRef.current;
-    if (log) log.scrollTop = log.scrollHeight;
-  }, [history]);
+    const content = logContentRef.current;
+    if (!log || !content) return;
+    // Text can reflow after a response (font loading, zoom, or responsive layout).
+    const revealLatest = () => {
+      log.scrollTop = log.scrollHeight;
+    };
+    const observer = new ResizeObserver(revealLatest);
+    observer.observe(content);
+    revealLatest();
+    return () => observer.disconnect();
+  }, []);
 
   async function send(event: React.FormEvent) {
     event.preventDefault();
@@ -90,14 +100,16 @@ export function DialoguePanel({
         aria-relevant="additions text"
         className="dialogue-log space-y-2 text-sm"
       >
-        {history.map((m, i) => (
-          <p key={i} className={m.role === "npc" ? "text-neutral-900" : "text-neutral-500"}>
-            <span className="font-medium">{m.role === "npc" ? npc.name : "You"}:</span> {m.text}
-            {m.requestId && (
-              <span className="ml-2 font-mono text-xs text-neutral-400">{m.requestId}</span>
-            )}
-          </p>
-        ))}
+        <div ref={logContentRef} className="space-y-2">
+          {history.map((m, i) => (
+            <p key={i} className={m.role === "npc" ? "text-neutral-900" : "text-neutral-500"}>
+              <span className="font-medium">{m.role === "npc" ? npc.name : "You"}:</span> {m.text}
+              {m.requestId && (
+                <span className="ml-2 font-mono text-xs text-neutral-400">{m.requestId}</span>
+              )}
+            </p>
+          ))}
+        </div>
       </div>
       {error && (
         <p role="alert" className="text-sm text-red-600">

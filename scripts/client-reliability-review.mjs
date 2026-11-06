@@ -155,7 +155,7 @@ try {
             viewport.width,
           );
           await page.waitForFunction(() => document.activeElement?.tagName === "CANVAS");
-        await page.locator("canvas").focus();
+          await page.locator("canvas").focus();
           await page.keyboard.press("e");
           await page.getByRole("heading", { name: "Dabba Depot", exact: true }).waitFor();
           check(
@@ -215,7 +215,7 @@ try {
             });
           await page.goto("/world/fixture-monsoon-tiffin");
           await page.waitForFunction(() => document.activeElement?.tagName === "CANVAS");
-        await page.locator("canvas").focus();
+          await page.locator("canvas").focus();
           await page.keyboard.press("e");
           const message =
             state === "download"
@@ -263,6 +263,54 @@ try {
           await context.close();
         }
       }
+  if (suites.includes("dialogue"))
+    for (const viewport of viewports) {
+      const { page, context, diagnostics } = await pageFor(
+        viewport,
+        `dialogue-resize-${viewport.width}`,
+      );
+      try {
+        await page.goto("/world/fixture-monsoon-tiffin");
+        await page.waitForFunction(() => document.activeElement?.tagName === "CANVAS");
+        await page.keyboard.press("e");
+        const input = page.getByRole("textbox", { name: /^Say something/ });
+        for (const message of ["What happened tonight?", "What did you notice?"]) {
+          await input.fill(message);
+          const response = page.waitForResponse((response) =>
+            response.url().endsWith("/api/dialogue"),
+          );
+          await page.getByRole("button", { name: "Ask", exact: true }).click();
+          await response;
+          await page.waitForFunction(
+            () => document.querySelector('input[id^="say-"]')?.value === "",
+          );
+        }
+        await page.getByRole("log").evaluate((log) => {
+          log.style.fontSize = `${parseFloat(getComputedStyle(log).fontSize) * 2}px`;
+        });
+        await page.waitForFunction(() => {
+          const log = document.querySelector('[role="log"]');
+          return log && Math.abs(log.scrollHeight - log.clientHeight - log.scrollTop) < 2;
+        });
+        check(
+          "latest reply remains visible after text is enlarged",
+          (await page.getByRole("log").locator("p").count()) === 4,
+          null,
+          viewport.width,
+        );
+        check(
+          "dialogue resize has no uncaught errors",
+          diagnostics.pageErrors.length === 0,
+          diagnostics.pageErrors,
+          viewport.width,
+        );
+        await capture(page, "dialogue-large-text", viewport.width);
+      } catch (error) {
+        check("dialogue resize completed", false, error.message, viewport.width);
+      } finally {
+        await context.close();
+      }
+    }
 } finally {
   await browser.close();
   report.summary = report.checks.reduce((summary, check) => (summary[check.status]++, summary), {
