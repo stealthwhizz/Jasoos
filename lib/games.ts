@@ -3,7 +3,7 @@
  * records (see `lib/arkiv.ts`), row mapping, and quota enforcement.
  */
 
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { del, list, put } from "@vercel/blob";
 import { generateScreen } from "@/lib/world-engine";
@@ -306,7 +306,10 @@ export async function listVisibleGames(userId: string, ownerOnly = false): Promi
   const store = gameStore();
   const [games, votes] = await Promise.all([store.listGames(ownerOnly ? userId : undefined), store.listVotes()]);
   const tallies = tallyVotes(votes, userId);
-  return games.filter((game) => canViewGame(game, userId)).map((game) => toGameListItem(game, tallies.get(game.id)));
+  const visible = games.filter((game) => canViewGame(game, userId));
+  // Hide worlds whose first screen is not stored here: opening one could only bounce the player back.
+  const playable = await Promise.all(visible.map((game) => assetAvailable(game.thumbnail_url)));
+  return visible.filter((_, i) => playable[i]).map((game) => toGameListItem(game, tallies.get(game.id)));
 }
 
 /**
@@ -341,6 +344,24 @@ export async function deleteGameAssets(ownerId: string, gameId: string): Promise
   }
   const dir = assetFilePath(`${ownerId}/${gameId}`);
   if (dir) await rm(dir, { recursive: true, force: true });
+}
+
+/**
+ * Whether a saved image can be served by this deployment. Arkiv shares world records with every
+ * server, but images saved before Blob storage sit on the disk of the machine that made them, so
+ * on any other server their `/api/assets/...` URL is a 404. Blob and other remote URLs count as
+ * available; null (world not built yet) is left to the owner's boot flow.
+ */
+export async function assetAvailable(url: string | null): Promise<boolean> {
+  if (!url || !url.startsWith(ASSET_URL_PREFIX)) return true;
+  const file = assetFilePath(decodeURIComponent(url.slice(ASSET_URL_PREFIX.length)));
+  if (!file) return false;
+  try {
+    await access(file);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**

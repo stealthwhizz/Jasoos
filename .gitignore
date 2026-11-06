@@ -13,3 +13,5 @@ progress.md
 
 # agent board read state (tools/board)
 /.board/
+.vercel
+.env*

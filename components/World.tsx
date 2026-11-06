@@ -728,7 +728,9 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
 
         const origin = scenesRef.current.get(ORIGIN_ID);
         if (origin) {
-          await ensureSceneReady(origin);
+          await ensureSceneReady(origin).catch(() => {
+            throw new Error("This world's pictures couldn't be loaded, so it can't be played right now.");
+          });
           showScene(origin);
           setSecondsLeft(SESSION_TIME_LIMIT_SEC);
           lowTimeWarnedRef.current = false;
@@ -745,7 +747,8 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
         throw new Error("This world has not been built yet.");
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load world.");
-        router.push("/");
+        // Leave time to read why before returning to the gallery.
+        setTimeout(() => router.push("/"), 3500);
       }
     },
     [bootWorld, ensureSceneReady, hydrateLoadedGame, resetRunState, router, showScene, startSprite]
