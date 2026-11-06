@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { parseAccusationResult } from "./accusationResult";
 import { WorldIdButton } from "./WorldIdButton";
 import type { PublicManifest } from "@/lib/types";
 
@@ -46,14 +47,13 @@ export function AccusationPanel({
         return;
       }
       if (!res.ok) throw new Error("The accusation could not be confirmed. Please try again.");
-      const body = await res.json();
-      if (typeof body.correct !== "boolean") throw new Error("Invalid response");
+      const body = parseAccusationResult(await res.json());
       setLocked(true);
       setNeedsVerification(false);
-      if (body.correct === true && typeof body.secret === "string") {
+      if (body.correct) {
         setOutcome({
           secret: body.secret,
-          finaleUrl: typeof body.finaleUrl === "string" ? body.finaleUrl : undefined,
+          finaleUrl: body.finaleUrl,
         });
         setMessage("Case solved.");
       } else {

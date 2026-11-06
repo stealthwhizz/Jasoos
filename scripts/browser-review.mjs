@@ -632,6 +632,25 @@ for (const viewport of viewports) {
       width,
     );
     await capture(page, "accusation", width);
+    for (const malformed of [{ correct: true }, { correct: "true" }]) {
+      await page.route("**/api/worlds/*/accuse", (route) => route.fulfill({ json: malformed }), {
+        times: 1,
+      });
+      await page.getByRole("button", { name: "Submit accusation" }).click();
+      await page
+        .getByText(
+          "The result could not be confirmed. Retrying will still respect the server's one-accusation limit.",
+          { exact: true },
+        )
+        .waitFor();
+      check(
+        "malformed accusation result is uncertain rather than a wrong guess",
+        (await picker.isEnabled()) &&
+          (await page.getByRole("heading", { name: "The truth behind the case" }).count()) === 0,
+        null,
+        width,
+      );
+    }
     const accusation = page.waitForResponse((response) => response.url().endsWith("/accuse"));
     await page.getByRole("button", { name: "Submit accusation" }).click();
     const result = await (await accusation).json();
