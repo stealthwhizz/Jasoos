@@ -12,9 +12,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "format": "prettier --write .",
-    "smoke:0g": "tsx --env-file-if-exists=.env.local scripts/smoke-0g.ts",
-    "smoke:arkiv": "tsx --env-file-if-exists=.env.local scripts/smoke-arkiv.ts",
-    "smoke:worldid": "tsx --env-file-if-exists=.env.local scripts/smoke-worldid.ts"
+    "smoke:0g": "tsx scripts/smoke-0g.ts",
+    "smoke:arkiv": "tsx scripts/smoke-arkiv.ts",
+    "smoke:worldid": "tsx scripts/smoke-worldid.ts"
   },
   "dependencies": {
     "@arkiv-network/sdk": "^1.0.1",
