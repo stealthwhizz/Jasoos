@@ -24,6 +24,16 @@ const CHAT_MODEL = process.env.ZG_CHAT_MODEL || "0gm-1.0-35b-a3b";
 const VISION_MODEL = process.env.ZG_VISION_MODEL || "qwen3-vl-plus";
 const IMAGE_MODEL = process.env.ZG_IMAGE_MODEL || "bytedance/seedream-5.0-flash";
 
+/**
+ * 0G's 0gm models think before answering: a tiny JSON reply spent ~800 hidden reasoning tokens
+ * and ~22 s, and the full game bible took 2.7 min. Turning thinking off gave 0 reasoning tokens
+ * and ~4 s with valid JSON (bible: 51 s). Set ZG_CHAT_THINKING=on to bring it back.
+ */
+const chatThinkingOff = (model: string) =>
+  model.startsWith("0gm-") && process.env.ZG_CHAT_THINKING !== "on"
+    ? { chat_template_kwargs: { enable_thinking: false } }
+    : {};
+
 // Each route request gets its own list, so concurrent requests never mix their IDs.
 const requestLog = new AsyncLocalStorage<ZgRequest[]>();
 
@@ -150,6 +160,7 @@ export async function generateContentWithRetry(
         temperature: config.temperature,
         // The vision model may reject json_object; it still gets the schema in the prompt.
         ...(json && !hasImage && { response_format: { type: "json_object" as const } }),
+        ...(!hasImage && chatThinkingOff(CHAT_MODEL)),
       }),
     DEFAULT_RETRY_OPTS
   );

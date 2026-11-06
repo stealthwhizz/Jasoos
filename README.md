@@ -84,7 +84,11 @@ Sponsors are ordered by how much of the game stops working without them.
 - Entities, each tagged `project` + `entityType`:
   - `game`: one per world. Indexed `owner` (hash of the World ID nullifier)
     and `createdAt`; the record is gzipped JSON. Expires after 90 days.
-  - `scene`: one per saved screen. Indexed `gameId`, `sceneId` and `createdAt`.
+  - `scene`: saved interiors (and legacy street tiles), indexed by `gameId`, `sceneId`, `createdAt`.
+  - `screen`: street tiles, also indexed by `worldKey`, `x`, `y`; gzipped metadata and asset URLs.
+  - `unlock`: evidence opens, indexed by `worldKey`, `humanHash`.
+  - `accusation`: one guess per human/game, including guessed index and correctness (public).
+  All new entities use a 90-day lifetime.
 - **Reads that players see:** the home gallery (`GET /api/games`), replaying a
   world (`/play/[gameId]`), and the per-player creation limit
   (`GET /api/profile`).
@@ -124,6 +128,8 @@ Sponsors are ordered by how much of the game stops working without them.
 
 ### 3 · World ID (gate)
 
+Integration notes: [World ID debrief](docs/world-id-debrief.md).
+
 - **The trust moment:** creating a world spends shared 0G compute.
   `FREE_GAME_LIMIT` caps how many worlds each person may create, so the app
   needs to know that it is dealing with one unique human, and nothing else.
@@ -131,7 +137,7 @@ Sponsors are ordered by how much of the game stops working without them.
   "is this one unique person?". The game needs nothing about age or nationality.
 - **Server check:** the IDKit result is checked locally (action, environment,
   one nullifier), then forwarded to the World Developer Portal
-  (`/api/v4/verify`). Only a salted SHA-256 of the nullifier is kept, as the
+  (`/api/v4/verify`). Only a namespaced SHA-256 of the nullifier is kept, as the
   player id, in an HMAC-signed cookie.
 - **The other path:** without a valid session, every page redirects to
   `/login`, and every generation API returns `401`.
@@ -157,6 +163,7 @@ type anything to any character · **Esc** leave.
 | `ZG_COMPUTE_API_KEY` | **every** text, vision and image call (0G router key `sk-...`, from [pc.0g.ai](https://pc.0g.ai)) | creating or playing a new world fails |
 | `FREE_GAME_LIMIT` | worlds each player may create (`.env.example` sets `3`) | `0`: creation is off, gallery only |
 | `ZG_COMPUTE_BASE_URL` | 0G router | `https://router-api.0g.ai/v1` |
+| `ZG_CHAT_THINKING` | `on` restores reasoning on 0gm text calls | `off` (lower latency) |
 | `ZG_CHAT_MODEL` · `ZG_VISION_MODEL` · `ZG_IMAGE_MODEL` | model ids | `0gm-1.0-35b-a3b` · `qwen3-vl-plus` · `bytedance/seedream-5.0-flash` |
 | `WORLD_APP_ID` · `WORLD_RP_ID` · `WORLD_RP_SIGNING_KEY` | real World ID sign-in | dev builds sign in one local test player |
 | `WORLD_ACTION_ID` · `WORLD_ENVIRONMENT` | World ID action and proof environment | `sign-in` · `staging` (simulator proofs) |
@@ -262,14 +269,12 @@ npm run build
 
 - **Players can't spend their own 0G credits.** The iAI sign-in bonus was cut;
   every call uses the server's `ZG_COMPUTE_API_KEY`.
-- **An accusation can be retried by calling the API directly.** The Accuse
-  button only allows one try, but `/api/finale` doesn't record accusations yet
-  (#27).
-- **`arkiv/*.md` describe the earlier schema** (`world`, `creation`, `visit`,
-  `accusation`), not the live `game` and `scene` entities.
 - **No `game` entities on rabdi yet.** The query above returns `[]` until a
   world is saved with `ARKIV_SIGNER_KEY` set.
-- **No World ID debrief yet**, although the IDKit track requires one.
+- **The World ID evidence proof hasn't run against the real simulator yet.**
+  Per-case actions (`evidence-<gameId>`) are implemented and tested with mocks;
+  [`docs/world-id-debrief.md`](docs/world-id-debrief.md) lists what is still
+  unconfirmed (#19).
 - **Dialogue trusts the client for everything except the answer.**
   `/api/dialogue` takes the world plan, `clueFound`, `exchanges`, `heat` and
   `inventory` from the request body. The clue and close rules run on the

@@ -9,12 +9,12 @@ import { randomUUID } from "node:crypto";
 import { gunzipSync, gzipSync } from "node:zlib";
 import { createPublicClient, createWalletClient, ExpirationTime } from "@arkiv-network/sdk";
 import { rabdi } from "@arkiv-network/sdk/chains";
-import { and, asc, desc, eq } from "@arkiv-network/sdk/query";
-import { bytes, defineSchema, str, u64 } from "@arkiv-network/sdk/schema";
+import { and, asc, desc, eq, or } from "@arkiv-network/sdk/query";
+import { bool, bytes, defineSchema, i32, str, u64 } from "@arkiv-network/sdk/schema";
 import { hexToBytes, http, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { withRetry, DEFAULT_RETRY_OPTS } from "@/lib/retry";
-import type { GameRecord, GameSceneRow } from "@/lib/types/server";
+import type { Accusation, GameRecord, GameSceneRow } from "@/lib/types/server";
 
 /** Fields set when a game is created; the rest are filled in by the store. */
 export type NewGame = Pick<GameRecord, "owner" | "title" | "idea" | "bible" | "premise">;
@@ -27,6 +27,14 @@ export type NewScene = Omit<GameSceneRow, "id" | "game_id">;
 
 /** What routes need from persistence. */
 export interface GameStore {
+  /** Atomically checks and records an accusation within this server's signer queue. */
+  recordAccusation(accusation: Accusation): Promise<boolean>;
+  /** Returning unlockers need no second World ID proof. */
+  hasUnlock(worldKey: string, humanHash: string): Promise<boolean>;
+  /** Idempotently persists an evidence unlock before returning its key. */
+  unlockEvidence(worldKey: string, humanHash: string): Promise<void>;
+  /** Live evidence opens for this world. */
+  countUnlocks(worldKey: string): Promise<number>;
   readonly name: "arkiv" | "memory";
   /** Newest first; all players' games when `owner` is omitted. */
   listGames(owner?: string): Promise<GameRecord[]>;
@@ -42,7 +50,28 @@ export interface GameStore {
   upsertScene(gameId: string, scene: NewScene): Promise<{ row: GameSceneRow; created: boolean }>;
 }
 
-const LIST_LIMIT = 200;
+/** The most rows an Arkiv node returns in one page. Asking for more fails the whole query. */
+const PAGE_SIZE = 100;
+
+/** A query that can be paged. Arkiv's select builders fit this shape. */
+interface Pageable {
+  limit(n: number): this;
+  offset(n: number): this;
+  fetch(): Promise<{ entities: readonly unknown[] }>;
+}
+type RowOf<Q extends Pageable> = Awaited<ReturnType<Q["fetch"]>>["entities"][number];
+
+/** Reads up to `max` rows, one page of at most PAGE_SIZE at a time. Sort the query first. */
+async function fetchUpTo<Q extends Pageable>(query: Q, max = Number.POSITIVE_INFINITY): Promise<RowOf<Q>[]> {
+  const rows: RowOf<Q>[] = [];
+  while (rows.length < max) {
+    const size = Math.min(PAGE_SIZE, max - rows.length);
+    const page = await withRetry(() => query.limit(size).offset(rows.length).fetch(), DEFAULT_RETRY_OPTS);
+    rows.push(...page.entities as RowOf<Q>[]);
+    if (page.entities.length < size) break;
+  }
+  return rows;
+}
 // shortcut: Arkiv entities expire; 90 days covers the event and judging. Extend on play
 //   (extendEntity) if games must live longer.
 const GAME_DAYS = 90;
@@ -72,6 +101,16 @@ const SceneEntity = defineSchema({
   record: bytes(),
 });
 
+const ScreenEntity = defineSchema({
+  ...base, gameId: str().indexed(), sceneId: str().indexed(), createdAt: u64().indexed(),
+  worldKey: str().indexed(), x: i32().indexed(), y: i32().indexed(), data: bytes(), record: bytes(),
+});
+
+const UnlockEntity = defineSchema({ ...base, worldKey: str().indexed(), humanHash: str().indexed() });
+const AccusationEntity = defineSchema({
+  ...base, gameId: str().indexed(), humanHash: str().indexed(), accused: u64(), correct: bool(),
+});
+
 const pack = (value: unknown) => gzipSync(JSON.stringify(value));
 const unpack = <T>(hex: Hex): T => JSON.parse(gunzipSync(hexToBytes(hex)).toString("utf8")) as T;
 const isEntityKey = (k: string) => /^0x[0-9a-fA-F]{64}$/.test(k);
@@ -96,6 +135,12 @@ function createArkivStore(signerKey: string): GameStore {
   };
   const write = <T>(fn: () => Promise<T>) => serial(() => withRetry(fn, DEFAULT_RETRY_OPTS));
 
+  let sceneQueue: Promise<unknown> = Promise.resolve();
+  const serialScene = <T>(fn: () => Promise<T>): Promise<T> => {
+    const run = sceneQueue.then(fn, fn);
+    sceneQueue = run.catch(() => undefined);
+    return run;
+  };
   const scope = (entityType: string) => and(eq("project", project), eq("entityType", entityType));
   const toGame = (key: string, hex: Hex): GameRecord => ({ ...unpack<Omit<GameRecord, "id">>(hex), id: key });
 
@@ -103,7 +148,7 @@ function createArkivStore(signerKey: string): GameStore {
     const page = await reader
       .select({ $key: true })
       .from(SceneEntity)
-      .where(and(scope("scene"), eq("gameId", gameId), eq("sceneId", sceneId)))
+      .where(and(or(scope("scene"), scope("screen")), eq("gameId", gameId), eq("sceneId", sceneId)))
       .limit(1)
       .fetch();
     return page.entities[0]?.$key as Hex | undefined;
@@ -111,16 +156,45 @@ function createArkivStore(signerKey: string): GameStore {
 
   return {
     name: "arkiv",
+    async recordAccusation(accusation) {
+      // Keep check + write in the same queue: concurrent requests cannot both win the check.
+      return serial(async () => {
+        const count = await withRetry(() => reader.count().from(AccusationEntity).where(and(
+          scope("accusation"), eq("gameId", accusation.gameId), eq("humanHash", accusation.humanHash)
+        )).fetch(), DEFAULT_RETRY_OPTS);
+        if (count > BigInt(0)) return false;
+        await withRetry(() => writer.createEntity(AccusationEntity, {
+          project, entityType: "accusation", ...accusation, accused: u64(accusation.accused),
+        }, { expiration: ExpirationTime.fromDays(GAME_DAYS) }), DEFAULT_RETRY_OPTS);
+        return true;
+      });
+    },
+    async hasUnlock(worldKey, humanHash) {
+      return (await withRetry(() => reader.count().from(UnlockEntity).where(and(
+        scope("unlock"), eq("worldKey", worldKey), eq("humanHash", humanHash)
+      )).fetch(), DEFAULT_RETRY_OPTS)) > BigInt(0);
+    },
+    async unlockEvidence(worldKey, humanHash) {
+      await serial(async () => {
+        if (await this.hasUnlock(worldKey, humanHash)) return;
+        await withRetry(() => writer.createEntity(UnlockEntity, {
+          project, entityType: "unlock", worldKey, humanHash,
+        }, { expiration: ExpirationTime.fromDays(GAME_DAYS) }), DEFAULT_RETRY_OPTS);
+      });
+    },
+    async countUnlocks(worldKey) {
+      return Number(await withRetry(() => reader.count().from(UnlockEntity).where(and(scope("unlock"), eq("worldKey", worldKey))).fetch(), DEFAULT_RETRY_OPTS));
+    },
 
     async listGames(owner) {
-      const page = await reader
-        .select({ $key: true, record: true })
-        .from(GameEntity)
-        .where(owner ? and(scope("game"), eq("owner", owner)) : scope("game"))
-        .orderBy(desc("createdAt"))
-        .limit(LIST_LIMIT)
-        .fetch();
-      return page.entities.map((row) => toGame(row.$key, row.record.value));
+      const rows = await fetchUpTo(
+        reader
+          .select({ $key: true, record: true })
+          .from(GameEntity)
+          .where(owner ? and(scope("game"), eq("owner", owner)) : scope("game"))
+          .orderBy(desc("createdAt"))
+      );
+      return rows.map((row) => toGame(row.$key, row.record.value));
     },
 
     async countGames(owner) {
@@ -177,27 +251,29 @@ function createArkivStore(signerKey: string): GameStore {
     },
 
     async deleteGame(id) {
-      const scenes = await reader
-        .select({ $key: true })
-        .from(SceneEntity)
-        .where(and(scope("scene"), eq("gameId", id)))
-        .limit(LIST_LIMIT)
-        .fetch();
-      for (const s of scenes.entities) {
+      // Collect every scene key first, then delete, so deletes cannot shift the pages.
+      const scenes = await fetchUpTo(
+        reader
+          .select({ $key: true })
+          .from(SceneEntity)
+          .where(and(or(scope("scene"), scope("screen")), eq("gameId", id)))
+          .orderBy(asc("$key"))
+      );
+      for (const s of scenes) {
         await write(() => writer.deleteEntity({ entityKey: s.$key as Hex }));
       }
       if (isEntityKey(id)) await write(() => writer.deleteEntity({ entityKey: id as Hex }));
     },
 
     async listScenes(gameId) {
-      const page = await reader
-        .select({ $key: true, record: true })
-        .from(SceneEntity)
-        .where(and(scope("scene"), eq("gameId", gameId)))
-        .orderBy(asc("createdAt"))
-        .limit(LIST_LIMIT)
-        .fetch();
-      return page.entities.map((row) => ({
+      const rows = await fetchUpTo(
+        reader
+          .select({ $key: true, record: true })
+          .from(SceneEntity)
+          .where(and(or(scope("scene"), scope("screen")), eq("gameId", gameId)))
+          .orderBy(asc("createdAt"))
+      );
+      return rows.map((row) => ({
         ...unpack<NewScene>(row.record.value),
         id: row.$key,
         game_id: gameId,
@@ -205,28 +281,29 @@ function createArkivStore(signerKey: string): GameStore {
     },
 
     async upsertScene(gameId, scene) {
-      const existing = await findScene(gameId, scene.scene_id);
-      if (existing) {
-        await write(() =>
-          writer.patchEntity(SceneEntity, existing, { set: { record: pack(scene) } })
+      return serialScene(async () => {
+        const current = await this.listScenes(gameId);
+        assertScreenCapacity(current, scene);
+        const existing = await findScene(gameId, scene.scene_id);
+        if (existing) {
+          await write(() =>
+            scene.kind === "street"
+              ? writer.patchEntity(ScreenEntity, existing, { set: { record: pack(scene), data: pack(scene.data) } })
+              : writer.patchEntity(SceneEntity, existing, { set: { record: pack(scene) } })
+          );
+          return { row: { ...scene, id: existing, game_id: gameId }, created: false };
+        }
+        const common = { project, gameId, sceneId: scene.scene_id, createdAt: u64(Date.now()), record: pack(scene) };
+        const { entityKey } = await write(() => scene.kind === "street"
+          ? writer.createEntity(ScreenEntity, {
+            ...common, entityType: "screen", worldKey: gameId,
+            x: i32(scene.x ?? 0), y: i32(scene.y ?? 0), data: pack(scene.data),
+          }, { expiration: ExpirationTime.fromDays(GAME_DAYS) })
+          : writer.createEntity(SceneEntity, { ...common, entityType: "scene" },
+            { expiration: ExpirationTime.fromDays(GAME_DAYS) })
         );
-        return { row: { ...scene, id: existing, game_id: gameId }, created: false };
-      }
-      const { entityKey } = await write(() =>
-        writer.createEntity(
-          SceneEntity,
-          {
-            project,
-            entityType: "scene",
-            gameId,
-            sceneId: scene.scene_id,
-            createdAt: u64(Date.now()),
-            record: pack(scene),
-          },
-          { expiration: ExpirationTime.fromDays(GAME_DAYS) }
-        )
-      );
-      return { row: { ...scene, id: entityKey, game_id: gameId }, created: true };
+        return { row: { ...scene, id: entityKey, game_id: gameId }, created: true };
+      });
     },
   };
 }
@@ -238,8 +315,23 @@ function createArkivStore(signerKey: string): GameStore {
 function createMemoryStore(): GameStore {
   const games = new Map<string, GameRecord>();
   const scenes = new Map<string, GameSceneRow[]>();
+  const accusations = new Map<string, Accusation>();
+  const unlocks = new Map<string, Set<string>>();
   return {
     name: "memory",
+    async recordAccusation(accusation) {
+      const key = `${accusation.gameId}:${accusation.humanHash}`;
+      if (accusations.has(key)) return false;
+      accusations.set(key, accusation);
+      return true;
+    },
+    async hasUnlock(worldKey, humanHash) { return unlocks.get(worldKey)?.has(humanHash) ?? false; },
+    async unlockEvidence(worldKey, humanHash) {
+      const humans = unlocks.get(worldKey) ?? new Set<string>();
+      humans.add(humanHash);
+      unlocks.set(worldKey, humans);
+    },
+    async countUnlocks(worldKey) { return unlocks.get(worldKey)?.size ?? 0; },
     async listGames(owner) {
       return [...games.values()]
         .filter((g) => !owner || g.owner === owner)
@@ -278,6 +370,7 @@ function createMemoryStore(): GameStore {
     },
     async upsertScene(gameId, scene) {
       const list = scenes.get(gameId) ?? [];
+      assertScreenCapacity(list, scene);
       const i = list.findIndex((s) => s.scene_id === scene.scene_id);
       const row: GameSceneRow = { ...scene, id: list[i]?.id ?? randomUUID(), game_id: gameId };
       if (i >= 0) list[i] = row;
@@ -286,6 +379,17 @@ function createMemoryStore(): GameStore {
       return { row, created: i < 0 };
     },
   };
+}
+
+/** Reject extra screens at persistence too, so direct save requests cannot bypass the cap. */
+function assertScreenCapacity(scenes: GameSceneRow[], scene: NewScene): void {
+  if (scene.kind !== "street") return;
+  if (!Number.isInteger(scene.x) || !Number.isInteger(scene.y) || Math.abs(scene.x!) > 1 || Math.abs(scene.y!) > 1 || scene.scene_id !== `s${scene.x}_${scene.y}`) {
+    throw Object.assign(new Error("Screen must be within the 3x3 grid with a matching id."), { status: 422 });
+  }
+  if (!scenes.some((s) => s.scene_id === scene.scene_id) && scenes.filter((s) => s.kind === "street").length >= 9) {
+    throw Object.assign(new Error("This world has reached its eight additional screen limit."), { status: 422 });
+  }
 }
 
 const globalStore = globalThis as unknown as { __ETHJasoosGameStore?: GameStore };

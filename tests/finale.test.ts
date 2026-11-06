@@ -48,6 +48,7 @@ const finale = async (body: object) => {
 };
 
 beforeEach(() => {
+  vi.restoreAllMocks();
   vi.mocked(generateFinale).mockClear();
   player.id = "owner";
 });
@@ -115,5 +116,30 @@ describe("POST /api/finale", () => {
     expect((await finale({ accused: 1 })).status).toBe(422);
     expect((await finale({ gameId: "0x" + "0".repeat(64), accused: 1 })).status).toBe(404);
     expect((await finale({ gameId: game.id, accused: 3 })).status).toBe(422);
+  });
+});
+
+
+describe("durable accusation gate", () => {
+  it("records the first guess and refuses a second guess even if it is correct", async () => {
+    const game = await newGame(1);
+    const record = vi.spyOn(gameStore(), "recordAccusation");
+    expect((await finale({ gameId: game.id, accused: 0 })).status).toBe(200);
+    expect(record).toHaveBeenCalledWith({ gameId: game.id, humanHash: "owner", accused: 0, correct: false });
+    expect((await finale({ gameId: game.id, accused: 1 })).status).toBe(409);
+    expect(generateFinale).toHaveBeenCalledTimes(1);
+  });
+  it("does not reveal or generate an ending if the accusation cannot be written", async () => {
+    const game = await newGame(1);
+    vi.spyOn(gameStore(), "recordAccusation").mockRejectedValue(new Error("Arkiv unavailable"));
+    const response = await finale({ gameId: game.id, accused: 1 });
+    expect(response.status).toBe(503);
+    expect(response.json).not.toHaveProperty("finale");
+    expect(generateFinale).not.toHaveBeenCalled();
+  });
+  it("accepts only one of two simultaneous guesses", async () => {
+    const game = await newGame(1);
+    const results = await Promise.all([0, 1].map((accused) => finale({ gameId: game.id, accused })));
+    expect(results.map((r) => r.status).sort()).toEqual([200, 409]);
   });
 });

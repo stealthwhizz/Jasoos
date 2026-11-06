@@ -6,6 +6,7 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { signRequest } from "@worldcoin/idkit/signing";
+import { withRetry, DEFAULT_RETRY_OPTS } from "@/lib/retry";
 import type { SessionUser } from "@/lib/types/server";
 
 const VERIFY_URL = "https://developer.world.org/api/v4/verify";
@@ -30,11 +31,11 @@ export const worldIdConfigured = Boolean(config.appId && config.rpId && config.r
 export const devSignInAllowed = !worldIdConfigured && process.env.NODE_ENV !== "production";
 
 /** What the browser needs to open the IDKit widget. Signing happens here; the key never leaves. */
-export function createRpContext() {
-  const sig = signRequest({ action: config.action, signingKeyHex: config.rpSigningKey });
+export function createRpContext(action = config.action) {
+  const sig = signRequest({ action, signingKeyHex: config.rpSigningKey });
   return {
     app_id: config.appId as `app_${string}`,
-    action: config.action,
+    action,
     environment: config.environment,
     rp_context: {
       rp_id: config.rpId,
@@ -55,10 +56,11 @@ function isRecord(v: unknown): v is Record<string, unknown> {
  * then forwards the result unchanged to the World Developer Portal.
  */
 export async function verifyProof(
-  proof: unknown
+  proof: unknown,
+  action = config.action
 ): Promise<{ ok: true; nullifier: string } | { ok: false; reason: string }> {
   if (!isRecord(proof)) return { ok: false, reason: "Proof is not an object." };
-  if (proof.action !== config.action) return { ok: false, reason: "Proof is for another action." };
+  if (proof.action !== action) return { ok: false, reason: "Proof is for another action." };
   // The simulator issues "staging" proofs. Production must never accept them.
   if (proof.environment !== config.environment) {
     return { ok: false, reason: `Proof environment is not ${config.environment}.` };
@@ -76,12 +78,18 @@ export async function verifyProof(
 
   let res: Response;
   try {
-    res = await fetch(`${VERIFY_URL}/${encodeURIComponent(config.rpId)}`, {
+    res = await withRetry(async () => {
+      const response = await fetch(`${VERIFY_URL}/${encodeURIComponent(config.rpId)}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(proof),
       signal: AbortSignal.timeout(15_000),
-    });
+      });
+      if (response.status === 429 || response.status >= 500) {
+        throw Object.assign(new Error("World ID temporarily unavailable."), { status: response.status });
+      }
+      return response;
+    }, DEFAULT_RETRY_OPTS);
   } catch {
     return { ok: false, reason: "Could not reach World ID. Try again." };
   }

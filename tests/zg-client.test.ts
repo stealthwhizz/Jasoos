@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { generateContentWithRetry, withRequestIds } from "@/lib/zg-client";
 
+const requests = vi.hoisted(() => [] as Array<Record<string, unknown>>);
+
 vi.hoisted(() => {
   process.env.ZG_COMPUTE_API_KEY = "sk-test";
 });
@@ -11,6 +13,7 @@ vi.mock("openai", () => ({
     chat = {
       completions: {
         create: async (req: { messages: Array<{ content: string }> }) => {
+          requests.push(req);
           await Promise.resolve(); // yield, so the two overlapping runs interleave
           const prompt = req.messages.at(-1)!.content;
           return { choices: [{ message: { content: "ok" } }], x_0g_trace: { request_id: `id-${prompt}` } };
@@ -37,4 +40,22 @@ describe("withRequestIds", () => {
     await generateContentWithRetry({ contents: "loose" });
     expect(a.requestIds).toHaveLength(2);
   });
+});
+
+
+it("disables thinking on 0gm text calls by default and supports opting back in", async () => {
+  const previous = process.env.ZG_CHAT_THINKING;
+  try {
+    delete process.env.ZG_CHAT_THINKING;
+    await generateContentWithRetry({ contents: "fast" });
+    expect(requests.at(-1)).toMatchObject({ chat_template_kwargs: { enable_thinking: false } });
+    process.env.ZG_CHAT_THINKING = "on";
+    await generateContentWithRetry({ contents: "reason" });
+    expect(requests.at(-1)).not.toHaveProperty("chat_template_kwargs");
+    await generateContentWithRetry({ contents: [{ inlineData: { mimeType: "image/png", data: "aA==" } }] });
+    expect(requests.at(-1)).not.toHaveProperty("chat_template_kwargs");
+  } finally {
+    if (previous === undefined) delete process.env.ZG_CHAT_THINKING;
+    else process.env.ZG_CHAT_THINKING = previous;
+  }
 });

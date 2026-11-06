@@ -39,7 +39,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "World ID is not configured on this server." }, { status: 503 });
   }
   const result = await verifyProof(body);
-  if (!result.ok) return NextResponse.json({ error: result.reason }, { status: 401 });
+  if (!result.ok) {
+    // Log why, so a "declined" sign-in can be diagnosed from the server log.
+    console.warn("[/api/session] World ID proof refused:", result.reason);
+    return NextResponse.json({ error: result.reason }, { status: 401 });
+  }
   await startSession(hashHuman(result.nullifier));
   return NextResponse.json({ verified: true });
 }

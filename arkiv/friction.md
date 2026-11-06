@@ -3,6 +3,16 @@
 Honest notes from building ETHJasoos on rabdi with `@arkiv-network/sdk` 1.0.1, Node 20.19.
 Dated entries, newest decisions marked with what we did about each.
 
+## Current implementation note
+
+The dated observations below include the removed prototype. The current stack uses
+`game`, `scene`, `screen`, `unlock`, and `accusation`, all with a 90-day lifetime;
+no visit batching, daily creation quota, or extend-on-play code remains.
+See [schema.md](schema.md) for the current contract.
+
+- **2026-11-06:** Asking for `.limit(200)` fails with node maximum 100. The store now
+  reads all pages in batches of 100, including before deleting saved scenes.
+
 ## Setup
 
 - **2026-11-06. The faucet cannot fund a server wallet.** The faucet only pays the wallet you

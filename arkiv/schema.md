@@ -1,111 +1,51 @@
 # Arkiv schema
 
-Testnet **rabdi** (chain ID 7794095), written with `@arkiv-network/sdk` 1.0.1. Schemas are defined
-in code in [lib/arkiv/schemas.ts](../lib/arkiv/schemas.ts); this page mirrors them.
+The live schema is in [lib/arkiv.ts](../lib/arkiv.ts), using SDK 1.0.1 on rabdi
+(chain ID 7794095). Every entity has indexed strings `project` and `entityType`.
+`ARKIV_PROJECT_ID` defaults to `ETH Jasoos`; `.env.example` uses `ethjasoos`.
+Use the same project value when querying. All new entities expire 90 days after creation.
 
-Every entity carries two indexed strings, so anyone can find this app's data without our API:
+| Entity | Indexed attributes beyond project/type | Payload |
+| --- | --- | --- |
+| `game` | `owner` (hashed human), `createdAt` (u64 Unix ms) | `record`: gzipped GameRecord without id, including title, idea, bible, premise, image URLs and saved finales |
+| `scene` | `gameId`, `sceneId`, `createdAt` | `record`: gzipped interior scene row without store ids |
+| `screen` | `gameId`, `sceneId`, `createdAt`, `worldKey`, signed `x`, `y` | `data`: gzipped scene metadata; `record`: compatibility scene row with image URLs |
+| `unlock` | `worldKey`, `humanHash` | No key or plaintext evidence is stored here |
+| `accusation` | `gameId`, `humanHash` | `accused` (u64 index 0–2), `correct` (bool) |
 
-| Attribute    | Type         | Value                                         |
-| ------------ | ------------ | --------------------------------------------- |
-| `project`    | str, indexed | `ethjasoos` (`ARKIV_PROJECT_ID`)              |
-| `entityType` | str, indexed | `world`, `creation`, `visit`, or `accusation` |
+Screens use coordinates -1..1, id `s<x>_<y>`, with at most nine total (origin plus
+eight additional screens). Existing street `scene` entities remain readable and count
+toward the cap. Interior scenes do not count. Saving the same id replaces it.
+A screen's initial 90-day lifetime matches the world's configured lifetime; it is
+not extended when a scene is replaced. Deleting a game removes both scene types;
+unlocks and accusations remain until expiry.
 
-People never appear by name, wallet, or prompt. A player is a `humanHash`:
-`sha256("ethjasoos:" + World ID nullifier)`, which is stable per person for this app and reveals
-nothing about them.
-
-## world
-
-One case file. Its entity key is the world's id in every URL (`/world/0x…`).
-
-| Attribute       | Type                   | Notes                                                                                    |
-| --------------- | ---------------------- | ---------------------------------------------------------------------------------------- |
-| `createdAt`     | u64, indexed           | Unix ms. The gallery sorts on it (`$createdAt` cannot be sorted on, so we store our own) |
-| `publishId`     | str, indexed, optional | Random id shared with the matching `creation`, so both are written in one transaction    |
-| `title`         | str                    | Cut to 128 bytes, the Arkiv string limit                                                 |
-| `summary`       | bytes                  | JSON `{ premise, thumbnailUrl }` for gallery cards, so a listing never loads a manifest  |
-| `manifest`      | bytes                  | Gzipped JSON: world bible without the mystery, assets, walk map, doors, notes            |
-| `sealedMystery` | bytes                  | AES-256-GCM sealed `{ secret, culpritNpcId, finalePrompt }`. Only our server can open it |
-
-**Expires:** 7 days after publish. Each play extends it to 7 days from now (at most once an hour per
-world, in the same transaction as the visit). A case nobody plays goes cold and leaves the gallery.
-
-## creation
-
-One row per world made. The live count per person is the daily quota.
-
-| Attribute   | Type         | Notes                                |
-| ----------- | ------------ | ------------------------------------ |
-| `humanHash` | str, indexed | Who created                          |
-| `publishId` | str, indexed | Links to the world written alongside |
-
-**Expires:** 24 hours. With `CREATION_LIMIT_PER_DAY=3`, a fourth creation is refused until the
-oldest `creation` expires, and the refusal says when (from that entity's `$expiresAt`).
-
-## visit
-
-| Attribute  | Type         | Notes           |
-| ---------- | ------------ | --------------- |
-| `worldKey` | str, indexed | The world's key |
-
-**Expires:** 1 hour. The live count is how busy a world is right now (shown on gallery cards).
-
-## accusation
-
-One per person per case (World ID gated).
-
-| Attribute   | Type         | Notes                                                                                       |
-| ----------- | ------------ | ------------------------------------------------------------------------------------------- |
-| `worldKey`  | str, indexed | The case                                                                                    |
-| `humanHash` | str, indexed | Who accused                                                                                 |
-| `correct`   | bool         | Whether they were right. The name they guessed is **not** stored, so the answer never leaks |
-
-**Expires:** 30 days, longer than any case lives, so the one-per-person rule holds for the case's life.
-
-## solve
-
-Planned for the daily leaderboard (R16), not built. Cut for time.
+The player id is `sha256("ETH Jasoos:" + nullifier)` from [worldid.ts](../lib/worldid.ts).
+This is a namespaced hash, not a secret salt. Raw proofs and nullifiers are not stored.
+Game ideas, generated story text and asset URLs **are public**. The mystery (including
+culprit and key) and victory finale are AES-256-GCM sealed using `SESSION_SECRET`.
+Accusations expose the guessed index and correctness, so a correct public accusation
+can reveal the answer to someone querying the chain; sealing the bible does not hide that.
 
 ## Queries anyone can run
 
-All of these filter on the node; none need a key or our servers.
-[scripts/arkiv-query.ts](../scripts/arkiv-query.ts) runs the first and the counts: `npm run arkiv:query`.
+Run `npm install` then `npm run arkiv:query`. It reads `.env.local` for project/RPC
+configuration, but requires no signer or app server. An access key helps avoid public
+RPC rate limits. Counts include game, scene, screen, unlock and accusation.
 
 ```ts
-import { and, desc, eq } from "@arkiv-network/sdk/query";
-const scope = (t: string) => and(eq("project", "ethjasoos"), eq("entityType", t));
-
-// Live worlds, newest first (the gallery)
-client
-  .select({ $key: true, $owner: true, $attributes: true })
-  .where(scope("world"))
-  .orderBy(desc("createdAt", "u64"))
-  .limit(24)
-  .fetch();
-
-// Daily quota: live creations for one person
-client
-  .count()
-  .where(and(scope("creation"), eq("humanHash", hash)))
-  .fetch();
-
-// When that person's next slot opens: their oldest live creation's expiry
-client
-  .select({ $expiresAt: true })
-  .where(and(scope("creation"), eq("humanHash", hash)))
-  .orderBy(asc("$expiresAt"))
-  .limit(1)
-  .fetch();
-
-// Activity: live visits to one world
-client
-  .count()
-  .where(and(scope("visit"), eq("worldKey", worldKey)))
-  .fetch();
-
-// Has this person already accused in this case?
-client
-  .count()
-  .where(and(scope("accusation"), eq("worldKey", worldKey), eq("humanHash", hash)))
-  .fetch();
+import { and, eq } from "@arkiv-network/sdk/query";
+const scope = (type: string) => and(eq("project", "ethjasoos"), eq("entityType", type));
+// Live evidence opens in one world:
+await client.count().where(and(scope("unlock"), eq("worldKey", worldKey))).fetch();
+// The human's committed accusation:
+await client.select({ $key: true, $attributes: true })
+  .where(and(scope("accusation"), eq("gameId", worldKey), eq("humanHash", hash)))
+  .limit(100).fetch();
+// Generated screens, readable without our API:
+await client.select({ $key: true, $attributes: true })
+  .where(and(scope("screen"), eq("worldKey", worldKey))).limit(100).fetch();
 ```
+
+Listings page in batches of 100, the node maximum. Deletion gathers all keys before
+removing them so changing offsets cannot skip entities.

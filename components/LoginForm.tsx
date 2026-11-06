@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
 import { motion } from "framer-motion";
@@ -9,7 +9,6 @@ import {
   IDKitRequestWidget,
   proofOfHuman,
   type IDKitResult,
-  type RpContext,
 } from "@worldcoin/idkit";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -17,13 +16,7 @@ import { BrandBanner } from "@/components/BrandBanner";
 
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 
-/** What `GET /api/session` returns when World ID is configured. */
-type WidgetConfig = {
-  app_id: `app_${string}`;
-  action: string;
-  environment: "production" | "staging";
-  rp_context: RpContext;
-};
+import type { WidgetConfig } from "@/lib/types/client";
 
 /** Sends a proof (or the dev sign-in marker) to the server, which starts the session. */
 async function postSession(body: unknown) {
@@ -48,6 +41,9 @@ export function LoginForm() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Why the server refused the last proof. The widget only reports a generic error code, so
+  // without this the player never learns why World ID "declined".
+  const serverReason = useRef<string | null>(null);
 
   const finish = () => {
     posthog.capture("signed_in_with_world_id");
@@ -57,6 +53,7 @@ export function LoginForm() {
 
   const start = async () => {
     setError(null);
+    serverReason.current = null;
     setLoading(true);
     try {
       // A fresh RP signature per attempt: each one carries its own nonce and expiry.
@@ -117,9 +114,19 @@ export function LoginForm() {
           allow_legacy_proofs={false}
           preset={proofOfHuman()}
           action_description="Prove you are human to play ETH Jasoos"
-          handleVerify={async (result: IDKitResult) => postSession(result)}
+          handleVerify={async (result: IDKitResult) => {
+            try {
+              await postSession(result);
+            } catch (e) {
+              serverReason.current = e instanceof Error ? e.message : "Verification failed.";
+              throw e;
+            }
+          }}
           onSuccess={finish}
-          onError={(code) => setError(`World ID error: ${code}`)}
+          onError={(code) => {
+            setOpen(false);
+            setError(serverReason.current ?? `World ID error: ${code}. Please try again.`);
+          }}
         />
       ) : null}
     </motion.div>
