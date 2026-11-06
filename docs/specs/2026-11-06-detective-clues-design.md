@@ -1,6 +1,6 @@
 # Detective clues: search, sealed evidence, and a keyed hidden note
 
-Date: 2026-11-06 · Status: approved design, not built · Budget: under 12 hours
+Date: 2026-11-06 · Status: approved design, not built · Budget: under 12 hours, 3 people
 
 ## Goal
 
@@ -114,7 +114,89 @@ copied; if any is, its MIT notice goes with it.
   Developer Portal. If it does not, use one fixed action `open-evidence` with the world id as the
   signal, and rely on the Arkiv `unlock` record for the once-per-case rule.
 
+## Part 2: the wider game (added 2026-11-06)
+
+Everything below is designed for ETHJasoos and written fresh in this repo.
+
+### Overworld: a 3x3 grid of screens (lanes A + B + C)
+
+The street becomes screen `(0,0)` of a 3x3 grid (`x, y` in -1..1). Walking off an open edge loads
+the neighbouring screen.
+
+- Type: `Screen { x, y, imageUrl, walkMap, doors, hotspots, edges: { n, e, s, w: boolean } }`.
+  `Manifest.screens: Screen[]` replaces the single street fields for new worlds; the street is
+  `screens[0]`. Old manifests (no `screens`) load as a one-screen grid.
+- Edges: the vision pass says, per edge, whether open ground continues (true) or water, wall,
+  or cliff stops it. Grid bounds are always closed.
+- Rooms: the 3 rooms are placed on the first screens generated (street gets 1, the next two
+  screens one each); later screens have no doors.
+- `POST /api/worlds/[id]/screens { x, y }` (lane A): if the screen exists, return it. Otherwise,
+  for a verified human only, generate it: image prompt = art style + world setting + "continues
+  the <direction> edge of <neighbour title>", then the vision pass for walk map, doors,
+  hotspots, and edges. Visitors without World ID get 401 and the edge acts as a wall.
+- Persistence (lane C): each generated screen is an Arkiv `screen` entity
+  `{ project, entityType: "screen", worldKey, x, y, data (gzipped Screen) }`, same lifetime as
+  the world, so every later visitor replays it with no 0G cost. In-memory backend mirrors it.
+- Cost cap: at most 8 generated screens per world (9 with the street).
+- Fixture mode: all 9 screens reuse the fixture street image with the fallback walk map.
+- Client (lane B): on crossing an open edge, fade, request the screen, place the player on the
+  opposite edge. While it generates, show "the road ahead is still being built" and keep the
+  player on the current screen.
+
+### Inspectable things (lanes A + B)
+
+- The vision pass (street and every screen) also returns up to 4 `Hotspot { id, name, hint,
+  x, y, w, h }`: things a detective would look at (a cart, a shrine, a notice board). `hint` is
+  one sentence written by the vision model.
+- Client: walking into a hotspot rect shows "E: inspect"; E shows `name` and `hint` in the
+  panel. Room objects from Part 1 use the same panel.
+
+### Heat (lanes A + B)
+
+- Each NPC gets `tripwire: string` in the bible (a topic that offends them). Server-only state
+  per human per world: `heat` 0..100.
+- Dialogue: the model returns JSON `{ reply, offended: boolean }`. `offended` adds 25 heat;
+  being rude after the chat closed adds 10. Rules stay in code (`dialogueRules.ts`), like the
+  clue rule.
+- At 100: the run fails ("You were run out of town"), no accusation allowed for this run.
+  `DialogueResponse` gains `heat`; the client shows a heat bar and the fail screen.
+- Heat lives in the server session store (in memory, per process); it resets on a new run.
+
+### Voice (lane B)
+
+NPC replies and the finale secret are spoken with the browser's `speechSynthesis`. Each NPC
+gets a stable voice and pitch from a hash of their id. A mute toggle, off by default on
+mobile. No new keys or services.
+
+### Finale image (lane A)
+
+On the first correct accusation for a world, generate the finale image from
+`mystery.finalePrompt` (not at creation: the manifest reaches the browser and the image would
+show the culprit). Store it as a `finale` asset; later correct accusations reuse it. The
+accuse response already has `finaleUrl`. The client shows it with the secret, spoken.
+
+### Mobile controls, minimap, sound (lane B)
+
+- On-screen D-pad and an E button below 768px width; the canvas scales to fit.
+- Minimap: the 3x3 grid, visited screens filled, current screen marked, rooms dotted.
+- Sound: short WebAudio blips generated in code (step, door, clue, unlock, fail). No audio files.
+
+## Team split
+
+| Lane | Owner | Builds |
+| ---- | ----- | ------ |
+| A | Amogh | Types and fixtures first (hour 1): `Screen`, `Hotspot`, `Location.object`, `tripwire`, `evidenceLocationId`, `mystery.key`, `heat` on `DialogueResponse`. Then: keyed codec + notes, plan model fields, vision pass (edges + hotspots), screen generation route, heat in dialogue rules, finale image on first correct accusation |
+| B | Suraj | Against fixtures from hour 1: screen transitions, hotspot inspect panel, room search, evidence button, Decoder key field, clue board, heat bar + fail screen, voice, D-pad, minimap, sound |
+| C | Kishore | `createRpContext(action)`, evidence route + Arkiv `unlock`, Arkiv `screen` entities + 8-screen cap, World ID check on screen generation, judge docs (`arkiv/`) for the new entities |
+
+Order: A's types and fixtures land on `main` first, so B and C never wait on 0G. Each lane
+works on its own branch, pulls `main` often, and merges small. Demo freeze 2 hours before
+submission: only fixes after that.
+
+Cut order if time runs out (last first): sound, minimap, voice, heat, overworld beyond the
+street. The Part 1 loop (search, evidence, keyed note, accuse) is never cut.
+
 ## Out of scope
 
-Hotspots on images, multi-screen exploration, voiced NPCs, LLM (arithmetic-coding) steganography,
+Endless (unbounded) overworld, server-generated voice, LLM (arithmetic-coding) steganography,
 and NPC dialogue that carries the hidden message.
