@@ -1,10 +1,12 @@
-# Worldsmith: Product Requirements, HLD and LLD\
+# ETH Jasoos: Product Requirements, HLD and LLD\
 
 Nov 6, 2026 · @Amogh Sunil
 
+> This is the target spec. For what the current build actually runs (routes, env vars, known gaps), see the [README](../README.md). The earlier turn-based choice mode has its own document: [CHOICE_MODE_PRD.md](CHOICE_MODE_PRD.md).
+
 ## Overview
 
-Worldsmith turns one sentence into a world you can walk through. The player types a scene, such as "a rain-flooded night market where I carry a tiffin box someone will kill for", and soon after walks its streets with the arrow keys, enters buildings, talks to characters, and solves one hidden mystery.
+ETH Jasoos turns one sentence into a world you can walk through. The player types a scene, such as "a rain-flooded night market where I carry a tiffin box someone will kill for", and soon after walks its streets with the arrow keys, enters buildings, talks to characters, and solves one hidden mystery.
 
 ### The problem
 
