@@ -1,10 +1,12 @@
 import { randomUUID } from "node:crypto";
-import type { Asset, AssetKind, JobEvent, Manifest } from "@/lib/types";
-import { env, processStore } from "@/lib/env";
-import { fixtureNotes } from "@/fixtures/world";
+import type { Asset, AssetKind, JobEvent, Manifest, TickerEvent } from "@/lib/types";
+import { processStore } from "@/lib/env";
+import { ZgError } from "@/lib/zg";
 import { planWorld } from "./planWorld";
 import { generateImage } from "./generateImage";
 import { analyzeStreet } from "./analyzeStreet";
+import { fallbackMap } from "./walkMap";
+import { writeNotes } from "./notes";
 
 export interface Job {
   prompt: string;
@@ -29,43 +31,62 @@ export function takeJob(id: string): Job | undefined {
 
 /**
  * Plans the world, then starts street, sprite, and all interiors at once (R3).
- * The vision pass waits only for the street. Returns the manifest without a worldId.
+ * The vision pass waits only for the street; notes are written alongside. A failed image
+ * becomes a labelled placeholder and the run continues. Returns the manifest without a worldId.
  */
 export async function scheduler(job: Job, emit: (e: JobEvent) => void): Promise<Manifest> {
   const plan = await planWorld(job.prompt);
   for (const event of plan.events) emit({ type: "ticker", event });
   const { bible } = plan;
 
-  // TODO(A): cap concurrency at the 0G rate limit; retry once, then mark the asset failed.
+  const tick = (event: TickerEvent) => emit({ type: "ticker", event });
+  // No concurrency cap: 0G documents no numeric limit, and the client retries 429s with
+  // Retry-After. Add one here if rehearsal shows sustained 429s.
   const image = async (id: string, kind: AssetKind, prompt: string): Promise<Asset> => {
-    const r = await generateImage(id, kind, prompt, bible.artStyle);
-    emit({ type: "ticker", event: r.event });
-    emit({ type: "asset", asset: r.asset });
-    return r.asset;
+    let asset: Asset;
+    try {
+      const r = await generateImage(id, kind, prompt, bible.artStyle);
+      tick(r.event);
+      asset = r.asset;
+    } catch (err) {
+      if (!(err instanceof ZgError)) throw err;
+      tick(err.event);
+      const url = kind === "sprite" ? "/fixtures/sprite.svg" : "/placeholder.svg";
+      const { model, requestId } = err.event;
+      asset = { id, kind, url, model, requestId, status: "failed" };
+    }
+    emit({ type: "asset", asset });
+    return asset;
   };
 
   const street = image("street", "street", bible.streetDescription);
-  const [assets, map] = await Promise.all([
+  const [assets, map, written] = await Promise.all([
     Promise.all([
       street,
       image("sprite", "sprite", bible.protagonist),
       ...bible.locations.map((l) => image(`interior-${l.id}`, "interior", l.interiorDescription)),
     ]),
     street.then(async (s) => {
+      if (s.status === "failed") return fallbackMap(bible.locations.map((l) => l.id));
       const r = await analyzeStreet(s, bible.locations);
-      for (const event of r.events) emit({ type: "ticker", event });
+      r.events.forEach(tick);
       return r;
+    }),
+    writeNotes(bible).then((r) => {
+      r.events.forEach(tick);
+      return r.notes;
     }),
   ]);
 
+  // TODO(A): finale image (R8). Generate it on the first correct accusation, not here: the
+  //   manifest reaches the browser and the image would show the culprit. Needs a hook in accuse (C).
   return {
     worldId: "",
     bible,
     assets,
     walkMap: map.walkMap,
     doors: map.doors,
-    // TODO(A): generate notes with encodeNote; one per world hides the secret (R21).
-    notes: env.useFixtures ? fixtureNotes : [],
+    notes: written,
     createdAt: new Date().toISOString(),
   };
 }
