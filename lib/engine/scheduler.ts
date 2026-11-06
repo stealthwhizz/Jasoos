@@ -33,7 +33,7 @@ export function takeJob(id: string): Job | undefined {
  */
 export async function scheduler(job: Job, emit: (e: JobEvent) => void): Promise<Manifest> {
   const plan = await planWorld(job.prompt);
-  emit({ type: "ticker", event: plan.event });
+  for (const event of plan.events) emit({ type: "ticker", event });
   const { bible } = plan;
 
   // TODO(A): cap concurrency at the 0G rate limit; retry once, then mark the asset failed.
