@@ -28,7 +28,7 @@ export async function dialogueTurn(
     raw = env.useFixtures
       ? npcTurns === 0
         ? `${npc.name} looks you over. "Ask what you came to ask."`
-        : ""
+        : `${npc.name} leans in.`
       : (result.data ?? "");
   } catch (err) {
     if (!(err instanceof ZgError)) throw err;
