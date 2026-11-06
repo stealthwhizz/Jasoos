@@ -8,6 +8,8 @@ beforeAll(() => {
   vi.stubEnv("ZG_COMPUTE_API_KEY", "sk-test");
   vi.stubEnv("ZG_CHAT_MODEL", "chat-model");
   vi.stubEnv("ZG_IMAGE_MODEL", "image-model");
+  // No backup here, so failures stay failures (zg-fallback.test.ts covers the backup).
+  vi.stubEnv("OPENAI_API_KEY", "");
   vi.resetModules();
 });
 
