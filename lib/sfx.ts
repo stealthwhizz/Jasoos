@@ -1,4 +1,4 @@
-import type { SfxName } from "@/lib/types/client";
+import type { SfxName, NarrateOptions } from "@/lib/types/client";
 export type { SfxName } from "@/lib/types/client";
 
 let context: AudioContext | null = null;
@@ -7,6 +7,8 @@ let narration = 0;
 /** When on, lines are voiced by 0G speech through /api/voice (browser voice is the fallback). */
 let cloudVoice = false;
 let currentAudio: HTMLAudioElement | null = null;
+let currentUrl: string | null = null;
+let voiceRequest: AbortController | null = null;
 const active = new Set<OscillatorNode>();
 let lastStep = 0;
 let lastHover = 0;
@@ -28,6 +30,9 @@ export function setSoundMuted(value: boolean): void {
 /** Cancel browser narration when leaving a conversation, changing worlds or muting. */
 export function cancelNarration(): void {
   narration++;
+  voiceRequest?.abort();
+  voiceRequest = null;
+  if (currentUrl) { URL.revokeObjectURL(currentUrl); currentUrl = null; }
   if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
   if (currentAudio) {
     currentAudio.pause();
@@ -39,14 +44,6 @@ export function cancelNarration(): void {
 export function setCloudVoice(value: boolean): void {
   cloudVoice = value;
 }
-
-/** The 0G request behind a voiced line, for the request-ID panel. */
-export type VoiceRequest = { model: string; requestId: string };
-export type NarrateOptions = {
-  /** The character's speaker name from the bible, so each character keeps one voice. */
-  voice?: string;
-  onRequest?: (request: VoiceRequest) => void;
-};
 
 /** Stable voice selection and pitch for a given character across replies. */
 export function speechProfile(identity: string, voices: SpeechSynthesisVoice[]) {
@@ -84,11 +81,21 @@ async function speakWith0G(
   { voice, onRequest }: NarrateOptions,
   ticket: number
 ): Promise<void> {
+  const controller = new AbortController();
+  voiceRequest = controller;
+  let fellBack = false;
+  const fallback = () => {
+    if (!fellBack && ticket === narration && !muted) {
+      fellBack = true;
+      speakInBrowser(text, identity, onSpeaking, ticket);
+    }
+  };
   try {
     const res = await fetch("/api/voice", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text, voice }),
+      signal: controller.signal,
     });
     if (!res.ok) throw new Error(`voice ${res.status}`);
     const model = res.headers.get("x-0g-model");
@@ -96,21 +103,29 @@ async function speakWith0G(
     const blob = await res.blob();
     if (ticket !== narration || muted) return; // cancelled while the audio was being made
     if (model && requestId) onRequest?.({ model, requestId });
+    voiceRequest = null;
     const url = URL.createObjectURL(blob);
+    currentUrl = url;
     const audio = new Audio(url);
     currentAudio = audio;
     const finish = () => {
       URL.revokeObjectURL(url);
+      if (currentUrl === url) currentUrl = null;
       if (ticket !== narration) return;
       currentAudio = null;
       onSpeaking(false);
     };
     audio.onplay = () => { if (ticket === narration) onSpeaking(true); };
     audio.onended = finish;
-    audio.onerror = finish;
+    audio.onerror = () => { finish(); fallback(); };
     await audio.play();
   } catch {
-    if (ticket === narration && !muted) speakInBrowser(text, identity, onSpeaking, ticket);
+    if (ticket === narration) {
+      voiceRequest = null;
+      currentAudio?.pause(); currentAudio = null;
+      if (currentUrl) { URL.revokeObjectURL(currentUrl); currentUrl = null; }
+      fallback();
+    }
   }
 }
 

@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No recording received." }, { status: 400 });
   }
   if (file.size > MAX_AUDIO_BYTES) {
-    return NextResponse.json({ error: "That recording is too long. Keep it under 30 seconds." }, { status: 413 });
+    return NextResponse.json({ error: "That recording is too long. Keep it under 15 seconds." }, { status: 413 });
   }
   const type = file.type || "audio/webm";
   const ext = type.includes("ogg") ? "ogg" : type.includes("mp4") || type.includes("m4a") ? "m4a" : type.includes("wav") ? "wav" : "webm";

@@ -71,3 +71,46 @@ it("gives each character type a stable 0G voice", () => {
   expect(voiceFor(undefined)).toBe("English_expressive_narrator");
   expect(voiceFor("someone-new")).toBe(voiceFor("someone-new"));
 });
+
+it("closing a recording releases the mic without uploading or sending a late line", async () => {
+  const stopTrack = vi.fn();
+  vi.mocked(navigator.mediaDevices.getUserMedia).mockResolvedValue({ getTracks: () => [{ stop: stopTrack }] } as never);
+  const onSay = vi.fn();
+  const view = render(<DialogueBox npc={npc} history={[]} options={[]} thinking={false} speaking={false} voiceOn inventory={[]} onToggleVoice={vi.fn()} onSay={onSay} onClose={vi.fn()} />);
+  fireEvent.click(screen.getByRole("button", { name: "Speak to Ravi" }));
+  await screen.findByRole("button", { name: "Stop and send voice" });
+  view.unmount();
+  expect(stopTrack).toHaveBeenCalled();
+  expect(request).not.toHaveBeenCalled();
+  expect(onSay).not.toHaveBeenCalled();
+});
+
+it("releases a stream whose permission resolves after dialogue unmounts", async () => {
+  const stopTrack = vi.fn();
+  let grant!: (stream: MediaStream) => void;
+  vi.mocked(navigator.mediaDevices.getUserMedia).mockImplementation(() => new Promise((resolve) => { grant = resolve; }));
+  const view = render(<DialogueBox npc={npc} history={[]} options={[]} thinking={false} speaking={false} voiceOn inventory={[]} onToggleVoice={vi.fn()} onSay={vi.fn()} onClose={vi.fn()} />);
+  fireEvent.click(screen.getByRole("button", { name: "Speak to Ravi" }));
+  fireEvent.click(screen.getByRole("button", { name: "Speak to Ravi" }));
+  expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledTimes(1);
+  view.unmount();
+  grant({ getTracks: () => [{ stop: stopTrack }] } as never);
+  await waitFor(() => expect(stopTrack).toHaveBeenCalled());
+  expect(request).not.toHaveBeenCalled();
+});
+
+it("aborts pending transcription and ignores its late result when the player leaves", async () => {
+  let finish!: (response: Response) => void;
+  request.mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
+  const onSay = vi.fn();
+  const view = render(<DialogueBox npc={npc} history={[]} options={[]} thinking={false} speaking={false} voiceOn inventory={[]} onToggleVoice={vi.fn()} onSay={onSay} onClose={vi.fn()} />);
+  fireEvent.click(screen.getByRole("button", { name: "Speak to Ravi" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Stop and send voice" }));
+  await waitFor(() => expect(request).toHaveBeenCalledTimes(1));
+  const signal = request.mock.calls[0][1]?.signal;
+  view.unmount();
+  expect(signal?.aborted).toBe(true);
+  finish(Response.json({ text: "Do not send this" }));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  expect(onSay).not.toHaveBeenCalled();
+});

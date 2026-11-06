@@ -1,0 +1,16 @@
+.git
+.next
+node_modules
+.env
+.env.*
+!.env.example
+.data
+.board
+.claude
+.codex
+.agents
+notes
+artifacts
+coverage
+*.tsbuildinfo
+.DS_Store

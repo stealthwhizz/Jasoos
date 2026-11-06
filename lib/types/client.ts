@@ -213,3 +213,10 @@ export type ExitDirection = "n" | "e" | "s" | "w";
 export type TouchInput = { x: number; y: number };
 /** Programmatically generated UI/game effects. */
 export type SfxName = "click" | "tap" | "toggleOn" | "toggleOff" | "open" | "close" | "pickup" | "success" | "error" | "hover" | "step" | "door" | "unlock" | "fail";
+
+/** Microphone permission, capture and transcription lifecycle. */
+export type VoiceInputState = "idle" | "requesting" | "recording" | "transcribing";
+/** Browser response from the 0G transcription route. */
+export type TranscriptionResponse = { text?: string; requestIds?: ZgRequest[]; error?: string };
+/** Narration options and provenance use the shared request-id contract. */
+export type NarrateOptions = { voice?: string; onRequest?: (request: ZgRequest) => void };

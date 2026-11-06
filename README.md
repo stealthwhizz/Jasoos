@@ -195,6 +195,12 @@ or World answers 403 `integrity_verification_failed`); `production` accepts the 
 ([faucet](https://hub.arkiv.network/faucet)), and set `ARKIV_ACCESS_KEY` for the
 RPC endpoint without rate limits.
 
+### Submission status
+
+The submission is not yet complete (#29). The team must supply the live demo URL,
+uploaded video (under three minutes), and Telegram/X contacts. None are invented here.
+The remaining checklist and a 2:45 recording plan are in [the submission pack](docs/submission-pack.md).
+
 ### Deploy (Railway or Render)
 
 The app is one long-running Node server. Generated images are written to
@@ -212,8 +218,17 @@ host would lose them.
    `ARKIV_SIGNER_KEY` (funded) plus `ARKIV_ACCESS_KEY`. Without the Arkiv key,
    saved worlds live in memory and vanish on restart. Optional: `SARVAM_API_KEY`
    and PostHog.
-4. Run one instance only: the in-memory fallback and the Arkiv write queue
+4. Run `npm run check:deploy` with the intended production environment. It checks configuration
+   only and never prints secret values. It does not prove signer funding or disk persistence.
+5. Run one instance only: the in-memory fallback and the Arkiv write queue
    are per process.
+
+For container hosting, build the included `Dockerfile` and mount a persistent volume at
+`/data`. It runs the standalone Next server as a non-root user. Set the same server-only
+environment values at runtime; no `.env.local` or generated assets enter the build context.
+Configure the host health check as `GET /api/health` (liveness only, not a World ID/Arkiv check).
+Verify that the mounted directory is writable by the container's `node` user. After deployment,
+play a full case, restart the service, and confirm its saved images/world still replay.
 
 ## Other services (not sponsors)
 

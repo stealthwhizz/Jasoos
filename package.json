@@ -10,7 +10,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "arkiv:query": "tsx scripts/arkiv-query.ts",
-    "smoke:worldid": "tsx scripts/smoke-worldid.ts"
+    "smoke:worldid": "tsx scripts/smoke-worldid.ts",
+    "check:deploy": "node scripts/check-deploy.mjs"
   },
   "dependencies": {
     "@arkiv-network/sdk": "^1.0.1",

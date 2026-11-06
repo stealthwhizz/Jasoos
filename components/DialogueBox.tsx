@@ -40,6 +40,7 @@ export function DialogueBox({
   const [draft, setDraft] = useState("");
   // Speak instead of typing: Whisper on 0G transcribes, and the line is sent as if typed.
   const voiceInput = useVoiceInput((text) => onSay(text), onZgRequests);
+  const { cancel: cancelVoiceInput, state: voiceInputState } = voiceInput;
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastNpcLine = [...history].reverse().find((t) => t.speaker === "npc");
 
@@ -97,12 +98,13 @@ export function DialogueBox({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        cancelVoiceInput();
         onClose();
         return;
       }
       if ((document.activeElement as HTMLElement | null)?.matches("input, textarea, select, [contenteditable=true]")) return;
       const n = Number(e.key);
-      if (!thinking && n >= 1 && n <= Math.min(3, options.length)) {
+      if (!thinking && voiceInputState === "idle" && n >= 1 && n <= Math.min(3, options.length)) {
         playSfx("tap"); // keyboard picks mirror the chip click sound
         e.preventDefault();
         onSay(options[n - 1]);
@@ -110,7 +112,7 @@ export function DialogueBox({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [options, thinking, onSay, onClose]);
+  }, [options, thinking, onSay, onClose, voiceInputState, cancelVoiceInput]);
 
   const moodColor = mood ? (MOOD_COLOR[mood] ?? "#7c6d61") : undefined;
 
@@ -168,7 +170,7 @@ export function DialogueBox({
               variant="neutral"
               size="sm"
               sound="none"
-              onClick={onClose}
+              onClick={() => { cancelVoiceInput(); onClose(); }}
             >
               Esc · leave
             </Button>
@@ -235,6 +237,7 @@ export function DialogueBox({
                     sound="tap"
                     hoverSound="hover"
                     className="h-auto whitespace-normal py-2 text-left"
+                    disabled={voiceInputState !== "idle"}
                     onClick={() => onSay(opt)}
                   >
                     <span className="text-[11px] font-bold tabular-nums text-main">
@@ -254,14 +257,14 @@ export function DialogueBox({
               <option value="">Choose an item…</option>
               {inventory.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
-            <Button disabled={thinking || !inventory.includes(selectedItem)} onClick={() => onSay(`What can you tell me about this ${selectedItem}?`, selectedItem)}>Show item</Button>
+            <Button disabled={thinking || voiceInputState !== "idle" || !inventory.includes(selectedItem)} onClick={() => onSay(`What can you tell me about this ${selectedItem}?`, selectedItem)}>Show item</Button>
           </div>}
           <form
             className="mt-3 flex items-center gap-2"
             onSubmit={(e) => {
               e.preventDefault();
               const line = draft.trim();
-              if (!line || thinking) return;
+              if (!line || thinking || voiceInputState !== "idle") return;
               setDraft("");
               onSay(line);
             }}
@@ -270,9 +273,9 @@ export function DialogueBox({
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               placeholder={
-                voiceInput.state === "recording"
+                voiceInputState === "recording"
                   ? "Listening… click the square to send"
-                  : voiceInput.state === "transcribing"
+                  : voiceInputState === "transcribing"
                     ? "Transcribing on 0G…"
                     : `Say anything to ${npc.name}…`
               }
@@ -282,16 +285,16 @@ export function DialogueBox({
               <Button
                 type="button"
                 size="icon"
-                variant={voiceInput.state === "recording" ? "default" : "neutral"}
+                variant={voiceInputState === "recording" ? "default" : "neutral"}
                 sound="tap"
-                disabled={thinking || voiceInput.state === "transcribing"}
+                disabled={thinking || voiceInputState === "transcribing" || voiceInputState === "requesting"}
                 onClick={voiceInput.toggle}
-                aria-label={voiceInput.state === "recording" ? "Stop and send voice" : `Speak to ${npc.name}`}
-                title={voiceInput.state === "recording" ? "Stop and send" : "Speak (transcribed by Whisper on 0G)"}
+                aria-label={voiceInputState === "recording" ? "Stop and send voice" : `Speak to ${npc.name}`}
+                title={voiceInputState === "recording" ? "Stop and send" : "Speak (transcribed by Whisper on 0G)"}
               >
-                {voiceInput.state === "recording" ? (
+                {voiceInputState === "recording" ? (
                   <Square size={14} />
-                ) : voiceInput.state === "transcribing" ? (
+                ) : voiceInputState === "transcribing" ? (
                   <Loader2 size={15} className="animate-spin" />
                 ) : (
                   <Mic size={15} />
@@ -302,7 +305,7 @@ export function DialogueBox({
               type="submit"
               size="icon"
               sound="tap"
-              disabled={thinking || !draft.trim()}
+              disabled={thinking || voiceInputState !== "idle" || !draft.trim()}
             >
               <Send size={15} />
             </Button>
