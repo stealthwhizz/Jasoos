@@ -331,7 +331,11 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
    */
   useEffect(() => {
     if (phase !== "playing" || !premise) return;
-    const engine = (musicRef.current ??= new MusicEngine());
+    // A disposed engine (unmount, dev Strict Mode, Fast Refresh) never plays again; replace it.
+    if (!musicRef.current || musicRef.current.isDisposed) musicRef.current = new MusicEngine();
+    const engine = musicRef.current;
+    // Mute before start so a "music off" player never hears the first bar.
+    engine.setMuted(!musicOn || !voiceOn);
     // Newer bibles carry a model-chosen track (it read the player's idea,
     // so it understands mood far better than keywords can). Older saved
     // games fall back to keyword/hash matching over the bible text.
@@ -351,7 +355,6 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
           .join(" ")
       );
     engine.start(theme);
-    engine.setMuted(!musicOn || !voiceOn);
     // Announce the track once so players can tell worlds apart by name.
     if (musicThemeRef.current !== theme.id) {
       musicThemeRef.current = theme.id;
@@ -362,7 +365,10 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
     }
   }, [phase, premise, bible, musicOn, voiceOn]);
 
-  useEffect(() => () => musicRef.current?.dispose(), []);
+  useEffect(() => () => {
+    musicRef.current?.dispose();
+    musicRef.current = null;
+  }, []);
 
   // HUD toggle → mute; persists across sessions.
   useEffect(() => {
