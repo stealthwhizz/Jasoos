@@ -8,3 +8,4 @@ next-env.d.ts
 !.env.example
 progress.md
 .DS_Store
+.data/

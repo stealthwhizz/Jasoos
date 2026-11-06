@@ -25,6 +25,5 @@ export async function POST(req: Request) {
   const world = await getWorld(dialogue.worldId);
   const npc = world?.bible.locations.find((l) => l.npc.id === dialogue.npcId)?.npc;
   if (!npc) return Response.json({ error: "No such character." }, { status: 404 });
-  // TODO(A): history comes from the client; keep turn state server-side so it cannot be reset.
   return Response.json(await dialogueTurn(npc, dialogue));
 }

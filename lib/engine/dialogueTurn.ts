@@ -1,19 +1,40 @@
 import type { DialogueRequest, DialogueResponse, Npc, TickerEvent } from "@/lib/types";
-import { zgCall } from "@/lib/zg";
+import { env } from "@/lib/env";
+import { ZgError, zgCall } from "@/lib/zg";
+import { applyDialogueRules, npcSystemPrompt } from "./dialogueRules";
+import { moderate } from "./moderate";
 
-/**
- * R7: one NPC reply. The rules live here in code, not only in the prompt:
- * the clue appears by the second reply and the chat closes after the third.
- */
+/** R7: one NPC reply from the chat model, moderated, then held to the clue and turn rules. */
 export async function dialogueTurn(
   npc: Npc,
   req: DialogueRequest,
 ): Promise<DialogueResponse & { event: TickerEvent }> {
   const npcTurns = req.history.filter((m) => m.role === "npc").length;
-  const { event } = await zgCall("dialogue", { persona: npc.persona, message: req.message });
-  // TODO(A): build the prompt from persona + clue (never the secret), cap reply length,
-  //   force the clue on the second reply if the model skipped it, moderate the line.
-  const clueRevealed = npcTurns >= 1;
-  const reply = clueRevealed ? npc.clue : `${npc.name} looks you over. "Ask what you came to ask."`;
-  return { reply, clueRevealed, close: npcTurns >= 2, event };
+  let raw: string;
+  let event: TickerEvent;
+  try {
+    const result = await zgCall("dialogue", {
+      messages: [
+        { role: "system", content: npcSystemPrompt(npc, npcTurns) },
+        ...req.history.map((m) => ({
+          role: m.role === "npc" ? ("assistant" as const) : ("user" as const),
+          content: m.text,
+        })),
+        { role: "user", content: req.message },
+      ],
+      maxTokens: 150,
+    });
+    event = result.event;
+    raw = env.useFixtures
+      ? npcTurns === 0
+        ? `${npc.name} looks you over. "Ask what you came to ask."`
+        : `${npc.name} leans in.`
+      : (result.data ?? "");
+  } catch (err) {
+    if (!(err instanceof ZgError)) throw err;
+    event = err.event;
+    raw = `${npc.name} doesn't seem to hear you.`;
+  }
+  if (!env.useFixtures && raw && !(await moderate(raw)).allowed) raw = `${npc.name} hesitates.`;
+  return { ...applyDialogueRules(raw, npc, npcTurns), event };
 }
