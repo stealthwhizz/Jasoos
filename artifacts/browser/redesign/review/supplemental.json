@@ -1,0 +1,17 @@
+[
+  {
+    "width": 1440,
+    "check": "Loading skeleton is visible and reduced-motion animation is bounded",
+    "pass": true
+  },
+  {
+    "width": 768,
+    "check": "Loading skeleton is visible and reduced-motion animation is bounded",
+    "pass": true
+  },
+  {
+    "width": 390,
+    "check": "Loading skeleton is visible and reduced-motion animation is bounded",
+    "pass": true
+  }
+]

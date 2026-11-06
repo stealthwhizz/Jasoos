@@ -185,7 +185,7 @@ export function GameCanvas({
   }, [manifest]);
 
   return (
-    <div className="space-y-3">
+    <div className="scene-frame">
       <canvas
         ref={canvasRef}
         width={W}
@@ -197,7 +197,7 @@ export function GameCanvas({
         aria-describedby={instructionsId}
         className="aspect-video w-full rounded-2xl bg-neutral-900"
       />
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="scene-toolbar">
         <div
           role="group"
           aria-label="Movement controls"

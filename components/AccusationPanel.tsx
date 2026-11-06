@@ -67,10 +67,8 @@ export function AccusationPanel({
   }
 
   return (
-    <section
-      aria-labelledby="accusation-title"
-      className="space-y-4 rounded-2xl bg-white p-6 shadow-sm"
-    >
+    <section aria-labelledby="accusation-title" className="case-panel accusation-panel space-y-4">
+      <p className="eyebrow">The final deduction / one accusation</p>
       <h2 id="accusation-title" className="text-xl font-semibold">
         Close the case
       </h2>
@@ -81,7 +79,23 @@ export function AccusationPanel({
           <p className="text-sm text-neutral-600">
             Choose carefully. Each verified detective gets one accusation per case.
           </p>
-          <form onSubmit={accuse} className="flex flex-wrap items-end gap-3">
+          <form onSubmit={accuse} className="flex flex-wrap items-end gap-4">
+            <div className="suspect-grid" role="group" aria-label="Suspect selection">
+              {manifest.bible.locations.map(({ npc }, i) => (
+                <button
+                  type="button"
+                  key={npc.id}
+                  aria-pressed={culpritId === npc.id}
+                  disabled={busy || locked}
+                  onClick={() => setCulpritId(npc.id)}
+                  className="suspect-card"
+                >
+                  <span className="eyebrow">Suspect 0{i + 1}</span>
+                  <strong>{npc.name}</strong>
+                  <span className="text-sm text-neutral-600">{npc.persona}</span>
+                </button>
+              ))}
+            </div>
             <label htmlFor="culprit-picker" className="grid gap-2">
               Culprit
               <select
@@ -99,10 +113,7 @@ export function AccusationPanel({
                 ))}
               </select>
             </label>
-            <button
-              disabled={!culpritId || busy || locked}
-              className="rounded-full bg-accent px-5 py-2 text-white disabled:opacity-40"
-            >
+            <button disabled={!culpritId || busy || locked} className="case-button">
               {busy ? "Submitting…" : "Submit accusation"}
             </button>
           </form>
@@ -112,7 +123,8 @@ export function AccusationPanel({
         {message}
       </p>
       {outcome && (
-        <div className="space-y-3">
+        <div className="finale space-y-3">
+          <p className="eyebrow">Case closed / the reveal</p>
           <h3 className="text-xl font-semibold">The truth behind the case</h3>
           <p>{outcome.secret}</p>
           {outcome.finaleUrl && !imageFailed ? (
@@ -123,7 +135,7 @@ export function AccusationPanel({
               className="w-full rounded-xl"
             />
           ) : (
-            <p className="rounded-xl bg-neutral-100 p-5">
+            <p className="finale-fallback rounded-xl p-5">
               Case solved. The finale image is unavailable.
             </p>
           )}

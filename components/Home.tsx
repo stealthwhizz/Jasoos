@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { JobEvent, TickerEvent } from "@/lib/types";
+import { Gallery } from "./Gallery";
 import { Ticker } from "./Ticker";
 import { fetchClientJson } from "./clientRequest";
 
@@ -134,22 +135,39 @@ export function Home() {
   const canCreate = status?.verified && !status.creationPaused;
 
   return (
-    <div className="space-y-10 pt-10">
-      <section className="space-y-3">
-        <h1 className="text-5xl font-semibold tracking-tight">One sentence. One case.</h1>
-        <p className="max-w-xl text-lg text-neutral-500">
-          Describe a scene. Walk the street it becomes, question the people inside, and name the
-          culprit.
-        </p>
-        {status?.fixtures && (
-          <p className="text-xs text-neutral-400">
-            Running on fixture data. No model calls are made.
+    <div className="space-y-6">
+      <section className="hero">
+        <div>
+          <p className="eyebrow">The ETHJasoos detective bureau · Open a case</p>
+          <h1>
+            Every street.<span>A secret.</span>
+          </h1>
+          <p className="hero-copy">
+            Describe a scene. Walk the street it becomes, question the people inside, and name the
+            culprit.
           </p>
-        )}
+          {status?.fixtures && (
+            <p className="text-xs text-neutral-400">
+              Running on fixture data. No model calls are made.
+            </p>
+          )}
+        </div>
+        <figure className="case-preview">
+          <span className="hero-stamp">ENTER THE EVIDENCE</span>
+          <img
+            src="/case-cover.svg"
+            alt="A detective follows a trail through an amber-lit midnight street"
+          />
+          <figcaption>
+            <span>ONE SENTENCE. ONE CASE.</span>
+            <span>FIELD NOTES / 01</span>
+          </figcaption>
+        </figure>
       </section>
 
       {!status && checkingStatus && <p role="status">Checking creation availability…</p>}
-      <form onSubmit={create} className="space-y-4 rounded-2xl bg-white p-6 shadow-sm">
+      <form onSubmit={create} className="case-panel creation-panel">
+        <p className="eyebrow">01 / Describe your mystery</p>
         <label htmlFor="prompt" className="sr-only">
           Your scene
         </label>
@@ -171,7 +189,7 @@ export function Home() {
                 setCheckingStatus(true);
                 void loadStatus();
               }}
-              className="rounded-full border border-neutral-300 px-5 py-2 text-sm font-medium hover:bg-neutral-100"
+              className="case-button secondary"
             >
               Retry creation status
             </button>
@@ -181,7 +199,7 @@ export function Home() {
               type="button"
               onClick={verify}
               disabled={verifying}
-              className="rounded-full border border-neutral-300 px-5 py-2 text-sm font-medium hover:bg-neutral-100"
+              className="case-button secondary"
             >
               {verifying
                 ? "Verifying…"
@@ -193,7 +211,7 @@ export function Home() {
           <button
             type="submit"
             disabled={!canCreate || busy || !prompt.trim()}
-            className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-white disabled:opacity-40"
+            className="case-button"
           >
             {busy ? "Building…" : "Create world"}
           </button>
@@ -221,6 +239,18 @@ export function Home() {
       </form>
 
       <Ticker events={events} />
+      <section aria-label="Explore existing cases">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">No verification needed to explore</p>
+            <h2>Pick up a cold trail.</h2>
+          </div>
+          <Link href="/gallery" className="text-sm underline">
+            All cases →
+          </Link>
+        </div>
+        <Gallery />
+      </section>
     </div>
   );
 }

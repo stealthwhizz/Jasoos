@@ -20,11 +20,11 @@ This file is the shared handoff for the team. The PRD remains the source of trut
 | --- | --- | --- | --- |
 | A | Real moderation, world planning/schema retry, 0G generation/vision, retries, notes/codec | In progress | `lib/engine/` contains fixture behavior and TODO(A) markers; connect real 0G and record model/request evidence. |
 | A | Ticker events and server dialogue rules | In progress | Event/dialogue routes and modules exist; verify server-side turn state and live event metadata. |
-| B | R5 keyboard movement and walk-mask collision | Ready for validation | Implemented map-cell collision, axis sliding, normalized diagonal movement, and blur key reset in `components/GameCanvas.tsx`. Check against generated and fixture maps. |
-| B | R6 interior ready/pending/failed UI | Ready for validation | `app/world/[id]/WorldView.tsx` now shows a clear pending state and a labelled failure state with model/request ID. |
-| B | R7 dialogue panel, R9 ticker UI, R22 Decoder UI | In progress | Components exist; validate full flow with a live fixture world and edge cases. |
-| B | R8 clue unlock, accusation picker and finale; R17 share link; R18 speech | Not complete | Accusation/finale UI remains a TODO. Share and speech are cut-first stretch items in the PRD; decide based on time after core loop. |
-| B | Gallery and visual/demo polish | In progress / dependency | Gallery UI exists and reads `/api/gallery`; C owns the Arkiv query and verify components. Review when real data is available. |
+| B | R5 keyboard movement and walk-mask collision | Fixture validated | Chromium keyboard/touch, normalized diagonals, blur handlers and collision pass; see redesign-accepted evidence. |
+| B | R6 interior ready/pending/failed UI | Fixture validated / live dependency | Ready flow and focus validated; existing pending/failed UI retained. Live updates require A/C snapshot contract. |
+| B | R7 dialogue, R9 ticker, R22 Decoder | Fixture validated | Accessible interviews, recovery, real event disclosure and both Decoder states pass; original amber presentation added. |
+| B | R8 accusation/finale; R17 share; R18 speech | R8 fixture validated | Actual three-clue gating, suspect cards, verification/one-attempt errors, secret and finale/fallback verified. Share/speech stretch work remains deferred. |
+| B | Gallery and visual/demo polish | Fixture validated / live dependency | Original design and responsive Chromium/axe review complete. Gallery loading/empty/error/retry tested; live Arkiv remains C-owned. |
 | C | World ID verification/gate, Arkiv reads/writes, quota, accusation checks, Storage | In progress | Stub implementations and TODO(C) markers remain in `lib/worldid/`, `lib/arkiv/`, and API routes. |
 | C | Arkiv judge docs, README details, World ID debrief and submission | In progress | `arkiv/*.md` are judge-facing stubs; README retains sponsor TODOs. |
 
@@ -87,3 +87,11 @@ This file is the shared handoff for the team. The PRD remains the source of trut
 - Browser harness now handles repeated fixture replies and avoids cancelling ended touch sequences; no assertions relaxed. Evidence: artifacts/browser/lane-b-chromium/recovered/report.json and adjacent screenshots. Baseline 106 PASS / 26 FAIL / 1 UNVERIFIED; expanded final suite 377 PASS / 0 FAIL / 1 UNVERIFIED across 1440x900, 768x1024, 390x844, including axe audits. Totals differ because regression coverage expanded.
 - Sequential validation: targeted 15 passed; full 46 passed / 3 TODO; typecheck, ESLint and production build passed. Final diff check passed.
 - Remaining: actual tab blur cannot be established in headless Chromium (synthetic blur/visibility pass); live sponsor integrations and prior A/C blockers remain unverified. No GPT-6 Astra model review was performed in this recovered session. Fixture evidence is not live integration evidence.
+
+### 2026-11-06 — B / original amber detective redesign
+- Started from clean a7d0b92; fetched client remote and confirmed no divergence. Retained PR #1 base A and all previous R5/R6/R8 evidence/contracts.
+- Studied all eight requested Kahani source files. The live reference URL rendered service JSON, recorded in artifacts/browser/redesign/reference/public-site.png. No Kahani source or assets reused.
+- Added original bureau cover art, self-hosted OFL display/body fonts, cream/amber tokens, outlined panels and hard shadows; redesigned Home/gallery, game shell, actual evidence tracker, suspect interview/draft choices, provenance disclosure, accusation cards and finale treatment. Kept all movement/collision and submission logic.
+- Corrected QA findings: amber-header contrast, evidence label semantics, keyboard scrolling and latest-reply visibility. Gallery failures now differ from empty states and offer retry; thumbnails do not prefetch every world. No API/shared type or A/C implementation files changed.
+- Design rationale, review steps, reference limitations and sponsor dependencies: docs/UI_DESIGN.md. Before/after landing/gallery: artifacts/browser/redesign/before and review. Final gameplay/accessibility report: artifacts/browser/lane-b-chromium/redesign-accepted/report.json. Earlier iterations remain preserved and superseded by redesign-accepted.
+- Final results: 422 PASS / 0 FAIL / 1 UNVERIFIED in redesign-accepted; supplemental reduced-motion/loading checks 3/3 passed. Final sequential unit suite 46 passed / 3 TODO; typecheck, ESLint, production build and diff check passed. Real tab blur remains unverified in headless mode; live sponsor dependencies remain unchanged.
