@@ -5,10 +5,12 @@
 
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { del, list, put } from "@vercel/blob";
 import { generateScreen } from "@/lib/world-engine";
 import { withRequestIds } from "@/lib/zg-client";
 import { FREE_GAME_LIMIT, GEN_CALL_COST, MAX_STREET_SCREENS } from "@/lib/constants";
 import { gameStore } from "@/lib/arkiv";
+import { withRetry, DEFAULT_RETRY_OPTS } from "@/lib/retry";
 import type {
   FullGameResponse,
   GameListItem,
@@ -26,8 +28,12 @@ import type {
 } from "@/lib/types/server";
 import type { SceneData } from "@/lib/universe";
 
-// shortcut: generated images live on local disk, so they do not survive a redeploy or scale
-//   past one server. Move them to 0G Storage (or any object store) before hosting publicly.
+// Generated images live on local disk by default (dev, or one server with a volume). On Vercel the
+// disk does not persist, so when BLOB_READ_WRITE_TOKEN is set they go to Vercel Blob instead.
+/** True when assets are stored in Vercel Blob rather than on local disk. */
+const blobStorageOn = () => Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+/** Only Vercel Blob's public host is ever fetched server-side, so a client cannot make us fetch any URL. */
+const BLOB_URL = /^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\//;
 /** Where generated game assets are written. Served by `GET /api/assets/[...path]`. */
 const ASSET_DIR = path.resolve(/*turbopackIgnore: true*/ process.env.ASSET_DIR || ".data/assets");
 /** URL prefix for saved assets. */
@@ -98,10 +104,21 @@ export function assetFilePath(relPath: string): string | null {
  * @param dataUrl - Inline image/audio data URL.
  */
 export async function uploadDataUrl(relPath: string, dataUrl: string): Promise<string> {
-  const { bytes, ext } = parseDataUrl(dataUrl);
+  const { bytes, ext, mimeType } = parseDataUrl(dataUrl);
   const objectPath = relPath.includes(".") ? relPath : `${relPath}.${ext}`;
   const file = assetFilePath(objectPath);
   if (!file) throw new Error("Invalid asset path.");
+  if (blobStorageOn()) {
+    const blob = await withRetry(() => put(objectPath, Buffer.from(bytes), {
+      access: "public",
+      contentType: mimeType,
+      // Same path on purpose: a re-saved scene replaces its image. Short cache so replays see it.
+      addRandomSuffix: false,
+      allowOverwrite: true,
+      cacheControlMaxAge: 60,
+    }), DEFAULT_RETRY_OPTS);
+    return blob.url;
+  }
   await mkdir(path.dirname(file), { recursive: true });
   await writeFile(file, bytes);
   return `${ASSET_URL_PREFIX}${objectPath}`;
@@ -317,6 +334,11 @@ export async function voteOnGame(gameId: string, userId: string, value: VoteValu
  * Best-effort delete of all asset files under `{ownerId}/{gameId}/`.
  */
 export async function deleteGameAssets(ownerId: string, gameId: string): Promise<void> {
+  if (blobStorageOn()) {
+    const { blobs } = await list({ prefix: `${ownerId}/${gameId}/` });
+    if (blobs.length) await del(blobs.map((b) => b.url));
+    return;
+  }
   const dir = assetFilePath(`${ownerId}/${gameId}`);
   if (dir) await rm(dir, { recursive: true, force: true });
 }
@@ -324,11 +346,19 @@ export async function deleteGameAssets(ownerId: string, gameId: string): Promise
 /**
  * Load a saved image and return raw base64 (no data-URL prefix).
  * Used when continuing screen generation from a saved asset URL. Only local
- * assets are read, so a client cannot make the server fetch arbitrary URLs.
+ * assets and Vercel Blob URLs are read, so a client cannot make the server fetch arbitrary URLs.
  *
- * @param url - Saved asset URL (`/api/assets/...`).
+ * @param url - Saved asset URL (`/api/assets/...` or a Vercel Blob URL).
  */
 export async function fetchImageAsBase64(url: string): Promise<string | null> {
+  if (BLOB_URL.test(url)) {
+    try {
+      const res = await withRetry(() => fetch(url), DEFAULT_RETRY_OPTS);
+      return res.ok ? Buffer.from(await res.arrayBuffer()).toString("base64") : null;
+    } catch {
+      return null;
+    }
+  }
   if (!url.startsWith(ASSET_URL_PREFIX)) return null;
   const file = assetFilePath(decodeURIComponent(url.slice(ASSET_URL_PREFIX.length)));
   if (!file) return null;
