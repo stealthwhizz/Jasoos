@@ -1,5 +1,6 @@
 import { env } from "@/lib/env";
 import { getHumanHash } from "@/lib/worldid";
+import { zgBalance } from "@/lib/zg";
 
 export async function GET() {
   return Response.json({
@@ -7,6 +8,6 @@ export async function GET() {
     fixtures: env.useFixtures,
     verified: Boolean(await getHumanHash()),
     creationLimitPerDay: env.creationLimitPerDay,
-    creditsRemaining: null, // TODO(A): read the 0G balance (R13)
+    creditsRemaining: await zgBalance(),
   });
 }

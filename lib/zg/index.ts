@@ -158,3 +158,29 @@ export function parseJson(text: string | null): unknown {
     return null;
   }
 }
+
+const NEURON_PER_0G = 10n ** 18n;
+
+/**
+ * R13: the 0G account balance in 0G, or null when unknown. Needs a management key (mk-) with
+ * account:read; inference keys (sk-) are refused for this endpoint.
+ */
+export async function zgBalance(): Promise<number | null> {
+  const key = process.env.ZG_MANAGEMENT_KEY;
+  if (env.useFixtures || !key) return null;
+  try {
+    const res = await fetch(
+      `${process.env.ZG_COMPUTE_BASE_URL || DEFAULT_BASE_URL}/account/balance`,
+      {
+        headers: { Authorization: `Bearer ${key}` },
+        signal: AbortSignal.timeout(5_000),
+      },
+    );
+    if (!res.ok) return null;
+    const { total_balance } = (await res.json()) as { total_balance?: string };
+    // Neuron is 1e-18 0G; keep 6 decimals without losing precision in a float.
+    return Number((BigInt(total_balance ?? "") * 10n ** 6n) / NEURON_PER_0G) / 1e6;
+  } catch {
+    return null;
+  }
+}
