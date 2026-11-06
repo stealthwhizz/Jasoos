@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/worldid";
 import { generateInteriorScene } from "@/lib/world-engine";
+import { withRequestIds } from "@/lib/zg-client";
 import type { GameBible } from "@/lib/universe";
 
 export const runtime = "nodejs";
@@ -37,12 +38,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const scene = await generateInteriorScene(
-      body.bible,
-      body.roomIndex,
-      body.parentId || "s0_0"
+    const { result: scene, requestIds } = await withRequestIds(() =>
+      generateInteriorScene(body.bible, body.roomIndex, body.parentId || "s0_0")
     );
-    return NextResponse.json({ scene });
+    return NextResponse.json({ scene, requestIds });
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Failed to generate the scene.";

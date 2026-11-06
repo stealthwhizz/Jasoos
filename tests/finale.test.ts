@@ -95,7 +95,7 @@ describe("POST /api/finale", () => {
     player.id = "visitor";
     vi.mocked(generateFinale).mockClear();
     const replay = await finale({ gameId: game.id, accused: 1 });
-    expect(replay.json).toEqual({ finale: won.json.finale, generated: false });
+    expect(replay.json).toEqual({ finale: won.json.finale, generated: false, requestIds: [] });
     expect(generateFinale).not.toHaveBeenCalled();
   });
 
@@ -106,7 +106,7 @@ describe("POST /api/finale", () => {
     const wrong = await finale({ gameId: game.id, accused: 0 });
     const again = await finale({ gameId: game.id, reason: "time ran out" });
     expect(generateFinale).toHaveBeenCalledTimes(1);
-    expect(wrong.json).toEqual({ finale: first.json.finale, generated: false });
+    expect(wrong.json).toEqual({ finale: first.json.finale, generated: false, requestIds: [] });
     expect(again.json.generated).toBe(false);
   });
 

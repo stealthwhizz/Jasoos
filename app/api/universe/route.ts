@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/worldid";
 import { generateBible } from "@/lib/world-engine";
+import { withRequestIds } from "@/lib/zg-client";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -21,8 +22,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Describe your scene first." }, { status: 400 });
   }
   try {
-    const bible = await generateBible(idea.slice(0, 1200));
-    return NextResponse.json({ bible });
+    const { result: bible, requestIds } = await withRequestIds(() =>
+      generateBible(idea.slice(0, 1200))
+    );
+    return NextResponse.json({ bible, requestIds });
   } catch (err) {
     console.error("[/api/universe]", err);
     return NextResponse.json(

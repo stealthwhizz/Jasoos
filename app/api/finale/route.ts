@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/worldid";
 import { gameStore } from "@/lib/arkiv";
 import { getGameRecord, uploadDataUrl } from "@/lib/games";
 import { generateFinale, seal, unseal } from "@/lib/world-engine";
+import { withRequestIds } from "@/lib/zg-client";
 import type { Mystery } from "@/lib/universe";
 import type { FinaleData } from "@/lib/types/server";
 
@@ -52,28 +53,33 @@ export async function POST(req: NextRequest) {
 
     if (body.accused === culprit) {
       if (game.sealed_victory) {
-        return NextResponse.json({ finale: unseal<FinaleData>(game.sealed_victory), generated: false });
+        const finale = unseal<FinaleData>(game.sealed_victory);
+        return NextResponse.json({ finale, generated: false, requestIds: [] });
       }
-      const finale = await generateFinale(bible, "victory");
+      const { result: finale, requestIds } = await withRequestIds(() =>
+        generateFinale(bible, "victory")
+      );
       const image = await uploadDataUrl(`${game.owner}/${game.id}/finale-victory`, finale.image);
       const saved: FinaleData = { ...finale, image };
       // The victory finale spells out the secret, so it is stored sealed.
       await gameStore().updateGame(game.id, { sealed_victory: seal(saved) });
-      return NextResponse.json({ finale: saved, generated: true });
+      return NextResponse.json({ finale: saved, generated: true, requestIds });
     }
 
     if (game.finale.defeat) {
-      return NextResponse.json({ finale: game.finale.defeat, generated: false });
+      return NextResponse.json({ finale: game.finale.defeat, generated: false, requestIds: [] });
     }
     const reason =
       body.accused === undefined
         ? body.reason
         : `you accused ${bible.npcs[body.accused]?.name ?? "the wrong person"}, and the real culprit walked free`;
-    const finale = await generateFinale(bible, "defeat", reason);
+    const { result: finale, requestIds } = await withRequestIds(() =>
+      generateFinale(bible, "defeat", reason)
+    );
     const image = await uploadDataUrl(`${game.owner}/${game.id}/finale-defeat`, finale.image);
     const saved: FinaleData = { ...finale, image };
     await gameStore().updateGame(game.id, { finale: { ...game.finale, defeat: saved } });
-    return NextResponse.json({ finale: saved, generated: true });
+    return NextResponse.json({ finale: saved, generated: true, requestIds });
   } catch (err) {
     console.error("[/api/finale]", err);
     return NextResponse.json(

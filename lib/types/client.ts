@@ -7,10 +7,13 @@
 
 import type { Choice, Effects, EndingKind, Stats } from "../stats";
 import type { DialogueTurn, GameBible, SceneData } from "../universe";
-import type { Premise } from "./shared";
+import type { Premise, ZgRequest } from "./shared";
 
 /** Premise card / world metadata shown in the UI. */
-export type { Premise } from "./shared";
+export type { Premise, ZgRequest } from "./shared";
+
+/** Generation routes return the 0G request IDs of the model calls they made. */
+export type ZgTraced = { requestIds?: ZgRequest[] };
 
 /** A note in the world; `text` may hide a codebook message for the Decoder. */
 export type Note = {

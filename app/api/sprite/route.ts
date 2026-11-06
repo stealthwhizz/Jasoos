@@ -7,6 +7,7 @@ import { fetchImageAsBase64 } from "@/lib/games";
 import { requireUser } from "@/lib/worldid";
 import type { SpriteRequest } from "@/lib/types/server";
 import { generateSprite } from "@/lib/world-engine";
+import { withRequestIds } from "@/lib/zg-client";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -31,8 +32,10 @@ export async function POST(req: NextRequest) {
     if (!referenceFrame && body.referenceFrameUrl) {
       referenceFrame = await fetchImageAsBase64(body.referenceFrameUrl);
     }
-    const sprite = await generateSprite(body.premise, referenceFrame);
-    return NextResponse.json({ sprite });
+    const { result: sprite, requestIds } = await withRequestIds(() =>
+      generateSprite(body.premise, referenceFrame)
+    );
+    return NextResponse.json({ sprite, requestIds });
   } catch (err) {
     console.error("[/api/sprite]", err);
     return NextResponse.json(

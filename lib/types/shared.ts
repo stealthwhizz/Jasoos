@@ -23,3 +23,11 @@ export type Premise = {
   /** What the draining clock represents in this world. */
   clockLabel: string;
 };
+
+/** One model call made on 0G Private Computer, as returned by the generation routes. */
+export type ZgRequest = {
+  /** Model id, e.g. `0gm-1.0-35b-a3b`. */
+  model: string;
+  /** 0G's `x_0g_trace.request_id`. */
+  requestId: string;
+};

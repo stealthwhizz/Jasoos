@@ -22,6 +22,8 @@ import type {
   WorldDialogueState,
   WorldPhase,
   WorldProps,
+  ZgRequest,
+  ZgTraced,
 } from "@/lib/types/client";
 import type {
   DialogueResponse,
@@ -271,6 +273,11 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
   const [genCalls, setGenCalls] = useState(0);
   const [interiorsReady, setInteriorsReady] = useState(0);
   const addCalls = useCallback((n: number) => setGenCalls((c) => c + n), []);
+  const [zgRequests, setZgRequests] = useState<ZgRequest[]>([]);
+  /** Keeps the latest 0G request IDs on screen: the 0G track asks for them in the main flow. */
+  const noteRequests = useCallback((ids: ZgRequest[] | undefined) => {
+    if (ids?.length) setZgRequests((prev) => [...ids, ...prev].slice(0, 4));
+  }, []);
   const [sprite, setSprite] = useState<HTMLCanvasElement | null>(null);
   const [bootStatus, setBootStatus] = useState("Loading your world…");
   const [entering, setEntering] = useState<string | null>(null);
@@ -521,7 +528,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
       for (const option of OPENING_OPTIONS) {
         const key = `${s.id}|${option}`;
         if (dialogueCache.current.has(key)) continue;
-        const p = post<DialogueResponse>("/api/dialogue", {
+        const p = post<DialogueResponse & ZgTraced>("/api/dialogue", {
           bible: theBible,
           npcIndex: s.clueIndex,
           history: [{ speaker: "npc", text: npc.opening }],
@@ -530,6 +537,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
           exchanges: 1,
           heat: 0,
         }).then((reply) => {
+          noteRequests(reply.requestIds);
           const params = voiceParams(reply.mood);
           fetchVoice(reply.line, npc.voice, params.pace, params.temperature);
           return reply;
@@ -538,7 +546,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
         dialogueCache.current.set(key, p);
       }
     },
-    [fetchVoice]
+    [fetchVoice, noteRequests]
   );
 
   const prefetchInterior = useCallback(
@@ -550,13 +558,14 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
       if (cached) return;
       if (!canGenerateRef.current) return;
       if (interiorPromises.current.has(roomKey)) return;
-      const p = post<{ scene: SceneData }>("/api/scene", {
+      const p = post<{ scene: SceneData } & ZgTraced>("/api/scene", {
         bible: theBible,
         roomIndex: h.clueIndex,
         parentId,
-      }).then(({ scene: s }) => {
+      }).then(({ scene: s, requestIds }) => {
         scenesRef.current.set(s.id, s);
         addCalls(GEN_CALL_COST.interior);
+        noteRequests(requestIds);
         setInteriorsReady((r) => r + 1);
         saveScene(s);
         warmSceneImages(s);
@@ -566,7 +575,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
       p.catch(() => interiorPromises.current.delete(roomKey));
       interiorPromises.current.set(roomKey, p);
     },
-    [addCalls, prefetchConversation, saveScene]
+    [addCalls, noteRequests, prefetchConversation, saveScene]
   );
 
   /**
@@ -594,16 +603,17 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
       const claimedRoom = claimNextRoom(placedRoomsRef.current);
       const unplacedRooms = claimedRoom !== null ? [claimedRoom] : [];
 
-      const p = post<{ scene: SceneData }>("/api/screen", {
+      const p = post<{ scene: SceneData } & ZgTraced>("/api/screen", {
         bible: theBible,
         x,
         y,
         arriveFrom,
         ...prevScreenPayload(prevScene),
         unplacedRooms,
-      }).then(({ scene: s }) => {
+      }).then(({ scene: s, requestIds }) => {
         scenesRef.current.set(s.id, s);
         addCalls(GEN_CALL_COST.screen);
+        noteRequests(requestIds);
         setScreensDreamed((n) => n + 1);
         saveScene(s);
         warmSceneImages(s);
@@ -634,7 +644,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
       screenPromises.current.set(id, p);
       return p;
     },
-    [addCalls, prefetchInterior, saveScene]
+    [addCalls, noteRequests, prefetchInterior, saveScene]
   );
 
   const resetRunState = useCallback(() => {
@@ -707,19 +717,20 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
         return;
       }
       if (!canGenerateRef.current) return;
-      post<{ sprite: string }>("/api/sprite", {
+      post<{ sprite: string } & ZgTraced>("/api/sprite", {
         premise: chosen,
         ...spriteReferencePayload(origin.image),
       })
-        .then(({ sprite: raw }) => {
+        .then(({ sprite: raw, requestIds }) => {
           addCalls(GEN_CALL_COST.sprite);
+          noteRequests(requestIds);
           saveSprite(raw);
           return chromaKeySprite(raw);
         })
         .then(setSprite)
         .catch(() => {});
     },
-    [addCalls, saveSprite]
+    [addCalls, noteRequests, saveSprite]
   );
 
   /** Paint origin, sprite, and neighbors for a newly created game row. */
@@ -786,7 +797,10 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
       canGenerateRef.current = true;
 
       try {
-        const { bible: theBible } = await post<{ bible: GameBible }>("/api/universe", { idea });
+        const { bible: theBible, requestIds } = await post<{ bible: GameBible } & ZgTraced>(
+          "/api/universe",
+          { idea }
+        );
         const firstLine =
           idea.split(/\r?\n/).map((l) => l.trim()).find(Boolean) ?? "";
         theBible.title =
@@ -808,6 +822,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
           clockLabel: "",
         };
         addCalls(GEN_CALL_COST.universe);
+        noteRequests(requestIds);
 
         const created = await post<CreateGameResponse>("/api/games", {
           idea,
@@ -821,7 +836,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
         router.push("/");
       }
     },
-    [addCalls, resetRunState, router]
+    [addCalls, noteRequests, resetRunState, router]
   );
 
   useEffect(() => {
@@ -1038,7 +1053,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
         if (cached) {
           reply = await cached;
         } else {
-          reply = await post<DialogueResponse>("/api/dialogue", {
+          const res = await post<DialogueResponse & ZgTraced>("/api/dialogue", {
             bible,
             npcIndex: clueIndex,
             history: dialogue.history,
@@ -1048,6 +1063,8 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
             inventory,
             heat,
           });
+          noteRequests(res.requestIds);
+          reply = res;
         }
         const offense = reply.offense ?? "none";
         if (offense !== "none") {
@@ -1105,7 +1122,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
         });
       }
     },
-    [bible, scene, dialogue, heat, cluesFound, speak, fetchVoice, addCalls, inventory, secondsLeft, finale, finaleLoading]
+    [bible, scene, dialogue, heat, cluesFound, speak, fetchVoice, addCalls, noteRequests, inventory, secondsLeft, finale, finaleLoading]
   );
 
   const allCluesFound = bible ? cluesFound.every(Boolean) : false;
@@ -1121,13 +1138,14 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
         let f: FinaleData | null = accused === undefined ? (savedFinalesRef.current.defeat ?? null) : null;
         // The server judges accusations and generates each world's endings at most once.
         if (!f) {
-          const res = await post<{ finale: FinaleData; generated: boolean }>("/api/finale", {
+          const res = await post<{ finale: FinaleData; generated: boolean } & ZgTraced>("/api/finale", {
             gameId: gameIdRef.current,
             accused,
             reason,
           });
           f = res.finale;
           if (res.generated) addCalls(GEN_CALL_COST.finale);
+          noteRequests(res.requestIds);
           if (f.outcome === "defeat") savedFinalesRef.current.defeat = f;
         }
         if (!f) throw new Error("Finale unavailable.");
@@ -1162,7 +1180,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
         setFinaleLoading(false);
       }
     },
-    [bible, finale, finaleLoading, speak, fetchVoice, stopVoice, addCalls, cluesFound, genCalls, screensDreamed]
+    [bible, finale, finaleLoading, speak, fetchVoice, stopVoice, addCalls, noteRequests, cluesFound, genCalls, screensDreamed]
   );
 
   useEffect(() => {
@@ -1360,6 +1378,20 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
             rooms {interiorsReady}/3
           </span>
         </Card>
+      )}
+
+      {!dialogue && !finale && zgRequests.length > 0 && (
+        <div
+          className="pointer-events-none absolute bottom-16 right-4 z-10 rounded-md bg-black/55 px-3 py-1.5 font-mono text-[10px] leading-4 text-white/85 backdrop-blur-sm"
+          aria-label="Latest 0G request IDs"
+        >
+          <div className="font-sans font-semibold text-white">Latest 0G request IDs</div>
+          {zgRequests.map((r) => (
+            <div key={r.requestId}>
+              {r.model} · {r.requestId}
+            </div>
+          ))}
+        </div>
       )}
 
       <Dialog open={!!assetLoading}>

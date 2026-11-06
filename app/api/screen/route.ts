@@ -8,6 +8,7 @@ import { fetchImageAsBase64 } from "@/lib/games";
 import { requireUser } from "@/lib/worldid";
 import type { ScreenRequest } from "@/lib/types/server";
 import { generateScreen } from "@/lib/world-engine";
+import { withRequestIds } from "@/lib/zg-client";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -43,17 +44,17 @@ export async function POST(req: NextRequest) {
     if (!prevImage && body.prevImageUrl) {
       prevImage = await fetchImageAsBase64(body.prevImageUrl);
     }
-    const scene = await generateScreen(
-      body.bible,
-      Math.round(body.x),
-      Math.round(body.y),
-      body.arriveFrom && DIRS.has(body.arriveFrom) ? body.arriveFrom : null,
-      prevImage,
-      (body.unplacedRooms ?? []).filter(
-        (r) => Number.isInteger(r) && r >= 0 && r <= 2
+    const { result: scene, requestIds } = await withRequestIds(() =>
+      generateScreen(
+        body.bible,
+        Math.round(body.x),
+        Math.round(body.y),
+        body.arriveFrom && DIRS.has(body.arriveFrom) ? body.arriveFrom : null,
+        prevImage,
+        (body.unplacedRooms ?? []).filter((r) => Number.isInteger(r) && r >= 0 && r <= 2)
       )
     );
-    return NextResponse.json({ scene });
+    return NextResponse.json({ scene, requestIds });
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Failed to dream the next screen.";

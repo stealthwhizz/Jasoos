@@ -1,9 +1,11 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import OpenAI from "openai";
 import type {
   ChatCompletionContentPart,
   ChatCompletionMessageParam,
 } from "openai/resources/chat/completions";
 import type { HistoryEntry, Premise } from "./types";
+import type { ZgRequest } from "./types/shared";
 import { MAX_TURNS } from "./constants";
 import { DEFAULT_RETRY_OPTS, withRetry } from "./retry";
 import {
@@ -21,6 +23,31 @@ import {
 const CHAT_MODEL = process.env.ZG_CHAT_MODEL || "0gm-1.0-35b-a3b";
 const VISION_MODEL = process.env.ZG_VISION_MODEL || "qwen3-vl-plus";
 const IMAGE_MODEL = process.env.ZG_IMAGE_MODEL || "bytedance/seedream-5.0-flash";
+
+// Each route request gets its own list, so concurrent requests never mix their IDs.
+const requestLog = new AsyncLocalStorage<ZgRequest[]>();
+
+/**
+ * Runs `fn` and returns the 0G request IDs of every model call it made, so routes can show
+ * judges which inference ran on 0G (the 0G track asks for request IDs in the main flow).
+ */
+export async function withRequestIds<T>(
+  fn: () => Promise<T>
+): Promise<{ result: T; requestIds: ZgRequest[] }> {
+  const requestIds: ZgRequest[] = [];
+  const result = await requestLog.run(requestIds, fn);
+  return { result, requestIds };
+}
+
+/** Reads 0G's request ID off a router response and logs it for the current route request. */
+function logRequestId(res: unknown, model: string): string | undefined {
+  // x_0g_trace is a 0G extension the OpenAI SDK types don't know; check it before reading.
+  const trace = typeof res === "object" && res && "x_0g_trace" in res ? res.x_0g_trace : null;
+  const id = typeof trace === "object" && trace && "request_id" in trace ? trace.request_id : null;
+  const requestId = typeof id === "string" ? id : undefined;
+  if (requestId) requestLog.getStore()?.push({ model, requestId });
+  return requestId;
+}
 
 let client: OpenAI | null = null;
 /** Lazily creates the 0G router client. Throws if the key is missing. */
@@ -130,7 +157,7 @@ export async function generateContentWithRetry(
   return {
     // Some models wrap JSON in a ```json fence even when asked not to.
     text: json ? raw.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, "") : raw,
-    requestId: (res as { x_0g_trace?: { request_id?: string } }).x_0g_trace?.request_id,
+    requestId: logRequestId(res, hasImage ? VISION_MODEL : CHAT_MODEL),
   };
 }
 
@@ -500,6 +527,7 @@ export async function generateImage(
     );
     const b64 = response.data?.[0]?.b64_json;
     if (!b64) throw new Error("No image data returned by image model.");
+    logRequestId(response, IMAGE_MODEL);
     return { b64, mimeType: sniffMime(b64), fallback: false };
   } catch (err) {
     console.error("[generateImage] falling back to placeholder:", err);

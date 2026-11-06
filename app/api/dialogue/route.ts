@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/worldid";
 import { generateDialogue } from "@/lib/world-engine";
+import { withRequestIds } from "@/lib/zg-client";
 import type { DialogueTurn, GameBible } from "@/lib/universe";
 
 export const runtime = "nodejs";
@@ -37,21 +38,16 @@ export async function POST(req: NextRequest) {
     );
   }
   try {
-    const reply = await generateDialogue(
-      body.bible,
-      body.npcIndex,
-      body.history ?? [],
-      body.playerLine ?? null,
-      {
+    const { result: reply, requestIds } = await withRequestIds(() =>
+      generateDialogue(body.bible, body.npcIndex, body.history ?? [], body.playerLine ?? null, {
         clueFound: Boolean(body.clueFound),
         exchanges:
-          body.exchanges ??
-          (body.history ?? []).filter((t) => t.speaker === "player").length,
+          body.exchanges ?? (body.history ?? []).filter((t) => t.speaker === "player").length,
         inventory: body.inventory ?? [],
         heat: body.heat ?? 0,
-      }
+      })
     );
-    return NextResponse.json(reply);
+    return NextResponse.json({ ...reply, requestIds });
   } catch (err) {
     console.error("[/api/dialogue]", err);
     return NextResponse.json(
