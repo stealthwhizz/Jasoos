@@ -37,7 +37,7 @@ import { repairLoadedStreetEdges, streetCoordKeys } from "@/lib/screen-edges";
 import { plainNote } from "@/lib/engine/codec";
 import { GEN_CALL_COST, MAX_GAME_TITLE_LENGTH, SESSION_TIME_LIMIT_SEC } from "@/lib/constants";
 import { MusicEngine, getMusicTheme, pickMusicTheme } from "@/lib/music";
-import { playSfx, setSoundMuted, narrate, cancelNarration } from "@/lib/sfx";
+import { playSfx, setSoundMuted, narrate, cancelNarration, setCloudVoice } from "@/lib/sfx";
 import {
   getCachedImage,
   preloadSceneImages,
@@ -432,10 +432,19 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
     put(`/api/games/${id}/sprite`, { sprite: dataUrl }).catch(() => {});
   }, []);
 
-  const speak = useCallback((text: string, identity?: string) => {
-    if (!voiceOnRef.current) return;
-    narrate(text, identity ?? "narrator", setSpeaking);
+  // Characters speak with 0G voices (MiniMax on 0G Private Computer); the browser voice is the fallback.
+  useEffect(() => {
+    setCloudVoice(true);
+    return () => setCloudVoice(false);
   }, []);
+
+  const speak = useCallback((text: string, identity?: string, voice?: string) => {
+    if (!voiceOnRef.current) return;
+    narrate(text, identity ?? "narrator", setSpeaking, {
+      voice: voice ?? "narrator",
+      onRequest: (request) => noteRequests([request]),
+    });
+  }, [noteRequests]);
 
   const stopVoice = useCallback(() => { cancelNarration(); setSpeaking(false); }, []);
   const toggleSound = useCallback(() => {
@@ -936,7 +945,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
           options: OPENING_OPTIONS,
           thinking: false,
         });
-        void speak(opening, `${scene.id}:${scene.npc.name}`);
+        void speak(opening, `${scene.id}:${scene.npc.name}`, scene.npc.voice);
         return;
       }
 
@@ -1089,7 +1098,8 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
         });
         void speak(
           reply.line,
-          `${scene.id}:${dialogue.npc.name}`
+          `${scene.id}:${dialogue.npc.name}`,
+          dialogue.npc.voice
         );
       } catch {
         setDialogue({
@@ -1552,6 +1562,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
               inventory={inventory}
               onSay={onSay}
               onClose={closeDialogue}
+              onZgRequests={noteRequests}
             />
           )}
         </AnimatePresence>

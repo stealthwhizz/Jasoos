@@ -36,6 +36,8 @@ it("sends the shown inventory item and updates the danger meter from an offended
       sent = JSON.parse(String(init?.body));
       return Response.json({ line: "That was rude", options: ["Apologize", "Leave", "Ask why"], offense: "grave", clueRevealed: true, done: false });
     }
+    // Character lines are voiced on 0G via /api/voice; a failure must fall back to the browser voice.
+    if (String(input) === "/api/voice") return new Response(null, { status: 502 });
     throw new Error(`Unexpected request ${input}`);
   });
   vi.stubGlobal("fetch", request);
@@ -52,5 +54,9 @@ it("sends the shown inventory item and updates the danger meter from an offended
   expect(audio.setMuted).toHaveBeenLastCalledWith(true);
   fireEvent.click(screen.getByText("Case notes"));
   expect(await screen.findByText("First clue")).toBeTruthy();
-  expect(request.mock.calls.some(([input]) => String(input) === "/api/voice")).toBe(false);
+  // Every voice request carries the line and the character's speaker name, never anything else.
+  for (const [input, init] of request.mock.calls) {
+    if (String(input) !== "/api/voice") continue;
+    expect(Object.keys(JSON.parse(String(init?.body))).sort()).toEqual(["text", "voice"]);
+  }
 });

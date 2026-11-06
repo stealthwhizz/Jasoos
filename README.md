@@ -70,8 +70,14 @@ Sponsors are ordered by how much of the game stops working without them.
   `bytedance/seedream-5.0-flash` (streets, interiors, sprite, finale). Each one
   can be overridden with `ZG_CHAT_MODEL`, `ZG_VISION_MODEL` and
   `ZG_IMAGE_MODEL`.
-- Every chat and vision reply carries 0G's request ID, read from
-  `x_0g_trace.request_id` in the client.
+- **Voice, both ways, on 0G:** characters speak their lines with
+  `minimax-speech-2.8-turbo` (each character keeps one voice), and players can
+  talk back with the mic button, transcribed by `whisper-large-v3`
+  ([lib/zg-voice.ts](lib/zg-voice.ts), `/api/voice`, `/api/transcribe`).
+  Override with `ZG_TTS_MODEL` and `ZG_STT_MODEL`. If 0G speech fails, the
+  browser's own voice reads the line instead.
+- Every chat, vision and voice reply carries 0G's request ID (`x_0g_trace.request_id`
+  or the router's `x-request-id`), shown in the game's 0G request panel.
 - **What breaks without 0G:** every frame and every line of the game comes from
   a 0G call, so without it there is nothing to walk through or talk to.
 - 0G image models only take text, so the previous frame is not passed as a
