@@ -8,7 +8,9 @@ const MAX_ENTRIES = 50_000;
 const key = (playerId: string, worldId: string, npcId: string) => `${playerId}:${worldId}:${npcId}`;
 
 export function loadNpcState(playerId: string, worldId: string, npcId: string): NpcState {
-  return states.get(key(playerId, worldId, npcId)) ?? { replies: 0, clueRevealed: false, history: [] };
+  return (
+    states.get(key(playerId, worldId, npcId)) ?? { replies: 0, clueRevealed: false, history: [] }
+  );
 }
 
 export function saveNpcState(

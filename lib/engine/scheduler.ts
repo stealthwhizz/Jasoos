@@ -5,6 +5,7 @@ import { fixtureNotes } from "@/fixtures/world";
 import { planWorld } from "./planWorld";
 import { generateImage } from "./generateImage";
 import { analyzeStreet } from "./analyzeStreet";
+import { generateNotes } from "./notes";
 
 export interface Job {
   prompt: string;
@@ -45,6 +46,13 @@ export async function scheduler(job: Job, emit: (e: JobEvent) => void): Promise<
   };
 
   const street = image("street", "street", bible.streetDescription);
+  // Notes are text only, so they run alongside the images (R21).
+  const notes = env.useFixtures
+    ? Promise.resolve(fixtureNotes)
+    : generateNotes(bible).then(({ notes, events }) => {
+        for (const event of events) emit({ type: "ticker", event });
+        return notes;
+      });
   const [assets, map] = await Promise.all([
     Promise.all([
       street,
@@ -64,8 +72,7 @@ export async function scheduler(job: Job, emit: (e: JobEvent) => void): Promise<
     assets,
     walkMap: map.walkMap,
     doors: map.doors,
-    // TODO(A): generate notes with encodeNote; one per world hides the secret (R21).
-    notes: env.useFixtures ? fixtureNotes : [],
+    notes: await notes,
     createdAt: new Date().toISOString(),
   };
 }

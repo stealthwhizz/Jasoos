@@ -1,4 +1,5 @@
 import type { Asset, Manifest, Note, WalkMap, WorldBible } from "@/lib/types";
+import { encodeNote } from "@/lib/engine/codec";
 
 // TODO(A): replace with a real saved run once 0G works; keep this one as the labelled backup world.
 
@@ -70,11 +71,22 @@ export const fixtureWalkMap: WalkMap = {
   cells: Array.from({ length: COLS * ROWS }, (_, i) => Math.floor(i / COLS) >= ROWS * (2 / 3)),
 };
 
+/** The code hidden in the pawn-shop ledger. The Decoder must read exactly this back. */
+export const FIXTURE_NOTE_SECRET = "KEY";
+
+// 24 codebook slots; "KEY" needs 23. encodeNote picks the word variants that carry the code.
+const LEDGER_COVER =
+  "Closed early today. A quick sale: the large brass lamp, perhaps to the nervous man from the depot. " +
+  "He had cash in his hand and seemed in a hurry. Frequently he waits below the stairs, quiet and careful, " +
+  "looking toward the door. Strange fellow, but polite. The shiny key with the red thread is gone " +
+  "from the case; maybe a mistake in the ledger, but I am almost sure it was there this morning. " +
+  "Must fix the lock soon. Really, the store is a mess, and the floor is wet from the rain.";
+
 export const fixtureNotes: Note[] = [
   {
     id: "note-ledger",
     locationId: "pawn",
-    text: "Shut early today. The large brass lamp sold fast, perhaps to the man from the depot. Frequently he waits below the stairs.",
+    text: encodeNote(FIXTURE_NOTE_SECRET, LEDGER_COVER),
     hasHidden: true,
   },
   {
@@ -84,9 +96,6 @@ export const fixtureNotes: Note[] = [
     hasHidden: false,
   },
 ];
-
-/** Decoded answers for fixture notes, used by the decodeNote stub until the real codec lands. */
-export const fixtureNoteSecrets: Record<string, string> = { "note-ledger": "KEY" };
 
 export const fixtureManifest: Manifest = {
   worldId: "fixture-monsoon-tiffin",

@@ -5,3 +5,4 @@ export { analyzeStreet } from "./analyzeStreet";
 export { scheduler, createJob, takeJob } from "./scheduler";
 export { dialogueTurn } from "./dialogueTurn";
 export { encodeNote, decodeNote } from "./codec";
+export { generateNotes } from "./notes";
