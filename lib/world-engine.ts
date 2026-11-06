@@ -1,4 +1,4 @@
-import { generateContentWithRetry, generateImage, toDataUrl, Type } from "./gemini";
+import { generateContentWithRetry, generateImage, toDataUrl, Type } from "./zg-client";
 import {
   resolveSpeaker,
   synthesizeSarvamSpeech,

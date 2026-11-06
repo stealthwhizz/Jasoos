@@ -39,7 +39,7 @@ export function ai(): OpenAI {
   return client;
 }
 
-/** Schema type tags. Same strings as the old Gemini `Type`, so existing schemas stay as written. */
+/** Schema type tags (uppercase). Existing schemas use these; `toJsonSchema` lowercases them. */
 export const Type = {
   OBJECT: "OBJECT",
   ARRAY: "ARRAY",
@@ -54,7 +54,7 @@ export type ContentPart =
   | { text: string }
   | { inlineData: { data: string; mimeType: string } };
 
-/** Request shape kept from the Gemini call sites: prompt, system instruction, JSON schema. */
+/** Request shape for model calls: prompt, system instruction, JSON schema. */
 export type GenerateParams = {
   contents: string | ContentPart[];
   config?: {
@@ -65,7 +65,7 @@ export type GenerateParams = {
   };
 };
 
-/** Gemini-style schema → JSON Schema (lowercase type names); everything else passes through. */
+/** Uppercase schema type tags → JSON Schema (lowercase type names); everything else passes through. */
 function toJsonSchema(schema: unknown): unknown {
   if (Array.isArray(schema)) return schema.map(toJsonSchema);
   if (!schema || typeof schema !== "object") return schema;

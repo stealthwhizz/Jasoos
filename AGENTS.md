@@ -35,8 +35,8 @@ Keep types in **one place per layer**. Do not define duplicate shapes inline in 
 
 Every model call goes to 0G Private Computer through the OpenAI SDK.
 
-- The explorable world uses [`lib/gemini.ts`](lib/gemini.ts). Despite the file name it holds no Gemini code; it is the 0G client. For text and vision use `generateContentWithRetry`; for images use `generateImage`. Do not call `ai().chat.completions.create` directly in new code.
-- The older engine under `lib/engine/` uses `zgCall` in [`lib/zg/index.ts`](lib/zg/index.ts), which falls back to OpenAI when `OPENAI_API_KEY` is set. `lib/gemini.ts` has no OpenAI fallback yet.
+- The explorable world uses [`lib/zg-client.ts`](lib/zg-client.ts), the 0G client. For text and vision use `generateContentWithRetry`; for images use `generateImage`. Do not call `ai().chat.completions.create` directly in new code.
+- The older engine under `lib/engine/` uses `zgCall` in [`lib/zg/index.ts`](lib/zg/index.ts), which falls back to OpenAI when `OPENAI_API_KEY` is set. `lib/zg-client.ts` has no OpenAI fallback yet.
 - Backup calls must stay visible (the ticker labels them `openai/<model>`), so a demo never hides that 0G was not used.
 
 ## Server-side retries
@@ -44,7 +44,7 @@ Every model call goes to 0G Private Computer through the OpenAI SDK.
 Wrap transient-prone outbound calls with the shared retry helper in [`lib/retry.ts`](lib/retry.ts):
 
 - Use `withRetry(fn, DEFAULT_RETRY_OPTS)` for Arkiv writes, external `fetch` calls, and other server I/O that can fail on rate limits, 5xx, or network blips.
-- Keep retry logic in domain libs (`lib/gemini.ts`, `lib/world-engine.ts`, `lib/games.ts`), not in API route handlers.
+- Keep retry logic in domain libs (`lib/zg-client.ts`, `lib/world-engine.ts`, `lib/games.ts`), not in API route handlers.
 - Defaults live in [`lib/constants.ts`](lib/constants.ts): `RETRY_MAX` (3) and `RETRY_BASE_MS` (500).
 
 ## Documentation

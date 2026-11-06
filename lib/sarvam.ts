@@ -25,8 +25,8 @@ export const VOICE_NAMES = [
   "ishita",
 ] as const;
 
-/** Map legacy Gemini TTS voice names from older saved games. */
-export const LEGACY_GEMINI_VOICE_MAP: Record<string, string> = {
+/** Map legacy TTS voice names (Puck, Kore, …) from older saved games to Bulbul speakers. */
+export const LEGACY_VOICE_MAP: Record<string, string> = {
   Puck: "rohan",
   Charon: "aditya",
   Kore: "priya",
@@ -48,13 +48,13 @@ type SarvamTtsResponse = {
 };
 
 /**
- * Resolve a Bulbul speaker id, mapping legacy Gemini names when needed.
+ * Resolve a Bulbul speaker id, mapping legacy voice names when needed.
  */
 export function resolveSpeaker(voice?: string): string {
   if (!voice) return DEFAULT_SPEAKER;
   const lower = voice.toLowerCase();
   if ((VOICE_NAMES as readonly string[]).includes(lower)) return lower;
-  const mapped = LEGACY_GEMINI_VOICE_MAP[voice];
+  const mapped = LEGACY_VOICE_MAP[voice];
   if (mapped) return mapped;
   return DEFAULT_SPEAKER;
 }

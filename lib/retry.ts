@@ -101,7 +101,7 @@ export async function withRetry<T>(
   throw new Error("withRetry: unreachable");
 }
 
-/** Shared retry config for server-side Gemini, Storage, and fetch calls. */
+/** Shared retry config for server-side 0G, Storage, and fetch calls. */
 export const DEFAULT_RETRY_OPTS: RetryOptions = {
   retries: RETRY_MAX,
   baseMs: RETRY_BASE_MS,

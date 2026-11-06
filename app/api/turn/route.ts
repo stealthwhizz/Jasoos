@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/worldid";
-import { generateBeat, generateImage, toDataUrl } from "@/lib/gemini";
+import { generateBeat, generateImage, toDataUrl } from "@/lib/zg-client";
 import type { TurnRequest, TurnResponse } from "@/lib/types";
 
 export const runtime = "nodejs";

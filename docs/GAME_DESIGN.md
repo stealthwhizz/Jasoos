@@ -41,7 +41,7 @@ a sprite, 3–4 interiors (prefetched), and a voice clip per dialogue line.
 ## Architecture
 
 - `lib/universe.ts` — GameBible/Scene/Hotspot/NPC types
-- `lib/gemini.ts` — the 0G model client (`generateContentWithRetry`, `generateImage`); the file name is historical
+- `lib/zg-client.ts` — the 0G model client (`generateContentWithRetry`, `generateImage`)
 - `lib/world-engine.ts` — `generateBible`, `generateScreen`, `generateInteriorScene`, `generateSprite`, `generateDialogue`, `generateFinale`, `synthesizeVoice`
 - `lib/sarvam.ts` — Sarvam Bulbul v3 TTS (`synthesizeSarvamSpeech`)
 - `app/api/universe` · `app/api/screen` · `app/api/scene` · `app/api/sprite` · `app/api/dialogue` · `app/api/finale` · `app/api/voice`
