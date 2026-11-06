@@ -180,7 +180,9 @@ Keep real keys in `.env.local` only; `.env.example` holds placeholders.
 **World ID setup:** in the [World Developer Portal](https://developer.world.org),
 create an app and an action (default `sign-in`), then set `WORLD_APP_ID`,
 `WORLD_RP_ID` and `WORLD_RP_SIGNING_KEY`. `WORLD_ENVIRONMENT=staging` accepts
-proofs from the [simulator](https://simulator.worldcoin.org).
+proofs from the [simulator](https://simulator.worldcoin.org); `sandbox` accepts the World ID
+Sandbox test app (turn off its attestation enforcement under **World ID Sandbox** in the portal,
+or World answers 403 `integrity_verification_failed`); `production` accepts the real World App.
 
 **Arkiv setup:** set `ARKIV_SIGNER_KEY` to a funded burner key
 ([faucet](https://hub.arkiv.network/faucet)), and set `ARKIV_ACCESS_KEY` for the

@@ -179,7 +179,8 @@ export type WorldDialogueState = {
 export type WidgetConfig = {
   app_id: `app_${string}`;
   action: string;
-  environment: "production" | "staging";
+  /** "staging" = web simulator, "sandbox" = World ID Sandbox app, "production" = World App. */
+  environment: "production" | "staging" | "sandbox";
   rp_context: import("@worldcoin/idkit").RpContext;
 };
 
