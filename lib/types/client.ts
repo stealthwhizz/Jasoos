@@ -196,6 +196,8 @@ export type DialogueBoxProps = {
   npc: import("../universe").NpcDef; history: DialogueTurn[]; options: string[];
   thinking: boolean; speaking: boolean; voiceOn: boolean; mood?: string;
   inventory: string[]; onToggleVoice: () => void; onSay: (line: string, shownItem?: string) => void; onClose: () => void;
+  /** 0G request IDs from voice input (Whisper), shown with the other 0G calls. */
+  onZgRequests?: (ids: ZgRequest[]) => void;
 };
 /** Pointer-driven movement and interact controls. */
 export type MobileControlsProps = {

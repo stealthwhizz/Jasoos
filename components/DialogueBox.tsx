@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Send, Volume2, VolumeX } from "lucide-react";
+import { Loader2, Mic, Send, Square, Volume2, VolumeX } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { playSfx } from "@/lib/sfx";
 import type { DialogueBoxProps } from "@/lib/types/client";
+import { useVoiceInput } from "./useVoiceInput";
 
 const MOOD_COLOR: Record<string, string> = {
   warm: "#6b8e5a",
@@ -33,9 +34,12 @@ export function DialogueBox({
   onSay,
   onClose,
   inventory,
+  onZgRequests,
 }: DialogueBoxProps) {
   const [selectedItem, setSelectedItem] = useState("");
   const [draft, setDraft] = useState("");
+  // Speak instead of typing: Whisper on 0G transcribes, and the line is sent as if typed.
+  const voiceInput = useVoiceInput((text) => onSay(text), onZgRequests);
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastNpcLine = [...history].reverse().find((t) => t.speaker === "npc");
 
@@ -265,9 +269,35 @@ export function DialogueBox({
             <Input
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              placeholder={`Say anything to ${npc.name}…`}
+              placeholder={
+                voiceInput.state === "recording"
+                  ? "Listening… click the square to send"
+                  : voiceInput.state === "transcribing"
+                    ? "Transcribing on 0G…"
+                    : `Say anything to ${npc.name}…`
+              }
               className="min-w-0 flex-1 rounded-base"
             />
+            {voiceInput.supported && (
+              <Button
+                type="button"
+                size="icon"
+                variant={voiceInput.state === "recording" ? "default" : "neutral"}
+                sound="tap"
+                disabled={thinking || voiceInput.state === "transcribing"}
+                onClick={voiceInput.toggle}
+                aria-label={voiceInput.state === "recording" ? "Stop and send voice" : `Speak to ${npc.name}`}
+                title={voiceInput.state === "recording" ? "Stop and send" : "Speak (transcribed by Whisper on 0G)"}
+              >
+                {voiceInput.state === "recording" ? (
+                  <Square size={14} />
+                ) : voiceInput.state === "transcribing" ? (
+                  <Loader2 size={15} className="animate-spin" />
+                ) : (
+                  <Mic size={15} />
+                )}
+              </Button>
+            )}
             <Button
               type="submit"
               size="icon"
@@ -277,6 +307,9 @@ export function DialogueBox({
               <Send size={15} />
             </Button>
           </form>
+          {voiceInput.error && (
+            <p className="mt-2 text-xs font-medium text-destructive" role="alert">{voiceInput.error}</p>
+          )}
         </CardContent>
       </Card>
     </motion.div>

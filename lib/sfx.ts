@@ -4,6 +4,9 @@ export type { SfxName } from "@/lib/types/client";
 let context: AudioContext | null = null;
 let muted = true;
 let narration = 0;
+/** When on, lines are voiced by 0G speech through /api/voice (browser voice is the fallback). */
+let cloudVoice = false;
+let currentAudio: HTMLAudioElement | null = null;
 const active = new Set<OscillatorNode>();
 let lastStep = 0;
 let lastHover = 0;
@@ -26,7 +29,24 @@ export function setSoundMuted(value: boolean): void {
 export function cancelNarration(): void {
   narration++;
   if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
 }
+
+/** Turn 0G-voiced narration on or off (the game turns it on; tests leave it off). */
+export function setCloudVoice(value: boolean): void {
+  cloudVoice = value;
+}
+
+/** The 0G request behind a voiced line, for the request-ID panel. */
+export type VoiceRequest = { model: string; requestId: string };
+export type NarrateOptions = {
+  /** The character's speaker name from the bible, so each character keeps one voice. */
+  voice?: string;
+  onRequest?: (request: VoiceRequest) => void;
+};
 
 /** Stable voice selection and pitch for a given character across replies. */
 export function speechProfile(identity: string, voices: SpeechSynthesisVoice[]) {
@@ -37,11 +57,65 @@ export function speechProfile(identity: string, voices: SpeechSynthesisVoice[]) 
   return { voice: candidates.length ? candidates[hash % candidates.length] : undefined, pitch: 0.85 + (hash % 31) / 100 };
 }
 
-/** Speak NPC/finale text locally; no network request or audio asset is needed. */
-export function narrate(text: string, identity: string, onSpeaking: (value: boolean) => void): void {
-  if (muted || !text.trim() || typeof window === "undefined" || !("speechSynthesis" in window)) { onSpeaking(false); return; }
+/**
+ * Speak NPC/finale text. With 0G voice on, the line is synthesized by MiniMax speech on 0G and
+ * played as audio; any failure (network, autoplay, no key) falls back to the browser's voice.
+ */
+export function narrate(
+  text: string,
+  identity: string,
+  onSpeaking: (value: boolean) => void,
+  options: NarrateOptions = {}
+): void {
+  if (muted || !text.trim() || typeof window === "undefined") { onSpeaking(false); return; }
   cancelNarration();
   const ticket = narration;
+  if (cloudVoice && typeof fetch === "function" && typeof Audio !== "undefined") {
+    void speakWith0G(text, identity, onSpeaking, options, ticket);
+    return;
+  }
+  speakInBrowser(text, identity, onSpeaking, ticket);
+}
+
+async function speakWith0G(
+  text: string,
+  identity: string,
+  onSpeaking: (value: boolean) => void,
+  { voice, onRequest }: NarrateOptions,
+  ticket: number
+): Promise<void> {
+  try {
+    const res = await fetch("/api/voice", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, voice }),
+    });
+    if (!res.ok) throw new Error(`voice ${res.status}`);
+    const model = res.headers.get("x-0g-model");
+    const requestId = res.headers.get("x-0g-request-id");
+    const blob = await res.blob();
+    if (ticket !== narration || muted) return; // cancelled while the audio was being made
+    if (model && requestId) onRequest?.({ model, requestId });
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    currentAudio = audio;
+    const finish = () => {
+      URL.revokeObjectURL(url);
+      if (ticket !== narration) return;
+      currentAudio = null;
+      onSpeaking(false);
+    };
+    audio.onplay = () => { if (ticket === narration) onSpeaking(true); };
+    audio.onended = finish;
+    audio.onerror = finish;
+    await audio.play();
+  } catch {
+    if (ticket === narration && !muted) speakInBrowser(text, identity, onSpeaking, ticket);
+  }
+}
+
+function speakInBrowser(text: string, identity: string, onSpeaking: (value: boolean) => void, ticket: number): void {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) { onSpeaking(false); return; }
   const utterance = new SpeechSynthesisUtterance(text);
   const profile = speechProfile(identity, window.speechSynthesis.getVoices());
   if (profile.voice) utterance.voice = profile.voice;
