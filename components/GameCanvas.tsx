@@ -46,11 +46,27 @@ export function GameCanvas({
     const sprite = loadImage(url("sprite"));
     const pos = { x: 0.5, y: 0.85, facing: 1 }; // feet position, 0..1
     const held = new Set<string>();
+    const { cols, rows, cells } = manifest.walkMap;
+    const hasWalkMap =
+      Number.isInteger(cols) &&
+      cols > 0 &&
+      Number.isInteger(rows) &&
+      rows > 0 &&
+      cells.length === cols * rows;
+
+    const isWalkable = (x: number, y: number) => {
+      if (!hasWalkMap) return true;
+      const col = Math.min(cols - 1, Math.max(0, Math.floor(x * cols)));
+      const row = Math.min(rows - 1, Math.max(0, Math.floor(y * rows)));
+      return cells[row * cols + col] === true;
+    };
 
     // The door whose bottom edge is closest to the feet, if within reach.
     const nearDoor = () =>
       manifest.doors.find(
-        (d) => Math.abs(pos.x - (d.x + d.w / 2)) < d.w && Math.abs(pos.y - (d.y + d.h)) < 0.12,
+        (d) =>
+          Math.abs(pos.x - (d.x + d.w / 2)) < Math.max(d.w, 0.045) &&
+          Math.abs(pos.y - (d.y + d.h)) < 0.22,
       );
 
     const typing = (e: KeyboardEvent) =>
@@ -68,21 +84,32 @@ export function GameCanvas({
       }
     };
     const up = (e: KeyboardEvent) => held.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key);
+    const clearHeld = () => held.clear();
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
+    window.addEventListener("blur", clearHeld);
 
     let last = performance.now();
     let frame = 0;
     const tick = (now: number) => {
       const dt = Math.min((now - last) / 1000, 0.05);
       last = now;
+      let dx = 0;
+      let dy = 0;
       for (const key of held) {
-        const [dx, dy] = KEYS[key] ?? [0, 0];
-        // TODO(B): block moves onto non-walkable cells of manifest.walkMap.
-        pos.x = Math.min(1, Math.max(0, pos.x + dx * SPEED * dt));
-        pos.y = Math.min(1, Math.max(0, pos.y + dy * SPEED * dt * (W / H)));
-        if (dx) pos.facing = dx;
+        const [kx, ky] = KEYS[key] ?? [0, 0];
+        dx += kx;
+        dy += ky;
       }
+      const magnitude = Math.hypot(dx, dy) || 1;
+      dx /= magnitude;
+      dy /= magnitude;
+      const nextX = Math.min(1, Math.max(0, pos.x + dx * SPEED * dt));
+      const nextY = Math.min(1, Math.max(0, pos.y + dy * SPEED * dt * (W / H)));
+      // Test each axis separately so the player can slide along walls and map edges.
+      if (dx && isWalkable(nextX, pos.y)) pos.x = nextX;
+      if (dy && isWalkable(pos.x, nextY)) pos.y = nextY;
+      if (dx) pos.facing = dx < 0 ? -1 : 1;
 
       ctx.clearRect(0, 0, W, H);
       if (street.complete) ctx.drawImage(street, 0, 0, W, H);
@@ -109,6 +136,7 @@ export function GameCanvas({
       cancelAnimationFrame(frame);
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
+      window.removeEventListener("blur", clearHeld);
     };
   }, [manifest]);
 

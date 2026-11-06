@@ -1,0 +1,57 @@
+# Team status and handoff
+
+Last updated: 2026-11-06 by Suraj (B)
+
+This file is the shared handoff for the team. The PRD remains the source of truth for scope and acceptance criteria; this file tracks current implementation evidence, owners, blockers, and decisions. Update the relevant row and add a dated note when work changes. Coordinate cross-lane contract changes with all affected owners before changing `lib/types`.
+
+## Owners
+
+| Owner | Lane | PRD scope | Main paths |
+| --- | --- | --- | --- |
+| Amogh (A) | Engine, 0G, detective logic | R1–R4, R7/R8 server logic, R9 events, R21–R23 data | `lib/engine/`, `lib/zg/`, engine API routes |
+| Suraj (B) | Game client and polish | R5/R6, R7/R8/R9 UI, R17/R18, R22 UI | `components/`, `app/page.tsx`, `app/gallery/`, `app/world/` |
+| Kishore (C) | Chain, identity, submission | R10–R12, R14–R16, R24/R25 | `lib/arkiv/`, `lib/worldid/`, chain API routes, `arkiv/`, `README.md` |
+
+## Current assignment snapshot
+
+“In progress” means the source has a partial implementation or an open TODO. “Ready for validation” means code was just added but has not been run through the PRD acceptance check in this session. Do not treat fixture behavior as proof of sponsor integrations.
+
+| Owner | Work | Status | Evidence / next action |
+| --- | --- | --- | --- |
+| A | Real moderation, world planning/schema retry, 0G generation/vision, retries, notes/codec | In progress | `lib/engine/` contains fixture behavior and TODO(A) markers; connect real 0G and record model/request evidence. |
+| A | Ticker events and server dialogue rules | In progress | Event/dialogue routes and modules exist; verify server-side turn state and live event metadata. |
+| B | R5 keyboard movement and walk-mask collision | Ready for validation | Implemented map-cell collision, axis sliding, normalized diagonal movement, and blur key reset in `components/GameCanvas.tsx`. Check against generated and fixture maps. |
+| B | R6 interior ready/pending/failed UI | Ready for validation | `app/world/[id]/WorldView.tsx` now shows a clear pending state and a labelled failure state with model/request ID. |
+| B | R7 dialogue panel, R9 ticker UI, R22 Decoder UI | In progress | Components exist; validate full flow with a live fixture world and edge cases. |
+| B | R8 clue unlock, accusation picker and finale; R17 share link; R18 speech | Not complete | Accusation/finale UI remains a TODO. Share and speech are cut-first stretch items in the PRD; decide based on time after core loop. |
+| B | Gallery and visual/demo polish | In progress / dependency | Gallery UI exists and reads `/api/gallery`; C owns the Arkiv query and verify components. Review when real data is available. |
+| C | World ID verification/gate, Arkiv reads/writes, quota, accusation checks, Storage | In progress | Stub implementations and TODO(C) markers remain in `lib/worldid/`, `lib/arkiv/`, and API routes. |
+| C | Arkiv judge docs, README details, World ID debrief and submission | In progress | `arkiv/*.md` are judge-facing stubs; README retains sponsor TODOs. |
+
+## Checkpoints
+
+- [ ] Phase 0: each lane proves its risky integration; B shows a fixture world with collision and walking.
+- [ ] Real generation renders in B's canvas with ticker events.
+- [ ] Publish, gallery, quota, and World ID gate work end to end.
+- [ ] Detective note, Decoder, accusation, and finale work end to end.
+- [ ] Freeze features and rehearse the submission flow twice.
+
+## Handoff notes
+
+### 2026-11-06 — Suraj (B)
+
+- Read all eight repo Markdown files, including `docs/PRD.md` and `AI_USAGE.md`.
+- Implemented walk-mask collision with axis sliding and normalized diagonal movement; made nearby doors reachable with the fixture map's lower-third walk area.
+- Added explicit pending and failed interior states. Failure UI retains the model and request ID.
+- Created the working branch `suraj/ethjasoos-client`; changes are not committed yet.
+- Installed the shared `vercel-react-best-practices` skill under `.agents/skills/`; `skills-lock.json` records its source and version hash.
+- Next: validate R5/R6 with the fixture world, then complete R8 UI after confirming the accusation/finale response shape with C/A.
+- External coordination: this entry and the document are the shared written handoff; no external messages have been sent.
+
+## Coordination rules
+
+1. Keep the PRD as the requirements authority; link PRD requirement IDs in code reviews and updates.
+2. Add a dated handoff note when an owner changes status, finds a blocker, or changes a cross-lane contract.
+3. Record the file paths and observable evidence, not just “done”. Mark integration work complete only after a working end-to-end path is demonstrated.
+4. For shared type/API changes, document the proposed shape here and get agreement from all affected lane owners before implementation.
+5. Keep credentials, proof payloads, and personal data out of this file and Arkiv entities.

@@ -35,8 +35,26 @@ export function WorldView({ manifest }: { manifest: PublicManifest }) {
               ← Back to the street
             </button>
           </div>
-          {/* TODO(B): "still building" for pending interiors, labelled placeholder for failed (R6). */}
-          {interior && (
+          {!interior || interior.status === "pending" ? (
+            <div
+              role="status"
+              className="flex min-h-56 items-center justify-center rounded-xl bg-neutral-100 p-6 text-center"
+            >
+              <div>
+                <p className="font-medium">Still building this room</p>
+                <p className="mt-1 text-sm text-neutral-500">
+                  The interior is generating. You can keep talking while it finishes.
+                </p>
+              </div>
+            </div>
+          ) : interior.status === "failed" ? (
+            <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-5">
+              <p className="font-medium">This room image could not be generated.</p>
+              <p className="mt-1 text-sm text-neutral-600">
+                The case is still playable. Generation record: {interior.model} · {interior.requestId}
+              </p>
+            </div>
+          ) : (
             <figure>
               <img
                 src={interior.url}
