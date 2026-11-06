@@ -1,0 +1,84 @@
+{
+  "date": "2026-11-06T10:40:46.335Z",
+  "baseURL": "http://127.0.0.1:3003",
+  "fixtureOnly": true,
+  "browser": "158.0.8127.18",
+  "checks": [
+    {
+      "name": "gallery object completed",
+      "status": "FAIL",
+      "width": 1440,
+      "evidence": "locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Retry gallery' }) to be visible\u001b[22m\n"
+    },
+    {
+      "name": "gallery null completed",
+      "status": "FAIL",
+      "width": 1440,
+      "evidence": "locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Retry gallery' }) to be visible\u001b[22m\n"
+    },
+    {
+      "name": "gallery records completed",
+      "status": "FAIL",
+      "width": 1440,
+      "evidence": "locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Retry gallery' }) to be visible\u001b[22m\n"
+    },
+    {
+      "name": "gallery object completed",
+      "status": "FAIL",
+      "width": 768,
+      "evidence": "locator.waitFor: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Retry gallery' }) to be visible\u001b[22m\n"
+    }
+  ],
+  "diagnostics": [
+    {
+      "label": "gallery-object-1440",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3003/api/gallery",
+          "error": "net::ERR_ABORTED"
+        }
+      ]
+    },
+    {
+      "label": "gallery-null-1440",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3003/api/gallery",
+          "error": "net::ERR_ABORTED"
+        }
+      ]
+    },
+    {
+      "label": "gallery-records-1440",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3003/api/gallery",
+          "error": "net::ERR_ABORTED"
+        }
+      ]
+    },
+    {
+      "label": "gallery-object-768",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3003/api/gallery",
+          "error": "net::ERR_ABORTED"
+        }
+      ]
+    }
+  ],
+  "accessibility": [],
+  "summary": {
+    "PASS": 0,
+    "FAIL": 4,
+    "UNVERIFIED": 0
+  }
+}
