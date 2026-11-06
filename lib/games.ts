@@ -5,6 +5,8 @@
 
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { generateScreen } from "@/lib/world-engine";
+import { withRequestIds } from "@/lib/zg-client";
 import { FREE_GAME_LIMIT, GEN_CALL_COST } from "@/lib/constants";
 import { gameStore } from "@/lib/arkiv";
 import type {
@@ -17,6 +19,7 @@ import type {
   GameSceneRow,
   ParsedDataUrl,
   SessionUser,
+  SavedScreenRequest,
 } from "@/lib/types/server";
 import type { SceneData } from "@/lib/universe";
 
@@ -273,4 +276,59 @@ export async function fetchImageAsBase64(url: string): Promise<string | null> {
   } catch {
     return null;
   }
+}
+
+
+// One process owns the signer; keep a world's generation + save together so concurrent
+// requests cannot spend credits on the same screen or race the world's capacity check.
+const screenGenerations = new Map<string, Promise<unknown>>();
+
+/** Replay or generate and persist a bounded screen using only the saved world's bible. */
+export async function getOrGenerateScreen(body: SavedScreenRequest, user: SessionUser) {
+  if (typeof body?.gameId !== "string" || !body.gameId) {
+    throw Object.assign(new Error("gameId is required."), { status: 422 });
+  }
+  if (!Number.isInteger(body.x) || !Number.isInteger(body.y) || Math.abs(body.x) > 1 || Math.abs(body.y) > 1) {
+    throw Object.assign(new Error("The road ends at the edge of this 3x3 world."), { status: 422 });
+  }
+  const previous = screenGenerations.get(body.gameId) ?? Promise.resolve();
+  const run = previous.catch(() => undefined).then(async () => {
+    const store = gameStore();
+    const game = await getGameRecord(body.gameId);
+    if (!game) throw Object.assign(new Error("Game not found."), { status: 404 });
+    const scenes = await store.listScenes(game.id);
+    const sceneId = `s${body.x}_${body.y}`;
+    const cached = scenes.find((scene) => scene.scene_id === sceneId && scene.kind === "street");
+    if (cached) return { scene: rowToScene(cached), generated: false, requestIds: [] };
+    if (game.owner !== user.id) throw Object.assign(new Error("Only the creator can build new roads."), { status: 403 });
+    const streets = scenes.filter((scene) => scene.kind === "street");
+    const additional = streets.filter((scene) => scene.scene_id !== "s0_0");
+    if (streets.length >= 9 || (sceneId !== "s0_0" && additional.length >= 8)) {
+      throw Object.assign(new Error("This world has reached its eight additional screen limit."), { status: 422 });
+    }
+    const placed = new Set(streets.flatMap((scene) => scene.data.hotspots
+      .filter((hotspot) => hotspot.kind === "building" && typeof hotspot.clueIndex === "number")
+      .map((hotspot) => hotspot.clueIndex)));
+    const unplaced = [0, 1, 2].filter((index) => !placed.has(index));
+    const direction = body.arriveFrom && ["n", "e", "s", "w"].includes(body.arriveFrom) ? body.arriveFrom : null;
+    // Continuity comes from this world's saved neighbour, never a client-provided image/bible.
+    const dx = direction === "e" ? 1 : direction === "w" ? -1 : 0;
+    const dy = direction === "s" ? 1 : direction === "n" ? -1 : 0;
+    const neighbour = direction ? streets.find((scene) => scene.x === body.x - dx && scene.y === body.y - dy) : undefined;
+    const image = neighbour ? await fetchImageAsBase64(neighbour.image_url) : null;
+    const { result: scene, requestIds } = await withRequestIds(() =>
+      generateScreen(game.bible, body.x, body.y, direction, image, unplaced.slice(0, 1))
+    );
+    const base = `${game.owner}/${game.id}/${sceneId}`;
+    const imageUrl = scene.image.startsWith("data:") ? await uploadDataUrl(`${base}/image`, scene.image) : scene.image;
+    const annotatedUrl = scene.annotated?.startsWith("data:")
+      ? await uploadDataUrl(`${base}/annotated`, scene.annotated) : scene.annotated;
+    const row = sceneToRow({ ...scene, id: sceneId, kind: "street", coord: { x: body.x, y: body.y }, image: imageUrl, annotated: annotatedUrl });
+    const saved = await store.upsertScene(game.id, row);
+    if (sceneId === "s0_0") await store.updateGame(game.id, { thumbnail_url: imageUrl });
+    return { scene: rowToScene(saved.row), generated: true, requestIds };
+  });
+  screenGenerations.set(body.gameId, run);
+  try { return await run; }
+  finally { if (screenGenerations.get(body.gameId) === run) screenGenerations.delete(body.gameId); }
 }

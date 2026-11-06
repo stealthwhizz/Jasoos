@@ -4,12 +4,11 @@
 
 - Production build: passed (Next 16.2.10, with network access for configured Google Fonts).
 - Typecheck: passed after regenerating stale Next route types with `npx next typegen`.
-- Tests: 38 passed, covering pagination through 205 rows, deletion, first/repeated/concurrent
+- Tests: 44 passed, covering pagination through 205 rows, deletion, first/repeated/concurrent
   accusation, failed accusation write, evidence auth/action/persistence/reopen/failure,
   saved screen replay/grid cap, generation session gate and thinking opt-in.
 - Changed-file ESLint: passed.
-- Repository ESLint: 14 existing errors and 8 warnings in World, GameCanvas, DialogueBox and
-  Ending. Those shared files were not changed in this branch.
+- Repository ESLint: passed with five image warnings after merging main a1ce11e (including its React Compiler fixes).
 
 ## 0G text comparison
 
@@ -41,9 +40,11 @@ it is not an accepted-proof test.
 ## Open acceptance items
 
 - #19: a real per-world simulator proof. The per-case action scheme is provisional until tested.
-- #21: check the cap before generation, with a saved game id and server-side reservation;
-  persistence now rejects coordinates outside the 3x3 grid. Shared route/client edits were
-  requested on board #3 and remain awaiting lane-owner approval.
+- #21: server helper `getOrGenerateScreen` now checks saved game ownership, bounds/cap,
+  derives generation from the saved bible, serializes generation+save, and replays cached
+  screens without inference. Six helper tests pass. Route/client wiring is prepared as
+  a patch and remains awaiting the requested lane-owner approval or user override.
+  The existing route is not yet connected to that helper.
 - #28: measured time to first accepted proof. The debrief explicitly records this missing datum.
 - Interactive browser validation was blocked because localhost browser access was declined.
 - Check/write serialization is process-local. Deploy one signer/writer process until distributed
