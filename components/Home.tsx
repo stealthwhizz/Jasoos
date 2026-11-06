@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { JobEvent, TickerEvent } from "@/lib/types";
 import { Ticker } from "./Ticker";
+import { WorldIdButton } from "./WorldIdButton";
 
 interface Status {
   creationPaused: boolean;
@@ -26,16 +27,6 @@ export function Home() {
   useEffect(() => {
     void loadStatus();
   }, []);
-
-  // TODO(C): replace with IDKitRequestWidget from @worldcoin/idkit; post its result here as-is.
-  async function verify() {
-    const res = await fetch("/api/verify", {
-      method: "POST",
-      body: JSON.stringify({ fixture: true }),
-    });
-    setMessage(res.ok ? "" : ((await res.json()).error ?? "Verification failed."));
-    await loadStatus();
-  }
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
@@ -100,13 +91,7 @@ export function Home() {
         />
         <div className="flex flex-wrap items-center gap-3">
           {status && !status.verified && (
-            <button
-              type="button"
-              onClick={verify}
-              className="rounded-full border border-neutral-300 px-5 py-2 text-sm font-medium hover:bg-neutral-100"
-            >
-              Verify with World ID
-            </button>
+            <WorldIdButton onVerified={() => void loadStatus()} onError={setMessage} />
           )}
           <button
             type="submit"

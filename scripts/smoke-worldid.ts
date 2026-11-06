@@ -1,11 +1,16 @@
-// Sends an empty payload to the World ID verify endpoint. A 4xx with a JSON error means the
-// endpoint and app ID are reachable; a real proof needs the IDKit widget or the simulator.
+// 1. Signs an rp_context with WORLD_RP_SIGNING_KEY (the same call /api/verify GET makes).
+// 2. Sends an empty payload to the v4 verify endpoint for WORLD_RP_ID. A 4xx with a JSON error
+//    means the endpoint and RP ID are reachable; a real proof needs the widget or the simulator.
+import { signRequest } from "@worldcoin/idkit/signing";
 import { requireEnv, timed } from "./env";
 
-const env = requireEnv("smoke:worldid", ["WORLD_APP_ID", "WORLD_ACTION_ID"]);
-// TODO(C): the v4 endpoint takes an rp_id; confirm whether it equals WORLD_APP_ID for this app.
-const url = `https://developer.world.org/api/v4/verify/${encodeURIComponent(env.WORLD_APP_ID)}`;
+const env = requireEnv("smoke:worldid", ["WORLD_APP_ID", "WORLD_RP_ID", "WORLD_RP_SIGNING_KEY"]);
+const action = process.env.WORLD_ACTION_ID || "create-world";
 
+const sig = signRequest({ action, signingKeyHex: env.WORLD_RP_SIGNING_KEY });
+console.log({ action, nonce: sig.nonce, ttlSec: sig.expiresAt - sig.createdAt, signed: true });
+
+const url = `https://developer.world.org/api/v4/verify/${encodeURIComponent(env.WORLD_RP_ID)}`;
 const [res, ms] = await timed(() =>
   fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }),
 );
