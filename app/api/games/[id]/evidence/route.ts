@@ -2,9 +2,8 @@ import { NextResponse } from "next/server";
 import { gameStore } from "@/lib/arkiv";
 import { getGameRecord } from "@/lib/games";
 import { createRpContext, devSignInAllowed, requireUser, verifyProof, worldIdConfigured } from "@/lib/worldid";
-import { unseal } from "@/lib/world-engine";
+import { readMystery } from "@/lib/world-engine";
 import type { GameIdRouteContext } from "@/lib/types/server";
-import type { Mystery } from "@/lib/universe";
 
 export const runtime = "nodejs";
 
@@ -26,7 +25,7 @@ export async function POST(req: Request, context: GameIdRouteContext) {
   try {
     const game = await getGameRecord(id);
     if (!game) return NextResponse.json({ error: "Game not found." }, { status: 404 });
-    const mystery = unseal<Mystery>(game.bible.story.sealed);
+    const mystery = readMystery(game.bible);
     if (!mystery.key) return NextResponse.json({ error: "This older world has no sealed evidence." }, { status: 422 });
     const store = gameStore();
     if (!(await store.hasUnlock(id, user.id))) {

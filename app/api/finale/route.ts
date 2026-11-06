@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/worldid";
 import { gameStore } from "@/lib/arkiv";
 import { getGameRecord, uploadDataUrl } from "@/lib/games";
-import { generateFinale, seal, unseal } from "@/lib/world-engine";
+import { generateFinale, readMystery, seal, unseal } from "@/lib/world-engine";
 import { withRequestIds } from "@/lib/zg-client";
-import type { Mystery } from "@/lib/universe";
 import type { FinaleData, FinaleRequest } from "@/lib/types/server";
 
 export const runtime = "nodejs";
@@ -41,7 +40,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Game not found." }, { status: 404 });
     }
     const { bible } = game;
-    const { culprit } = unseal<Mystery>(bible.story.sealed);
+    const { culprit } = readMystery(bible);
+
+    if (body.accused !== undefined && culprit < 0) {
+      // Worlds made before the answer was sealed never recorded a culprit, so there is nothing to judge.
+      return NextResponse.json(
+        { error: "This older world has no culprit on record, so accusations are off here." },
+        { status: 422 }
+      );
+    }
 
     if (body.accused !== undefined) {
       try {

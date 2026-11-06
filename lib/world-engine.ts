@@ -368,6 +368,17 @@ export function unseal<T>(sealed: string): T {
   return JSON.parse(plain.toString("utf8")) as T;
 }
 
+/**
+ * The world's mystery, for new and old worlds alike. Worlds made before the answer was sealed
+ * store `story.secret` in the clear and have no culprit or evidence key: they come back with
+ * `culprit: -1` (no one to accuse) instead of crashing `unseal(undefined)`.
+ */
+export function readMystery(bible: GameBible): Mystery {
+  const story = bible.story as GameBible["story"] & { secret?: unknown };
+  if (typeof story.sealed === "string") return unseal<Mystery>(story.sealed);
+  return { secret: typeof story.secret === "string" ? story.secret : "", culprit: -1 };
+}
+
 /** The planner's raw story: the answer is still in the clear until `generateBible` seals it. */
 type PlannedStory = { goal: string; secret: string; culprit: number; clues: string[] };
 
@@ -493,14 +504,16 @@ export function plantClues(
  * inventing the world.
  */
 export function bibleBrief(b: GameBible): string {
-  const { secret, culprit } = unseal<Mystery>(b.story.sealed);
+  const { secret, culprit } = readMystery(b);
   const lines: string[] = [
     `=== GAME BIBLE: ${b.title} ===`,
     `SETTING: ${b.setting}`,
     `PROTAGONIST: ${b.protagonist}`,
     `GOAL: ${b.story.goal}`,
     `THE HIDDEN SECRET (spoiler — see rules below): ${secret}`,
-    `THE CULPRIT (spoiler): ${b.npcs[culprit]?.name}. They still guard their own clue, but lie about their part.`,
+    ...(b.npcs[culprit]
+      ? [`THE CULPRIT (spoiler): ${b.npcs[culprit].name}. They still guard their own clue, but lie about their part.`]
+      : []),
     `STORY BEATS: ${b.beats.map((x, i) => `(${i + 1}) ${x}`).join(" ")}`,
     `WIN CONDITION: ${b.winCondition}`,
     `DANGER METER — "${b.heatLabel}" (0-100): careless play raises it; at 100 the run ends in defeat.`,
@@ -1199,7 +1212,7 @@ export async function generateFinale(
       "",
       outcome === "victory"
         ? `Write the VICTORY finale: the player accused ${
-            bible.npcs[unseal<Mystery>(bible.story.sealed).culprit]?.name
+            bible.npcs[readMystery(bible).culprit]?.name
           } and was right. The three clues converge and the hidden secret finally comes out, plainly stated.`
         : `Write the DEFEAT finale: the run has ended because ${
             reason || `the ${bible.heatLabel} meter reached 100`
