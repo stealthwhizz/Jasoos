@@ -1,29 +1,62 @@
-import type { DialogueMessage, DialogueRequest } from "@/lib/types";
-import { dialogueTurn } from "@/lib/engine";
-import { getWorld } from "@/lib/arkiv";
+import { NextRequest, NextResponse } from "next/server";
+import { requireUser } from "@/lib/worldid";
+import { generateDialogue } from "@/lib/world-engine";
+import type { DialogueTurn, GameBible } from "@/lib/universe";
 
-const MAX_HISTORY = 10;
-const MAX_TEXT = 500;
+export const runtime = "nodejs";
+export const maxDuration = 30;
 
-function parse(body: unknown): DialogueRequest | null {
-  if (!body || typeof body !== "object") return null;
-  const b = body as Record<string, unknown>;
-  if (typeof b.worldId !== "string" || typeof b.npcId !== "string") return null;
-  if (typeof b.message !== "string" || !Array.isArray(b.history)) return null;
-  const history = b.history
-    .slice(-MAX_HISTORY)
-    .filter(
-      (m): m is DialogueMessage =>
-        (m?.role === "player" || m?.role === "npc") && typeof m.text === "string",
+type DialogueRequest = {
+  bible: GameBible;
+  /** Which of the bible's 3 NPCs is speaking. */
+  npcIndex: number;
+  history: DialogueTurn[];
+  playerLine: string | null;
+  clueFound?: boolean;
+  exchanges?: number;
+  inventory?: string[];
+  /** Current danger-meter value 0..100. */
+  heat?: number;
+};
+
+export async function POST(req: NextRequest) {
+  if (!(await requireUser())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let body: DialogueRequest;
+  try {
+    body = (await req.json()) as DialogueRequest;
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+  }
+  if (!body.bible?.npcs?.length || typeof body.npcIndex !== "number") {
+    return NextResponse.json(
+      { error: "Missing bible or npcIndex." },
+      { status: 400 }
     );
-  return { worldId: b.worldId, npcId: b.npcId, history, message: b.message.slice(0, MAX_TEXT) };
-}
-
-export async function POST(req: Request) {
-  const dialogue = parse(await req.json().catch(() => null));
-  if (!dialogue) return Response.json({ error: "Bad dialogue request." }, { status: 400 });
-  const world = await getWorld(dialogue.worldId);
-  const npc = world?.bible.locations.find((l) => l.npc.id === dialogue.npcId)?.npc;
-  if (!npc) return Response.json({ error: "No such character." }, { status: 404 });
-  return Response.json(await dialogueTurn(npc, dialogue));
+  }
+  try {
+    const reply = await generateDialogue(
+      body.bible,
+      body.npcIndex,
+      body.history ?? [],
+      body.playerLine ?? null,
+      {
+        clueFound: Boolean(body.clueFound),
+        exchanges:
+          body.exchanges ??
+          (body.history ?? []).filter((t) => t.speaker === "player").length,
+        inventory: body.inventory ?? [],
+        heat: body.heat ?? 0,
+      }
+    );
+    return NextResponse.json(reply);
+  } catch (err) {
+    console.error("[/api/dialogue]", err);
+    return NextResponse.json(
+      { error: "The character lost their train of thought." },
+      { status: 500 }
+    );
+  }
 }
