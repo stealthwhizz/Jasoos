@@ -129,6 +129,53 @@ try {
           await context.close();
         }
       }
+  if (suites.includes("visit"))
+    for (const viewport of viewports)
+      for (const mode of ["transport", "http"]) {
+        const { page, context, diagnostics } = await pageFor(
+          viewport,
+          `visit-${mode}-${viewport.width}`,
+        );
+        try {
+          await page.route("**/api/worlds/*/visit", (route) =>
+            mode === "transport"
+              ? route.abort("failed")
+              : route.fulfill({ status: 503, json: { error: "Deliberate visit failure" } }),
+          );
+          await page.goto("/world/fixture-monsoon-tiffin");
+          await page
+            .getByText("Visit activity could not be recorded. You can keep investigating.", {
+              exact: true,
+            })
+            .waitFor();
+          check(
+            `visit ${mode} failure is visible without blocking play`,
+            await page.locator("canvas").isVisible(),
+            null,
+            viewport.width,
+          );
+          await page.locator("canvas").focus();
+          await page.keyboard.press("e");
+          await page.getByRole("heading", { name: "Dabba Depot", exact: true }).waitFor();
+          check(
+            `visit ${mode} failure keeps doors usable`,
+            await page.getByRole("textbox", { name: /^Say something/ }).isVisible(),
+            null,
+            viewport.width,
+          );
+          check(
+            `visit ${mode} failure has no uncaught rejection`,
+            diagnostics.pageErrors.length === 0,
+            diagnostics.pageErrors,
+            viewport.width,
+          );
+          await capture(page, `visit-${mode}-recovered`, viewport.width);
+        } catch (error) {
+          check(`visit ${mode} completed`, false, error.message, viewport.width);
+        } finally {
+          await context.close();
+        }
+      }
 } finally {
   await browser.close();
   report.summary = report.checks.reduce((summary, check) => (summary[check.status]++, summary), {

@@ -8,6 +8,7 @@ import { AccusationPanel } from "@/components/AccusationPanel";
 import { Decoder } from "@/components/Decoder";
 
 export function WorldView({ manifest }: { manifest: PublicManifest }) {
+  const [visitFailed, setVisitFailed] = useState(false);
   const [locationId, setLocationId] = useState<string | null>(null);
   const [clues, setClues] = useState<Set<string>>(new Set());
   const interiorHeadingRef = useRef<HTMLHeadingElement>(null);
@@ -16,7 +17,17 @@ export function WorldView({ manifest }: { manifest: PublicManifest }) {
   const interior = manifest.assets.find((a) => a.id === `interior-${locationId}`);
 
   useEffect(() => {
-    void fetch(`/api/worlds/${worldId}/visit`, { method: "POST" });
+    let active = true;
+    void fetch(`/api/worlds/${encodeURIComponent(worldId)}/visit`, { method: "POST" })
+      .then((response) => {
+        if (!response.ok) throw new Error("Visit was not recorded");
+      })
+      .catch(() => {
+        if (active) setVisitFailed(true);
+      });
+    return () => {
+      active = false;
+    };
   }, [worldId]);
 
   useEffect(() => {
@@ -25,6 +36,11 @@ export function WorldView({ manifest }: { manifest: PublicManifest }) {
 
   return (
     <div className="game-shell">
+      {visitFailed && (
+        <p role="status" className="text-sm text-neutral-600">
+          Visit activity could not be recorded. You can keep investigating.
+        </p>
+      )}
       <div className="world-hud">
         <div>
           <p className="eyebrow">Case file / {location?.name ?? "Street investigation"}</p>

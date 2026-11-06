@@ -1,0 +1,314 @@
+{
+  "date": "2026-11-06T10:42:38.384Z",
+  "baseURL": "http://127.0.0.1:3003",
+  "fixtureOnly": true,
+  "browser": "158.0.8127.18",
+  "checks": [
+    {
+      "name": "visit transport failure is visible without blocking play",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "visit transport failure keeps doors usable",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "visit transport failure has no uncaught rejection",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "visit-transport-recovered: no horizontal overflow",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "visit-transport-recovered: automated accessibility",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "visit http failure is visible without blocking play",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "visit http failure keeps doors usable",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "visit http failure has no uncaught rejection",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "visit-http-recovered: no horizontal overflow",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "visit-http-recovered: automated accessibility",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "visit transport failure is visible without blocking play",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "visit transport failure keeps doors usable",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "visit transport failure has no uncaught rejection",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "visit-transport-recovered: no horizontal overflow",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "visit-transport-recovered: automated accessibility",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "visit http failure is visible without blocking play",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "visit http failure keeps doors usable",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "visit http failure has no uncaught rejection",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "visit-http-recovered: no horizontal overflow",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "visit-http-recovered: automated accessibility",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "visit transport failure is visible without blocking play",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "visit transport failure keeps doors usable",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "visit transport failure has no uncaught rejection",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    },
+    {
+      "name": "visit-transport-recovered: no horizontal overflow",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "visit-transport-recovered: automated accessibility",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    },
+    {
+      "name": "visit http failure is visible without blocking play",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "visit http failure keeps doors usable",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "visit http failure has no uncaught rejection",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    },
+    {
+      "name": "visit-http-recovered: no horizontal overflow",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "visit-http-recovered: automated accessibility",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    }
+  ],
+  "diagnostics": [
+    {
+      "label": "visit-transport-1440",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_FAILED",
+        "Failed to load resource: net::ERR_FAILED"
+      ],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3003/api/worlds/fixture-monsoon-tiffin/visit",
+          "error": "net::ERR_FAILED"
+        },
+        {
+          "url": "http://127.0.0.1:3003/api/worlds/fixture-monsoon-tiffin/visit",
+          "error": "net::ERR_FAILED"
+        }
+      ]
+    },
+    {
+      "label": "visit-http-1440",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      ],
+      "failedRequests": []
+    },
+    {
+      "label": "visit-transport-768",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_FAILED",
+        "Failed to load resource: net::ERR_FAILED"
+      ],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3003/api/worlds/fixture-monsoon-tiffin/visit",
+          "error": "net::ERR_FAILED"
+        },
+        {
+          "url": "http://127.0.0.1:3003/api/worlds/fixture-monsoon-tiffin/visit",
+          "error": "net::ERR_FAILED"
+        }
+      ]
+    },
+    {
+      "label": "visit-http-768",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      ],
+      "failedRequests": []
+    },
+    {
+      "label": "visit-transport-390",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_FAILED",
+        "Failed to load resource: net::ERR_FAILED"
+      ],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3003/api/worlds/fixture-monsoon-tiffin/visit",
+          "error": "net::ERR_FAILED"
+        },
+        {
+          "url": "http://127.0.0.1:3003/api/worlds/fixture-monsoon-tiffin/visit",
+          "error": "net::ERR_FAILED"
+        }
+      ]
+    },
+    {
+      "label": "visit-http-390",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      ],
+      "failedRequests": []
+    }
+  ],
+  "accessibility": [
+    {
+      "name": "visit-transport-recovered",
+      "width": 1440,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "visit-http-recovered",
+      "width": 1440,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "visit-transport-recovered",
+      "width": 768,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "visit-http-recovered",
+      "width": 768,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "visit-transport-recovered",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "visit-http-recovered",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    }
+  ],
+  "summary": {
+    "PASS": 30,
+    "FAIL": 0,
+    "UNVERIFIED": 0
+  }
+}
