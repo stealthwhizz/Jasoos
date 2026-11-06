@@ -24,18 +24,38 @@ export function WorldView({ manifest }: { manifest: PublicManifest }) {
   }, [locationId]);
 
   return (
-    <div className="space-y-6 pt-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className="game-shell">
+      <div className="world-hud">
         <div>
+          <p className="eyebrow">Case file / {location?.name ?? "Street investigation"}</p>
           <h1 className="text-3xl font-semibold tracking-tight">{bible.title}</h1>
           <p className="max-w-2xl text-neutral-500">{bible.premise}</p>
         </div>
-        <p className="shrink-0 text-sm text-neutral-500">Evidence collected: {clues.size} / 3</p>
+        <div className="evidence-tracker">
+          <div>
+            <p className="eyebrow">
+              {clues.size >= 3 ? "Ready for accusation" : "Investigation open"}
+            </p>
+            <p className="text-sm">Evidence collected: {clues.size} / 3</p>
+          </div>
+          <div className="evidence-slots" role="group" aria-label="Evidence tracker">
+            {bible.locations.map(({ npc }, i) => (
+              <span
+                key={npc.id}
+                role="img"
+                className={`evidence-slot ${clues.has(npc.id) ? "collected" : ""}`}
+                aria-label={`${npc.name}: ${clues.has(npc.id) ? "clue collected" : "clue missing"}`}
+              >
+                {clues.has(npc.id) ? "✓" : `0${i + 1}`}
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
 
       {location ? (
-        <section className="space-y-4 rounded-2xl bg-white p-6 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <section className="case-panel interior-panel">
+          <div className="interior-top">
             <h2 ref={interiorHeadingRef} tabIndex={-1} className="text-xl font-semibold">
               {location.name}
             </h2>
