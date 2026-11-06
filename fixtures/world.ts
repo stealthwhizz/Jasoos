@@ -74,7 +74,8 @@ export const fixtureNotes: Note[] = [
   {
     id: "note-ledger",
     locationId: "pawn",
-    text: "Shut early today. The large brass lamp sold fast, perhaps to the man from the depot. Frequently he waits below the stairs.",
+    // Encodes "KEY" with lib/engine/codec.
+    text: "Shut early today, the store was quiet. A large brass lamp sold in a rapid deal, perhaps to a rich man from the road. He is frequently weary and ill, and normally calm, but tonight he looked scared. He paid quickly, nearly too soon, and left the whole case empty. Strange, really.",
     hasHidden: true,
   },
   {
@@ -84,9 +85,6 @@ export const fixtureNotes: Note[] = [
     hasHidden: false,
   },
 ];
-
-/** Decoded answers for fixture notes, used by the decodeNote stub until the real codec lands. */
-export const fixtureNoteSecrets: Record<string, string> = { "note-ledger": "KEY" };
 
 export const fixtureManifest: Manifest = {
   worldId: "fixture-monsoon-tiffin",
