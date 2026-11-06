@@ -57,8 +57,12 @@ export function isTransientError(err: unknown): boolean {
   if (err instanceof TypeError) return true;
 
   if (err instanceof Error) {
+    // viem's request timeout ("The request took too long to respond") never says "timeout".
+    if (err.name === "TimeoutError") return true;
     const msg = err.message.toLowerCase();
     if (
+      msg.includes("timed out") ||
+      msg.includes("took too long") ||
       msg.includes("fetch failed") ||
       msg.includes("network") ||
       msg.includes("timeout") ||

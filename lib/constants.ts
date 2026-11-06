@@ -31,6 +31,9 @@ export const RETRY_MAX = 3;
 /** Base delay in ms for exponential backoff (doubled each retry). */
 export const RETRY_BASE_MS = 500;
 
+/** Per-request timeout for Arkiv RPC calls. withRetry adds the retries, so a dead node costs ~25 s, not minutes. */
+export const ARKIV_TIMEOUT_MS = 8_000;
+
 /** API-call budget per generated asset kind (server derivation + client live meter). */
 export const GEN_CALL_COST = {
   universe: 1,

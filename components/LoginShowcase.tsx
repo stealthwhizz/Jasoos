@@ -6,11 +6,11 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 /** Gameplay stills for the login marketing panel (right pane / mobile band). */
 const SLIDES = [
-  { src: "/login/lagaan-2.png", alt: "Lagaan" },
-  { src: "/login/lagaan-1.png", alt: "Lagaan" },
-  { src: "/login/znmd.png", alt: "Zindagi Na Milegi Dobara" },
-  { src: "/login/green-room.png", alt: "The Actress's Green Room" },
-  { src: "/login/gangs-of-wasseypur.png", alt: "Gangs of Wasseypur" },
+  { src: "/login/lagaan-2.webp", alt: "Lagaan" },
+  { src: "/login/lagaan-1.webp", alt: "Lagaan" },
+  { src: "/login/znmd.webp", alt: "Zindagi Na Milegi Dobara" },
+  { src: "/login/green-room.webp", alt: "The Actress's Green Room" },
+  { src: "/login/gangs-of-wasseypur.webp", alt: "Gangs of Wasseypur" },
 ] as const;
 
 const INTERVAL_MS = 4000;
@@ -20,8 +20,8 @@ const CROSSFADE_S = 0.5;
  * Slow crossfade carousel of gameplay stills with a subtle Ken Burns zoom.
  * Respects `prefers-reduced-motion` — shows the first slide only.
  *
- * Stills are served unoptimized (no second-pass WebP/JPEG compression).
- * For sharp Retina panels, source files should be ~2048px wide or larger.
+ * Stills are pre-compressed WebP (converted once from the original PNGs), so they are served
+ * as-is (`unoptimized`) without a second pass by the Vercel image optimizer.
  */
 export function LoginShowcase({ className }: { className?: string }) {
   const reduceMotion = useReducedMotion();
