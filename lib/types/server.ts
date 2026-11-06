@@ -117,3 +117,6 @@ export type Accusation = { gameId: string; humanHash: string; accused: number; c
 
 /** POST /api/finale body; the saved bible judges the accusation. */
 export type FinaleRequest = { gameId?: string | null; accused?: number; reason?: string };
+
+/** Saved screen generation ignores any client bible; persisted metadata is authoritative. */
+export type SavedScreenRequest = Omit<ScreenRequest, "bible"> & { bible?: GameBible };
