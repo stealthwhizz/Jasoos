@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { playSfx } from "@/lib/sfx";
-import type { DialogueTurn, NpcDef } from "@/lib/universe";
+import type { DialogueBoxProps } from "@/lib/types/client";
 
 const MOOD_COLOR: Record<string, string> = {
   warm: "#6b8e5a",
@@ -32,18 +32,9 @@ export function DialogueBox({
   onToggleVoice,
   onSay,
   onClose,
-}: {
-  npc: NpcDef;
-  history: DialogueTurn[];
-  options: string[];
-  thinking: boolean;
-  speaking: boolean;
-  voiceOn: boolean;
-  mood?: string;
-  onToggleVoice: () => void;
-  onSay: (line: string) => void;
-  onClose: () => void;
-}) {
+  inventory,
+}: DialogueBoxProps) {
+  const [selectedItem, setSelectedItem] = useState("");
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastNpcLine = [...history].reverse().find((t) => t.speaker === "npc");
@@ -105,10 +96,11 @@ export function DialogueBox({
         onClose();
         return;
       }
-      if (document.activeElement?.tagName === "INPUT") return;
+      if ((document.activeElement as HTMLElement | null)?.matches("input, textarea, select, [contenteditable=true]")) return;
       const n = Number(e.key);
-      if (!thinking && n >= 1 && n <= options.length) {
+      if (!thinking && n >= 1 && n <= Math.min(3, options.length)) {
         playSfx("tap"); // keyboard picks mirror the chip click sound
+        e.preventDefault();
         onSay(options[n - 1]);
       }
     };
@@ -124,7 +116,7 @@ export function DialogueBox({
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: 24, opacity: 0 }}
       transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-      className="pointer-events-auto w-full max-w-2xl"
+      className="pointer-events-auto max-h-[80dvh] w-full max-w-2xl overflow-y-auto"
     >
       <Card className="gap-0 rounded-t-base py-4 sm:rounded-base">
         <CardContent className="px-5">
@@ -161,7 +153,8 @@ export function DialogueBox({
               hoverSound="hover"
               className={`ml-auto size-8 ${voiceOn ? "bg-main/10 text-main" : ""}`}
               onClick={onToggleVoice}
-              title={voiceOn ? "Voice on" : "Voice off"}
+              title={voiceOn ? "Mute all sound" : "Enable sound"}
+              aria-label={voiceOn ? "Mute all sound" : "Enable sound"}
             >
               {voiceOn ? <Volume2 size={15} /> : <VolumeX size={15} />}
             </Button>
@@ -229,7 +222,7 @@ export function DialogueBox({
                 transition={{ duration: 0.25 }}
                 className="mt-2.5 flex flex-wrap gap-2"
               >
-                {options.map((opt, i) => (
+                {options.slice(0, 3).map((opt, i) => (
                   <Button
                     key={opt}
                     type="button"
@@ -250,6 +243,15 @@ export function DialogueBox({
             )}
           </AnimatePresence>
 
+          {inventory.length > 0 && <div className="mt-3 flex items-center gap-2">
+            <label className="sr-only" htmlFor="shown-item">Inventory item</label>
+            <select id="shown-item" value={selectedItem} onChange={(event) => setSelectedItem(event.target.value)} disabled={thinking}
+              className="min-w-0 flex-1 rounded border border-border bg-background p-2 text-sm">
+              <option value="">Choose an item…</option>
+              {inventory.map((item) => <option key={item} value={item}>{item}</option>)}
+            </select>
+            <Button disabled={thinking || !inventory.includes(selectedItem)} onClick={() => onSay(`What can you tell me about this ${selectedItem}?`, selectedItem)}>Show item</Button>
+          </div>}
           <form
             className="mt-3 flex items-center gap-2"
             onSubmit={(e) => {

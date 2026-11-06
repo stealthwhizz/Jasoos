@@ -7,17 +7,8 @@ import { getCachedImage, preloadImage } from "@/lib/image-cache";
 const SPEED_X = 26; // % of width per second
 const SPEED_Y = 20; // % of height per second
 
-export type PlayerState = {
-  x: number; // 0-100 (% of width)
-  y: number; // 0-100 (% of height)
-  dir: 1 | -1;
-  moving: boolean;
-};
-
-export type ExitDirection = "n" | "e" | "s" | "w";
-
-/** Discrete joystick axes written by mobile controls (-1, 0, or 1). */
-export type TouchInput = { x: number; y: number };
+import type { PlayerState, ExitDirection, TouchInput } from "@/lib/types/client";
+export type { PlayerState, ExitDirection, TouchInput } from "@/lib/types/client";
 
 function interactionLabel(near: Hotspot, touchControls: boolean): string {
   const prefix = touchControls ? "Action —" : "E —";
@@ -35,6 +26,7 @@ function interactionLabel(near: Hotspot, touchControls: boolean): string {
   }
 }
 
+/** Draw the whole scene with image-relative movement at every viewport size. */
 export function GameCanvas({
   scene,
   sprite,
@@ -162,9 +154,12 @@ export function GameCanvas({
     const up = (e: KeyboardEvent) => {
       keysRef.current[e.key.toLowerCase()] = false;
     };
+    const clear = () => { keysRef.current = {}; };
+    window.addEventListener("blur", clear);
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     return () => {
+      window.removeEventListener("blur", clear);
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
     };
@@ -204,6 +199,7 @@ export function GameCanvas({
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.imageSmoothingEnabled = false; // crisp pixel-art upscale
 
+      if (pausedRef.current) { playerRef.current.moving = false; keysRef.current = {}; }
       // --- Move on the flat plane (grid collision; slide along walls) ---
       const p = playerRef.current;
       if (!pausedRef.current) {
@@ -283,8 +279,9 @@ export function GameCanvas({
         }
       }
 
-      // --- Draw backdrop (cover fit; game coords are % of the image) ---
-      ctx.clearRect(0, 0, cw, ch);
+      // --- Draw backdrop (contain fit; game coords are % of the image) ---
+      ctx.fillStyle = "#1a1410";
+      ctx.fillRect(0, 0, cw, ch);
       const img =
         showVisionRef.current && visionRef.current
           ? visionRef.current
@@ -294,7 +291,7 @@ export function GameCanvas({
       let dw = cw;
       let dh = ch;
       if (img && img.naturalWidth > 0) {
-        const s = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
+        const s = Math.min(cw / img.naturalWidth, ch / img.naturalHeight);
         dw = img.naturalWidth * s;
         dh = img.naturalHeight * s;
         ox = (cw - dw) / 2;

@@ -15,6 +15,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Compass, DoorOpen, Zap } from "lucide-react";
 import type {
   CreateGameResponse,
+  EvidenceResponse,
   FinaleData,
   FinaleOutcome,
   FullGameResponse,
@@ -35,7 +36,7 @@ import type {
 import { repairLoadedStreetEdges, streetCoordKeys } from "@/lib/screen-edges";
 import { GEN_CALL_COST, MAX_GAME_TITLE_LENGTH, SESSION_TIME_LIMIT_SEC } from "@/lib/constants";
 import { MusicEngine, getMusicTheme, pickMusicTheme } from "@/lib/music";
-import { playSfx } from "@/lib/sfx";
+import { playSfx, setSoundMuted, narrate, cancelNarration } from "@/lib/sfx";
 import {
   getCachedImage,
   preloadSceneImages,
@@ -63,7 +64,9 @@ import {
 import { BOOT_PROGRESS, LoadingBlock } from "@/components/LoadingBlock";
 import { GameCanvas, type ExitDirection, type PlayerState, type TouchInput } from "./GameCanvas";
 import { DialogueBox } from "./DialogueBox";
-import { MobileControls, RotateToLandscapePrompt, useCoarsePointer } from "./MobileControls";
+import { MobileControls, useCoarsePointer } from "./MobileControls";
+import { Decoder } from "./Decoder";
+import { EvidenceBox } from "./EvidenceBox";
 import { WorldHud } from "./WorldHud";
 import {
   mergeKnownCell,
@@ -96,29 +99,6 @@ const OPENING_OPTIONS = [
   "Something's wrong here. Talk.",
   "I need your help.",
 ];
-
-/** Sarvam Bulbul delivery params derived from dialogue mood. */
-function voiceParams(mood?: string): { pace: number; temperature: number } {
-  switch (mood) {
-    case "urgent":
-    case "angry":
-      return { pace: 1.3, temperature: 0.9 };
-    case "fearful":
-    case "secretive":
-      return { pace: 0.85, temperature: 0.4 };
-    case "warm":
-    case "amused":
-      return { pace: 1.0, temperature: 0.6 };
-    case "wary":
-      return { pace: 0.95, temperature: 0.5 };
-    default:
-      return { pace: 1.0, temperature: 0.6 };
-  }
-}
-
-/** Narrator delivery for finale resolution lines. */
-const NARRATOR_VOICE = "shubh";
-const NARRATOR_PARAMS = { pace: 0.8, temperature: 0.5 };
 
 /** True when the value is an inline `data:` URL from live generation. */
 function isDataUrl(value: string): boolean {
@@ -251,6 +231,7 @@ function claimNextRoom(placed: Set<number>): number | null {
  */
 export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
   const router = useRouter();
+  const [activeGameId, setActiveGameId] = useState(routeGameId ?? null);
   /** Persisted game id — set after `POST /api/games` or on load. */
   const gameIdRef = useRef<string | null>(routeGameId ?? null);
   /** Owners may generate new scenes; visitors replay the finite saved world. */
@@ -305,7 +286,10 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
     evidence: boolean;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [voiceOn, setVoiceOn] = useState(true);
+  const [voiceOn, setVoiceOn] = useState(() => typeof window !== "undefined" && !window.matchMedia("(max-width: 767px), (pointer: coarse)").matches);
+  const [evidence, setEvidence] = useState<EvidenceResponse | null>(null);
+  const [decodedCode, setDecodedCode] = useState<string | null>(null);
+  const [caseNotesOpen, setCaseNotesOpen] = useState(false);
   // Music preference persists across sessions; SSR renders no HUD, so the
   // client-only lazy read cannot cause a hydration mismatch.
   const [musicOn, setMusicOn] = useState(
@@ -329,9 +313,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
   const interiorPromises = useRef<Map<string, Promise<SceneData>>>(new Map());
   const screenPromises = useRef<Map<string, Promise<SceneData>>>(new Map());
   const placedRoomsRef = useRef<Set<number>>(new Set());
-  const voiceCache = useRef<Map<string, Promise<string | null>>>(new Map());
   const dialogueCache = useRef<Map<string, Promise<DialogueResponse>>>(new Map());
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const musicRef = useRef<MusicEngine | null>(null);
   /** Last announced track id, the "now playing" toast fires once per theme. */
   const musicThemeRef = useRef<string | null>(null);
@@ -369,7 +351,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
           .join(" ")
       );
     engine.start(theme);
-    engine.setMuted(!musicOn);
+    engine.setMuted(!musicOn || !voiceOn);
     // Announce the track once so players can tell worlds apart by name.
     if (musicThemeRef.current !== theme.id) {
       musicThemeRef.current = theme.id;
@@ -378,15 +360,15 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
       setAmbient(note);
       setTimeout(() => setAmbient((a) => (a === note ? null : a)), 5000);
     }
-  }, [phase, premise, bible, musicOn]);
+  }, [phase, premise, bible, musicOn, voiceOn]);
 
   useEffect(() => () => musicRef.current?.dispose(), []);
 
   // HUD toggle → mute; persists across sessions.
   useEffect(() => {
-    musicRef.current?.setMuted(!musicOn);
+    musicRef.current?.setMuted(!musicOn || !voiceOn);
     localStorage.setItem("ETH Jasoos-music", musicOn ? "on" : "off");
-  }, [musicOn]);
+  }, [musicOn, voiceOn]);
 
   // The issue's one hard rule: music stops while the NPC is talking.
   useEffect(() => {
@@ -433,63 +415,28 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
     put(`/api/games/${id}/sprite`, { sprite: dataUrl }).catch(() => {});
   }, []);
 
-  const fetchVoice = useCallback(
-    (
-      text: string,
-      voice?: string,
-      pace?: number,
-      temperature?: number
-    ): Promise<string | null> => {
-      const key = `${voice ?? ""}|${pace ?? ""}|${temperature ?? ""}|${text}`;
-      const hit = voiceCache.current.get(key);
-      if (hit) return hit;
-      const p = post<{ audio: string | null }>("/api/voice", {
-        text,
-        voice,
-        pace,
-        temperature,
-      })
-        .then(({ audio }) => {
-          if (!audio) voiceCache.current.delete(key);
-          return audio;
-        })
-        .catch(() => {
-          voiceCache.current.delete(key);
-          return null;
-        });
-      voiceCache.current.set(key, p);
-      return p;
-    },
-    []
-  );
-
-  const speak = useCallback(
-    async (
-      text: string,
-      voice?: string,
-      pace?: number,
-      temperature?: number
-    ) => {
-      if (!voiceOnRef.current || !text.trim()) return;
-      const audio = await fetchVoice(text, voice, pace, temperature);
-      if (!audio || !voiceOnRef.current) return;
-      audioRef.current?.pause();
-      const el = new Audio(audio);
-      audioRef.current = el;
-      setSpeaking(true);
-      el.onended = () => setSpeaking(false);
-      el.onerror = () => setSpeaking(false);
-      await el.play().catch(() => setSpeaking(false));
-    },
-    [fetchVoice]
-  );
-
-  const stopVoice = useCallback(() => {
-    audioRef.current?.pause();
-    setSpeaking(false);
+  const speak = useCallback((text: string, identity?: string) => {
+    if (!voiceOnRef.current) return;
+    narrate(text, identity ?? "narrator", setSpeaking);
   }, []);
 
+  const stopVoice = useCallback(() => { cancelNarration(); setSpeaking(false); }, []);
+  const toggleSound = useCallback(() => {
+    const enabled = !voiceOn;
+    // Gate synchronously: turning sound off cancels active utterances and blips immediately.
+    voiceOnRef.current = enabled;
+    setSoundMuted(!enabled);
+    musicRef.current?.setMuted(!enabled || !musicOn);
+    if (!enabled) stopVoice();
+    setVoiceOn(enabled);
+  }, [voiceOn, musicOn, stopVoice]);
+  useEffect(() => {
+    setSoundMuted(!voiceOn);
+    return () => setSoundMuted(true);
+  }, [voiceOn]);
+
   const showScene = useCallback((s: SceneData) => {
+    playSfx("door");
     let next = s;
     if (s.kind === "street" && s.coord && s.edges) {
       const repaired = repairLoadedStreetEdges(
@@ -533,8 +480,6 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
       if (!canGenerateRef.current) return;
       const npc = s.npc;
       if (!npc || typeof s.clueIndex !== "number") return;
-      const wary = voiceParams("wary");
-      fetchVoice(npc.opening, npc.voice, wary.pace, wary.temperature);
       for (const option of OPENING_OPTIONS) {
         const key = `${s.id}|${option}`;
         if (dialogueCache.current.has(key)) continue;
@@ -548,15 +493,13 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
           heat: 0,
         }).then((reply) => {
           noteRequests(reply.requestIds);
-          const params = voiceParams(reply.mood);
-          fetchVoice(reply.line, npc.voice, params.pace, params.temperature);
           return reply;
         });
         p.catch(() => dialogueCache.current.delete(key));
         dialogueCache.current.set(key, p);
       }
     },
-    [fetchVoice, noteRequests]
+    [noteRequests]
   );
 
   const prefetchInterior = useCallback(
@@ -663,7 +606,6 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
     interiorPromises.current = new Map();
     screenPromises.current = new Map();
     placedRoomsRef.current = new Set();
-    voiceCache.current = new Map();
     dialogueCache.current = new Map();
     savedFinalesRef.current = {};
     setScene(null);
@@ -672,6 +614,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
     setPremise(null);
     setBible(null);
     setCluesFound([false, false, false]);
+    setEvidence(null); setDecodedCode(null); setCaseNotesOpen(false);
     setSearchedRooms(new Set());
     setSearchedObject(null);
     setInspection(null);
@@ -697,6 +640,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
   /** Populate refs and state from `GET /api/games/[id]`. */
   const hydrateLoadedGame = useCallback((game: FullGameResponse) => {
     gameIdRef.current = game.id;
+    setActiveGameId(game.id);
     canGenerateRef.current = game.isOwner;
     savedFinalesRef.current = game.finales;
     setPremise(game.premise);
@@ -844,6 +788,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
           premise: chosen,
         });
         gameIdRef.current = created.id;
+        setActiveGameId(created.id);
         router.replace(`/play/${created.id}`);
       } catch (e) {
         setError(e instanceof Error ? e.message : "World generation failed.");
@@ -943,24 +888,14 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
 
       if (h.kind === "npc" && scene.npc) {
         const opening = scene.npc.opening;
-        const params = voiceParams("wary");
         posthog.capture("npc_conversation_started", { npc_name: scene.npc.name, scene_id: scene.id });
-        if (voiceOnRef.current) {
-          setDialogue({
-            npc: scene.npc,
-            history: [],
-            options: [],
-            thinking: true,
-          });
-          await fetchVoice(opening, scene.npc.voice, params.pace, params.temperature);
-        }
         setDialogue({
           npc: scene.npc,
           history: [{ speaker: "npc", text: opening }],
           options: OPENING_OPTIONS,
           thinking: false,
         });
-        void speak(opening, scene.npc.voice, params.pace, params.temperature);
+        void speak(opening, `${scene.id}:${scene.npc.name}`);
         return;
       }
 
@@ -995,7 +930,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
         }
       }
     },
-    [bible, ensureSceneReady, fetchVoice, prefetchInterior, premise, scene, showScene, speak, stopVoice, secondsLeft, finale, finaleLoading]
+    [bible, ensureSceneReady, prefetchInterior, premise, scene, showScene, speak, stopVoice, secondsLeft, finale, finaleLoading]
   );
 
   /** Walking off an open edge — confirm before generating; walls for visitors without a neighbor. */
@@ -1047,8 +982,8 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
   }, []);
 
   const onSay = useCallback(
-    async (line: string) => {
-      if (!bible || !scene?.npc || !dialogue) return;
+    async (line: string, shownItem?: string) => {
+      if (!bible || !scene?.npc || !dialogue || dialogue.thinking) return;
       if (secondsLeft <= 0 || finale || finaleLoading) return;
       const history: DialogueTurn[] = [...dialogue.history, { speaker: "player", text: line }];
       setDialogue({ ...dialogue, history, options: [], thinking: true });
@@ -1058,7 +993,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
       try {
         const isFirstTurn = history.filter((t) => t.speaker === "player").length === 1;
         const cached =
-          isFirstTurn && heat < 60
+          isFirstTurn && heat < 60 && !shownItem
             ? dialogueCache.current.get(`${scene.id}|${line}`)
             : undefined;
         let reply: DialogueResponse;
@@ -1073,6 +1008,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
             clueFound: cluesFound[clueIndex],
             exchanges: history.filter((t) => t.speaker === "player").length,
             inventory,
+            shownItem,
             heat,
           });
           noteRequests(res.requestIds);
@@ -1103,15 +1039,6 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
             return next;
           });
         }
-        const params = voiceParams(reply.mood);
-        if (voiceOnRef.current) {
-          await fetchVoice(
-            reply.line,
-            dialogue.npc.voice,
-            params.pace,
-            params.temperature
-          );
-        }
         setDialogue({
           npc: dialogue.npc,
           history: [...history, { speaker: "npc", text: reply.line }],
@@ -1121,9 +1048,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
         });
         void speak(
           reply.line,
-          dialogue.npc.voice,
-          params.pace,
-          params.temperature
+          `${scene.id}:${dialogue.npc.name}`
         );
       } catch {
         setDialogue({
@@ -1134,7 +1059,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
         });
       }
     },
-    [bible, scene, dialogue, heat, cluesFound, speak, fetchVoice, noteRequests, inventory, secondsLeft, finale, finaleLoading]
+    [bible, scene, dialogue, heat, cluesFound, speak, noteRequests, inventory, secondsLeft, finale, finaleLoading]
   );
 
   const allCluesFound = bible ? cluesFound.every(Boolean) : false;
@@ -1170,20 +1095,11 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
           gen_calls: genCalls,
           screens_dreamed: screensDreamed,
         });
-        if (voiceOnRef.current) {
-          await fetchVoice(
-            f.resolution,
-            NARRATOR_VOICE,
-            NARRATOR_PARAMS.pace,
-            NARRATOR_PARAMS.temperature
-          );
-        }
+        playSfx(f.outcome === "victory" ? "success" : "fail");
         setFinale({ ...f, outcome: f.outcome ?? "defeat" });
         void speak(
           f.resolution,
-          NARRATOR_VOICE,
-          NARRATOR_PARAMS.pace,
-          NARRATOR_PARAMS.temperature
+          "narrator"
         );
       } catch {
         setError("The ending slipped away. Try again.");
@@ -1192,7 +1108,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
         setFinaleLoading(false);
       }
     },
-    [bible, finale, finaleLoading, speak, fetchVoice, stopVoice, addCalls, noteRequests, cluesFound, genCalls, screensDreamed]
+    [bible, finale, finaleLoading, speak, stopVoice, addCalls, noteRequests, cluesFound, genCalls, screensDreamed]
   );
 
   // Ending a run sets state, so it starts in a microtask after the effect (cancelled if the effect
@@ -1260,6 +1176,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
   }, [stopVoice, router]);
 
   const onPlayerPosition = useCallback((p: PlayerState) => {
+    if (p.moving) playSfx("step");
     setPlayerPos({ x: p.x, y: p.y });
   }, []);
 
@@ -1304,7 +1221,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
 
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-ink">
-      <RotateToLandscapePrompt visible={phase === "playing"} />
+
 
       <GameCanvas
         scene={scene}
@@ -1314,7 +1231,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
           entering !== null ||
           wandering !== null ||
           pendingExplore !== null ||
-          assetLoading !== null
+          assetLoading !== null || inspection !== null || searchedObject !== null || caseNotesOpen || finale !== null || finaleLoading
         }
         onInteract={onInteract}
         spawn={spawn}
@@ -1334,7 +1251,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
           entering !== null ||
           wandering !== null ||
           pendingExplore !== null ||
-          assetLoading !== null
+          assetLoading !== null || inspection !== null || searchedObject !== null || caseNotesOpen || finale !== null || finaleLoading
         }
         onInteract={onInteract}
       />
@@ -1342,8 +1259,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
       {scene.kind === "interior" && typeof scene.clueIndex === "number" && bible?.rooms[scene.clueIndex]?.object && (
         <Button
           type="button"
-          className="pointer-events-auto absolute bottom-16 left-1/2 z-20 -translate-x-1/2"
-          disabled={searchedRooms.has(scene.clueIndex)}
+          className="pointer-events-auto absolute bottom-28 left-1/2 z-20 -translate-x-1/2 md:bottom-16"
           onClick={() => {
             const index = scene.clueIndex!;
             const object = bible.rooms[index]?.object;
@@ -1363,7 +1279,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
       )}
 
       <Dialog open={!!inspection} onOpenChange={(open) => !open && setInspection(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[85dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-center font-display text-xl">{inspection?.name}</DialogTitle>
           </DialogHeader>
@@ -1372,22 +1288,28 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
       </Dialog>
 
       <Dialog open={!!searchedObject} onOpenChange={(open) => !open && setSearchedObject(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[85dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-center font-display text-xl">{searchedObject?.name}</DialogTitle>
           </DialogHeader>
           <p className="text-center text-sm">{searchedObject?.description}</p>
           {searchedObject?.note && (
-            // The note may hide the culprit's code; nothing marks which one (the Decoder is #13).
-            <blockquote className="rounded-md border border-border bg-secondary-background p-3 text-sm italic">
-              {searchedObject.note}
-            </blockquote>
+            <Decoder key={searchedObject.note} note={{ text: searchedObject.note }} evidenceKey={evidence?.key} onDecoded={setDecodedCode} />
           )}
           {searchedObject?.evidence && (
-            <p role="status" className="rounded-md border border-main/40 bg-main/10 p-3 text-center text-sm">
-              Evidence box discovered. Its contents remain sealed until verified access is available.
-            </p>
+            <EvidenceBox gameId={activeGameId} evidence={evidence} onUnlock={(value) => { setEvidence(value); playSfx("unlock"); }} />
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Button className="absolute bottom-28 right-3 z-20 md:bottom-4" onClick={() => setCaseNotesOpen(true)}>Case notes</Button>
+      <Dialog open={caseNotesOpen} onOpenChange={setCaseNotesOpen}>
+        <DialogContent className="max-h-[85dvh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Case notes</DialogTitle></DialogHeader>
+          <ol className="list-decimal space-y-2 pl-5">{cluesFound.map((found, index) => <li key={index}>{found ? bible?.story.clues[index] : "Clue not found yet"}</li>)}</ol>
+          <div><h3 className="font-bold">Sealed evidence</h3>{evidence ? <><p>Key: {evidence.key}</p>{evidence.evidenceNote && <p>{evidence.evidenceNote}</p>}</> : <p>Find and open the sealed box.</p>}</div>
+          <p>Decoded code: <strong>{decodedCode ?? "Not decoded yet"}</strong></p>
+          {[...searchedRooms].map((index) => bible?.rooms[index]?.object?.note && <Decoder key={index} note={{ text: bible.rooms[index].object!.note! }} evidenceKey={evidence?.key} onDecoded={setDecodedCode} />)}
         </DialogContent>
       </Dialog>
 
@@ -1409,7 +1331,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
         musicOn={musicOn}
         onToggleMusic={() => setMusicOn((m) => !m)}
         voiceOn={voiceOn}
-        onToggleVoice={() => setVoiceOn((v) => !v)}
+        onToggleVoice={toggleSound}
         onLeaveWorld={leaveWorld}
         onAccuse={(accused) => runFinale({ accused })}
         dialogue={dialogue}
@@ -1583,7 +1505,8 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
               mood={dialogue.mood}
               speaking={speaking}
               voiceOn={voiceOn}
-              onToggleVoice={() => setVoiceOn((v) => !v)}
+              onToggleVoice={toggleSound}
+              inventory={inventory}
               onSay={onSay}
               onClose={closeDialogue}
             />
