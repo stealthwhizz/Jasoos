@@ -15,6 +15,8 @@ Additional fixes found while checking the combination:
 - Muting/cancelling cloud narration aborts the request and releases its temporary audio URL.
 - Media playback failure falls back to browser speech once; stale/cancelled audio never starts.
 - Voice lifecycle/request types live in the shared client type module.
+- Decoder display normalizes legacy note formatting in every entry point, including case notes;
+  reopening a note cannot reveal the model's bold markers around codebook words.
 
 Production preparation adds standalone Next output, a non-root Node 24 container definition,
 a public noncached liveness route, a secret-redacting environment preflight, and the submission
@@ -24,7 +26,7 @@ handoff/recording plan. These artifacts do not constitute a deployed service or 
 
 | Check | Result |
 | --- | --- |
-| Combined test suite on Node v24.22.2 | 83 passed, 0 failed |
+| Combined test suite on Node v24.22.2 | 84 passed, 0 failed |
 | Typecheck | Passed |
 | Full repository lint | 0 errors; five existing image warnings |
 | Next 16.2.10 production build on Node 24 | Passed; standalone server emitted |

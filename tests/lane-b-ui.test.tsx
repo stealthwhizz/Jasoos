@@ -99,3 +99,12 @@ it("shows narrow-screen D-pad/E controls and clears movement on release, cancel,
   await waitFor(() => expect(touchInputRef.current.x).toBe(0));
   expect(screen.queryByLabelText("Move right")).toBeNull();
 });
+
+
+it("reopened legacy notes do not expose formatting around hidden words, and still decode", async () => {
+  const decorated = note.split(" ").map((word) => `**${word}**`).join(" ");
+  const view = render(<Decoder note={{ text: decorated }} evidenceKey="KEY" />);
+  expect(view.container.textContent).not.toContain("**");
+  fireEvent.click(screen.getByText("Use Decoder"));
+  expect(screen.getByText("Hidden message: MEE")).toBeTruthy();
+});
