@@ -181,20 +181,59 @@ accuse response already has `finaleUrl`. The client shows it with the secret, sp
 - Minimap: the 3x3 grid, visited screens filled, current screen marked, rooms dotted.
 - Sound: short WebAudio blips generated in code (step, door, clue, unlock, fail). No audio files.
 
+### Inventory and room actions (lanes A + B)
+
+- Bible: each room gets up to 2 `items: { id, name, description }` and up to 2
+  `actions: { id, name, outcome, heat: 0 | 15 | 30, yieldsItemId?, exits?: boolean }`
+  (for example "slip out the back window": heat 15, exits to the street).
+- Items and actions show as entries in the room panel (and as hotspots on screens where the
+  vision pass places them). E on an item adds it to the inventory; E on an action shows its
+  `outcome`, adds its heat, and gives its item if any.
+- Inventory: server-side per human per world, next to heat. Items can be shown to an NPC
+  ("Show item" in the dialogue panel); the NPC prompt gets "the player shows you <item>", and
+  an NPC whose `wants` names that item answers more openly.
+- One action per world may reveal a soft clue in its `outcome` (the plan model marks which).
+
+### Reply buttons and richer NPCs (lanes A + B)
+
+- Npc gains `wants`, `fears`, `opening` (first line when approached), `quirk` (a verbal habit),
+  and `tripwire` (from Heat). All go into the NPC system prompt; none is the clue.
+- Dialogue: the model returns `{ reply, offended, suggestions: string[3] }`. The client shows the
+  3 suggestions as buttons (keys 1-3) above the free-text box. Clue and turn rules are
+  unchanged.
+
+### Defeat ending and run timer (lanes A + B)
+
+- Bible gains `mystery.defeatPrompt` (server-only). Heat 100 or the timer running out ends the
+  run with a defeat screen; the defeat image is generated once per world on the first defeat
+  (same lazy rule as the finale) and reused after.
+- Run timer: `RUN_SECONDS` (default 600) shown in the HUD. It is client-side and resets on a new
+  run; it is a pacing device, not a security rule.
+
+### Music and deleting a world (lane C)
+
+- Music: a WebAudio ambient generator in code (drone + slow arpeggio), one of 4 moods
+  (`calm`, `tense`, `eerie`, `festive`) chosen by the plan model as `bible.mood`. Ducks under
+  voice, mute toggle shared with sound. No audio files.
+- Delete: `DELETE /api/worlds/[id]` for the creator only. The server finds the world's
+  `creation` entity by `publishId` and checks its `humanHash` matches the session, then deletes
+  the world and its `screen` entities on Arkiv. Unlock, visit, and accusation entities are left
+  to expire. The gallery shows a delete button on your own worlds.
+
 ## Team split
 
 | Lane | Owner | Builds |
 | ---- | ----- | ------ |
-| A | Amogh | Types and fixtures first (hour 1): `Screen`, `Hotspot`, `Location.object`, `tripwire`, `evidenceLocationId`, `mystery.key`, `heat` on `DialogueResponse`. Then: keyed codec + notes, plan model fields, vision pass (edges + hotspots), screen generation route, heat in dialogue rules, finale image on first correct accusation |
-| B | Suraj | Against fixtures from hour 1: screen transitions, hotspot inspect panel, room search, evidence button, Decoder key field, clue board, heat bar + fail screen, voice, D-pad, minimap, sound |
-| C | Kishore | `createRpContext(action)`, evidence route + Arkiv `unlock`, Arkiv `screen` entities + 8-screen cap, World ID check on screen generation, judge docs (`arkiv/`) for the new entities |
+| A | Amogh | Types and fixtures first (hour 1): `Screen`, `Hotspot`, `Location.object`, items, actions, NPC `wants/fears/opening/quirk/tripwire`, `evidenceLocationId`, `mystery.key/defeatPrompt`, `bible.mood`, `heat` and `suggestions` on `DialogueResponse`. Then: keyed codec + notes, plan model fields, vision pass (edges + hotspots), screen generation route, dialogue JSON (offended, suggestions, shown item), inventory + heat server state, finale and defeat images |
+| B | Suraj | Against fixtures from hour 1: screen transitions, inspect panel, room search + items + actions, inventory bar + "Show item", reply buttons, evidence button, Decoder key field, clue board, heat bar, run timer, defeat screen, voice, D-pad, minimap, sound effects |
+| C | Kishore | `createRpContext(action)`, evidence route + Arkiv `unlock`, Arkiv `screen` entities + 8-screen cap, World ID check on screen generation, delete world (route + gallery button), WebAudio music, judge docs (`arkiv/`) for the new entities |
 
 Order: A's types and fixtures land on `main` first, so B and C never wait on 0G. Each lane
 works on its own branch, pulls `main` often, and merges small. Demo freeze 2 hours before
 submission: only fixes after that.
 
-Cut order if time runs out (last first): sound, minimap, voice, heat, overworld beyond the
-street. The Part 1 loop (search, evidence, keyed note, accuse) is never cut.
+Cut order if time runs out (first cut first): music, sound, minimap, delete, voice, run timer,
+reply buttons, inventory and actions, heat and defeat, overworld beyond the street. The Part 1 loop (search, evidence, keyed note, accuse) is never cut.
 
 ## Out of scope
 
