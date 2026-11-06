@@ -1,0 +1,32 @@
+[
+  {
+    "width": 1440,
+    "overflow": false,
+    "roomOverflow": false,
+    "boundary": {
+      "x": 480,
+      "y": 363.0240000000003
+    },
+    "errors": []
+  },
+  {
+    "width": 768,
+    "overflow": false,
+    "roomOverflow": false,
+    "boundary": {
+      "x": 480,
+      "y": 363.0000000000003
+    },
+    "errors": []
+  },
+  {
+    "width": 390,
+    "overflow": false,
+    "roomOverflow": false,
+    "boundary": {
+      "x": 480,
+      "y": 363.024
+    },
+    "errors": []
+  }
+]

@@ -1,0 +1,31 @@
+
+> ethjasoos@0.1.0 test
+> vitest run
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.1.0 [39m[90m/workspace[39m
+
+ [32m✓[39m tests/zg-failure.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 2124[2mms[22m[39m
+   [32m✓[39m 0G failure injection [2m(3)[22m
+     [33m[2m✓[22m[39m moderation fails closed with a failed ticker event[33m 737[2mms[22m[39m
+     [33m[2m✓[22m[39m dialogue still answers in character and still reveals the clue[33m 912[2mms[22m[39m
+     [33m[2m✓[22m[39m image generation throws ZgError carrying the failed event[33m 471[2mms[22m[39m
+ [32m✓[39m tests/codec.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+ [32m✓[39m tests/client-requests.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 52[2mms[22m[39m
+ [32m✓[39m tests/walkmap.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 37[2mms[22m[39m
+ [32m✓[39m tests/bible.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m tests/dialogue.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m tests/assets.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/client-controls.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/notes.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/sprite.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [2m[90m↓[39m[22m tests/quota.test.ts [2m([22m[2m3 tests[22m[2m | [22m[90m3 todo[39m[2m)[22m
+
+[2m Test Files [22m [1m[32m10 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (11)[39m
+[2m      Tests [22m [1m[32m46 passed[39m[22m[2m | [22m[90m3 todo[39m[90m (49)[39m
+[2m   Start at [22m 09:13:18
+[2m   Duration [22m 4.88s[2m (tests 80%, import 13%, transform 5%, worker 2%)[22m
+
+[2m    Isolate [22m [33m11 workers spawned[39m[2m · ~174ms startup each (spawn + environment, per file)[22m
+[2m            [22m [2mat least ~1.74s faster with [22m[33misolate: false[39m[2m — reuses workers across files instead of one per file[22m
+

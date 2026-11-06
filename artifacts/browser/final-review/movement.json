@@ -1,0 +1,16 @@
+{
+  "straight": {
+    "distance": 63.98399999999981,
+    "elapsed": 263.69999999552965,
+    "speed": 242.63936291651305
+  },
+  "diagonal": {
+    "distance": 62.897966115602344,
+    "elapsed": 265,
+    "speed": 237.3508155305749
+  },
+  "ratio": 0.978204083120026,
+  "blurStopped": true,
+  "linkFocusStopped": true,
+  "errors": []
+}

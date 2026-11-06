@@ -8,3 +8,24 @@
 body {
   @apply bg-neutral-50 text-neutral-900 antialiased;
 }
+
+/* Shared keyboard and readability treatment across the judge journey. */
+:where(a, button, input, textarea, select, canvas):focus-visible {
+  outline: 3px solid #174b93;
+  outline-offset: 4px;
+}
+:where(button, select) {
+  min-height: 44px;
+}
+.text-neutral-400 {
+  color: #666;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

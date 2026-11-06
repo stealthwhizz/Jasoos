@@ -1,0 +1,39 @@
+
+> ethjasoos@0.1.0 build
+> next build
+
+▲ Next.js 16.4.5 (Turbopack)
+✓ Running next.config.ts took 87ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 1912ms
+  Running TypeScript ...
+  Finished TypeScript in 4.3s ...
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/9) ...
+  Generating static pages using 3 workers (2/9) 
+  Generating static pages using 3 workers (4/9) 
+  Generating static pages using 3 workers (6/9) 
+✓ Generating static pages using 3 workers (9/9) in 199ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/assets/[file]
+├ ƒ /api/dialogue
+├ ƒ /api/gallery
+├ ƒ /api/status
+├ ƒ /api/verify
+├ ƒ /api/worlds
+├ ƒ /api/worlds/[id]
+├ ƒ /api/worlds/[id]/accuse
+├ ƒ /api/worlds/[id]/events
+├ ƒ /api/worlds/[id]/visit
+├ ○ /gallery
+└ ƒ /world/[id]
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

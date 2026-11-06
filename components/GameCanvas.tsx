@@ -1,24 +1,21 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import type { PublicManifest } from "@/lib/types";
 import { isWalkable } from "@/lib/engine/walkMap";
 import { keySprite } from "@/lib/engine/sprite";
+import { getGameKey, getMovementVector } from "./gameControls";
 
 const W = 960;
 const H = 540;
 const SPEED = 0.25; // fraction of the scene per second
 const SPRITE_HEIGHT = 96;
-const KEYS: Record<string, [number, number]> = {
-  ArrowLeft: [-1, 0],
-  ArrowRight: [1, 0],
-  ArrowUp: [0, -1],
-  ArrowDown: [0, 1],
-  a: [-1, 0],
-  d: [1, 0],
-  w: [0, -1],
-  s: [0, 1],
-};
+const DIRECTIONS = [
+  { key: "ArrowUp", label: "Move up", symbol: "↑", placement: "col-start-2 row-start-1" },
+  { key: "ArrowLeft", label: "Move left", symbol: "←", placement: "col-start-1 row-start-2" },
+  { key: "ArrowRight", label: "Move right", symbol: "→", placement: "col-start-3 row-start-2" },
+  { key: "ArrowDown", label: "Move down", symbol: "↓", placement: "col-start-2 row-start-3" },
+];
 
 function loadImage(src: string): HTMLImageElement {
   const img = new Image();
@@ -35,14 +32,20 @@ export function GameCanvas({
   onEnter: (locationId: string) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const heldRef = useRef(new Set<string>());
+  const pointerKeysRef = useRef(new Map<number, string>());
+  const enterRef = useRef<() => void>(() => {});
+  const instructionsId = useId();
   const onEnterRef = useRef(onEnter);
   useEffect(() => {
     onEnterRef.current = onEnter;
   }, [onEnter]);
 
   useEffect(() => {
-    const ctx = canvasRef.current?.getContext("2d");
-    if (!ctx) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+    canvas.focus({ preventScroll: true });
     const url = (kind: string) => manifest.assets.find((a) => a.kind === kind)?.url ?? "";
     const street = loadImage(url("street"));
     const sprite = loadImage(url("sprite"));
@@ -52,7 +55,10 @@ export function GameCanvas({
       useFallback = true;
     };
     const pos = { x: 0.5, y: 0.85, facing: 1 }; // feet position, 0..1
-    const held = new Set<string>();
+    const held = heldRef.current;
+    const pointerKeys = pointerKeysRef.current;
+    held.clear();
+    pointerKeys.clear();
     let spriteSource: CanvasImageSource = sprite;
     let trim: { x: number; y: number; w: number; h: number } | null = null;
     sprite.onload = () => {
@@ -86,27 +92,28 @@ export function GameCanvas({
           Math.abs(pos.y - (d.y + d.h)) < 0.22,
       );
 
-    const typing = (e: KeyboardEvent) =>
-      e.target instanceof HTMLElement &&
-      e.target.closest("input, textarea, select, button, a, [contenteditable=true]") !== null;
-    const down = (e: KeyboardEvent) => {
-      if (typing(e)) {
-        held.clear();
-        return;
-      }
-      const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-      if (key in KEYS) {
+    enterRef.current = () => {
+      const door = nearDoor();
+      if (door) onEnterRef.current(door.locationId);
+    };
+    const down = (event: KeyboardEvent) => {
+      if (document.activeElement !== canvas || canvas.isContentEditable) return;
+      const key = getGameKey(event);
+      if (!key) return;
+      event.preventDefault();
+      if (key !== "e") {
         held.add(key);
-        e.preventDefault();
-      }
-      if (key === "e") {
-        const door = nearDoor();
-        if (door) onEnterRef.current(door.locationId);
+      } else if (!event.repeat) {
+        enterRef.current();
       }
     };
-    const up = (e: KeyboardEvent) => held.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key);
-    const clearHeld = () => held.clear();
-    window.addEventListener("keydown", down);
+    const up = (event: KeyboardEvent) =>
+      held.delete(event.key.length === 1 ? event.key.toLowerCase() : event.key);
+    const clearHeld = () => {
+      held.clear();
+      pointerKeys.clear();
+    };
+    canvas.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     window.addEventListener("blur", clearHeld);
     window.addEventListener("focusin", clearHeld);
@@ -117,16 +124,7 @@ export function GameCanvas({
     const tick = (now: number) => {
       const dt = Math.min((now - last) / 1000, 0.05);
       last = now;
-      let dx = 0;
-      let dy = 0;
-      for (const key of held) {
-        const [kx, ky] = KEYS[key] ?? [0, 0];
-        dx += kx;
-        dy += ky;
-      }
-      const magnitude = Math.hypot(dx, dy) || 1;
-      dx /= magnitude;
-      dy /= magnitude;
+      const [dx, dy] = getMovementVector([...held, ...pointerKeys.values()]);
       const nextX = Math.min(1, Math.max(0, pos.x + dx * SPEED * dt));
       const nextY = Math.min(1, Math.max(0, pos.y + dy * SPEED * dt * (W / H)));
       // Test each axis separately so the player can slide along walls and map edges.
@@ -176,7 +174,9 @@ export function GameCanvas({
       cancelAnimationFrame(frame);
       sprite.onload = null;
       sprite.onerror = null;
-      window.removeEventListener("keydown", down);
+      clearHeld();
+      enterRef.current = () => {};
+      canvas.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
       window.removeEventListener("blur", clearHeld);
       window.removeEventListener("focusin", clearHeld);
@@ -185,15 +185,74 @@ export function GameCanvas({
   }, [manifest]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={W}
-      height={H}
-      role="img"
-      tabIndex={0}
-      onPointerDown={(e) => e.currentTarget.focus()}
-      aria-label={manifest.bible.streetDescription}
-      className="aspect-video w-full rounded-2xl bg-neutral-900"
-    />
+    <div className="space-y-3">
+      <canvas
+        ref={canvasRef}
+        width={W}
+        height={H}
+        role="img"
+        tabIndex={0}
+        onPointerDown={(event) => event.currentTarget.focus()}
+        aria-label={manifest.bible.streetDescription}
+        aria-describedby={instructionsId}
+        className="aspect-video w-full rounded-2xl bg-neutral-900"
+      />
+      <div className="flex flex-wrap items-center gap-4">
+        <div
+          role="group"
+          aria-label="Movement controls"
+          className="grid shrink-0 grid-cols-3 gap-1"
+        >
+          {DIRECTIONS.map((direction) => (
+            <button
+              key={direction.key}
+              type="button"
+              aria-label={direction.label}
+              onPointerDown={(event) => {
+                event.preventDefault();
+                event.currentTarget.setPointerCapture(event.pointerId);
+                pointerKeysRef.current.set(event.pointerId, direction.key);
+              }}
+              onPointerUp={(event) => pointerKeysRef.current.delete(event.pointerId)}
+              onPointerCancel={(event) => pointerKeysRef.current.delete(event.pointerId)}
+              onLostPointerCapture={(event) => pointerKeysRef.current.delete(event.pointerId)}
+              onKeyDown={(event) => {
+                if (
+                  (event.key === " " || event.key === "Enter") &&
+                  !event.altKey &&
+                  !event.ctrlKey &&
+                  !event.metaKey
+                ) {
+                  event.preventDefault();
+                  heldRef.current.add(direction.key);
+                }
+              }}
+              onKeyUp={(event) => {
+                if (event.key === " " || event.key === "Enter") {
+                  event.preventDefault();
+                  heldRef.current.delete(direction.key);
+                }
+              }}
+              onBlur={() => heldRef.current.clear()}
+              className={`${direction.placement} h-12 w-14 touch-none select-none rounded-xl border border-neutral-300 bg-white text-xl hover:bg-neutral-100 active:bg-blue-100`}
+            >
+              {direction.symbol}
+            </button>
+          ))}
+          <button
+            type="button"
+            aria-label="Enter nearest door"
+            onClick={() => enterRef.current()}
+            className="col-start-2 row-start-2 h-12 w-14 rounded-xl bg-accent text-sm font-medium text-white"
+          >
+            Enter
+          </button>
+        </div>
+        <p id={instructionsId} className="max-w-md text-sm text-neutral-600">
+          Focus or tap the street. Arrow keys or WASD move; E enters a lit door. You can also hold
+          the direction buttons to move and use Enter at a door.
+        </p>
+      </div>
+    </div>
   );
 }

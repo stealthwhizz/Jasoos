@@ -1,0 +1,303 @@
+PASS 1440 landing: no horizontal overflow
+PASS 1440 landing: WCAG automated audit
+PASS 1440 ticker: no horizontal overflow
+PASS 1440 ticker: WCAG automated audit
+PASS 1440 fixture creation completes through SSE
+PASS 1440 street: no horizontal overflow
+PASS 1440 street: WCAG automated audit
+PASS 1440 keyboard-focus: no horizontal overflow
+PASS 1440 keyboard-focus: WCAG automated audit
+PASS 1440 picker locked before clues
+PASS 1440 touch movement controls available
+PASS 1440 walk mask blocks upper boundary
+PASS 1440 entering room moves focus off removed canvas
+PASS 1440 interior: no horizontal overflow
+PASS 1440 interior: WCAG automated audit
+PASS 1440 first reply preserves clue progression
+PASS 1440 second reply reveals clue
+PASS 1440 dialogue: no horizontal overflow
+FAIL 1440 dialogue: WCAG automated audit
+PASS 1440 dialogue replies announced to assistive technology
+FAIL 1440 journey completed
+PASS 768 landing: no horizontal overflow
+PASS 768 landing: WCAG automated audit
+PASS 768 street: no horizontal overflow
+PASS 768 street: WCAG automated audit
+PASS 768 keyboard-focus: no horizontal overflow
+PASS 768 keyboard-focus: WCAG automated audit
+PASS 768 picker locked before clues
+PASS 768 touch movement controls available
+PASS 768 Move left: usable touch target
+PASS 768 touch hold moves the player
+PASS 768 touch release stops movement
+PASS 768 touch controls do not scroll the page
+PASS 768 Move up: usable touch target
+PASS 768 touch diagonal movement is normalized
+PASS 768 touch cancellation stops every held direction
+PASS 768 mobile-controls: no horizontal overflow
+PASS 768 mobile-controls: WCAG automated audit
+FAIL 768 journey completed
+PASS 390 landing: no horizontal overflow
+PASS 390 landing: WCAG automated audit
+PASS 390 street: no horizontal overflow
+PASS 390 street: WCAG automated audit
+PASS 390 keyboard-focus: no horizontal overflow
+PASS 390 keyboard-focus: WCAG automated audit
+PASS 390 picker locked before clues
+PASS 390 touch movement controls available
+PASS 390 Move left: usable touch target
+PASS 390 touch hold moves the player
+PASS 390 touch release stops movement
+PASS 390 touch controls do not scroll the page
+PASS 390 Move up: usable touch target
+PASS 390 touch diagonal movement is normalized
+PASS 390 touch cancellation stops every held direction
+PASS 390 mobile-controls: no horizontal overflow
+PASS 390 mobile-controls: WCAG automated audit
+FAIL 390 journey completed
+PASS 1440 dialogue recovers from network failure
+PASS 1440 dialogue failure keeps unsent question
+PASS 1440 dialogue failure is announced
+PASS 1440 dialogue failure has no uncaught exception
+PASS 1440 failed dialogue does not add an NPC reply or clue
+PASS 1440 dialogue-network-failure: no horizontal overflow
+PASS 1440 dialogue-network-failure: WCAG automated audit
+PASS 1440 dialogue retry succeeds without skipping a turn
+PASS 1440 dialogue-network-recovered: no horizontal overflow
+FAIL 1440 dialogue-network-recovered: WCAG automated audit
+PASS 1440 dialogue recovery has no unexpected browser failures
+PASS 768 dialogue recovers from network failure
+PASS 768 dialogue failure keeps unsent question
+PASS 768 dialogue failure is announced
+PASS 768 dialogue failure has no uncaught exception
+PASS 768 failed dialogue does not add an NPC reply or clue
+PASS 768 dialogue-network-failure: no horizontal overflow
+PASS 768 dialogue-network-failure: WCAG automated audit
+PASS 768 dialogue retry succeeds without skipping a turn
+PASS 768 dialogue-network-recovered: no horizontal overflow
+FAIL 768 dialogue-network-recovered: WCAG automated audit
+PASS 768 dialogue recovery has no unexpected browser failures
+PASS 390 dialogue recovers from network failure
+PASS 390 dialogue failure keeps unsent question
+PASS 390 dialogue failure is announced
+PASS 390 dialogue failure has no uncaught exception
+PASS 390 failed dialogue does not add an NPC reply or clue
+PASS 390 dialogue-network-failure: no horizontal overflow
+PASS 390 dialogue-network-failure: WCAG automated audit
+PASS 390 dialogue retry succeeds without skipping a turn
+PASS 390 dialogue-network-recovered: no horizontal overflow
+FAIL 390 dialogue-network-recovered: WCAG automated audit
+PASS 390 dialogue recovery has no unexpected browser failures
+PASS 390 dialogue recovers from network failure (http)
+PASS 390 dialogue failure keeps unsent question (http)
+PASS 390 dialogue failure is announced (http)
+PASS 390 dialogue failure has no uncaught exception (http)
+PASS 390 failed dialogue does not add an NPC reply or clue (http)
+PASS 390 dialogue-http-failure: no horizontal overflow
+PASS 390 dialogue-http-failure: WCAG automated audit
+PASS 390 dialogue retry succeeds without skipping a turn (http)
+PASS 390 dialogue-http-recovered: no horizontal overflow
+FAIL 390 dialogue-http-recovered: WCAG automated audit
+PASS 390 dialogue recovery has no unexpected browser failures (http)
+PASS 390 dialogue recovers from network failure (invalid-json)
+PASS 390 dialogue failure keeps unsent question (invalid-json)
+PASS 390 dialogue failure is announced (invalid-json)
+PASS 390 dialogue failure has no uncaught exception (invalid-json)
+PASS 390 failed dialogue does not add an NPC reply or clue (invalid-json)
+PASS 390 dialogue-invalid-json-failure: no horizontal overflow
+PASS 390 dialogue-invalid-json-failure: WCAG automated audit
+PASS 390 dialogue retry succeeds without skipping a turn (invalid-json)
+PASS 390 dialogue-invalid-json-recovered: no horizontal overflow
+FAIL 390 dialogue-invalid-json-recovered: WCAG automated audit
+PASS 390 dialogue recovery has no unexpected browser failures (invalid-json)
+PASS  cardinal speed is 240 scene pixels per second
+PASS  diagonal speed is normalized
+PASS  opposing directions cancel
+PASS  focus changes clear held movement
+PASS  window blur event clears held movement
+PASS  visibility change clears held movement
+PASS  input does not trigger movement
+PASS  textarea does not trigger movement
+PASS  select does not trigger movement
+PASS  button does not trigger movement
+PASS  a does not trigger movement
+PASS  contenteditable does not trigger movement
+PASS  plaintext-only does not trigger movement
+PASS  empty-contenteditable does not trigger movement
+PASS  inherited-contenteditable does not trigger movement
+PASS  nested-contenteditable-false does not trigger movement
+PASS  modified keyboard shortcuts do not move the player
+PASS  direction buttons support keyboard hold
+PASS  releasing a direction button key stops movement
+PASS  unfocused canvas does not hijack page arrows
+PASS  page arrows keep their native scrolling behavior
+PASS  blocked vertical movement slides along wall
+PASS  map boundaries constrain feet
+PASS 1440 movement has no unexpected browser failures
+PASS 1440 home status failure is announced
+PASS 1440 home status failure has no uncaught exception
+PASS 1440 home-status-failure: no horizontal overflow
+PASS 1440 home-status-failure: WCAG automated audit
+PASS 1440 home status retry completes
+PASS 1440 home-status-recovered: no horizontal overflow
+PASS 1440 home-status-recovered: WCAG automated audit
+PASS 1440 home status recovery has no unexpected browser failures
+PASS 1440 home verify failure is announced
+PASS 1440 home verify failure has no uncaught exception
+PASS 1440 home-verify-failure: no horizontal overflow
+PASS 1440 home-verify-failure: WCAG automated audit
+PASS 1440 home verify retry completes
+PASS 1440 home-verify-recovered: no horizontal overflow
+PASS 1440 home-verify-recovered: WCAG automated audit
+PASS 1440 home verify recovery has no unexpected browser failures
+PASS 1440 home worlds failure is announced
+PASS 1440 home worlds failure has no uncaught exception
+PASS 1440 creation recovers after network failure
+PASS 1440 creation failure preserves the prompt
+PASS 1440 home-worlds-failure: no horizontal overflow
+PASS 1440 home-worlds-failure: WCAG automated audit
+PASS 1440 home worlds retry completes
+PASS 1440 home-worlds-recovered: no horizontal overflow
+PASS 1440 home-worlds-recovered: WCAG automated audit
+PASS 1440 home worlds recovery has no unexpected browser failures
+PASS 768 home status failure is announced
+PASS 768 home status failure has no uncaught exception
+PASS 768 home-status-failure: no horizontal overflow
+PASS 768 home-status-failure: WCAG automated audit
+PASS 768 home status retry completes
+PASS 768 home-status-recovered: no horizontal overflow
+PASS 768 home-status-recovered: WCAG automated audit
+PASS 768 home status recovery has no unexpected browser failures
+PASS 768 home verify failure is announced
+PASS 768 home verify failure has no uncaught exception
+PASS 768 home-verify-failure: no horizontal overflow
+PASS 768 home-verify-failure: WCAG automated audit
+PASS 768 home verify retry completes
+PASS 768 home-verify-recovered: no horizontal overflow
+PASS 768 home-verify-recovered: WCAG automated audit
+PASS 768 home verify recovery has no unexpected browser failures
+PASS 768 home worlds failure is announced
+PASS 768 home worlds failure has no uncaught exception
+PASS 768 creation recovers after network failure
+PASS 768 creation failure preserves the prompt
+PASS 768 home-worlds-failure: no horizontal overflow
+PASS 768 home-worlds-failure: WCAG automated audit
+PASS 768 home worlds retry completes
+PASS 768 home-worlds-recovered: no horizontal overflow
+PASS 768 home-worlds-recovered: WCAG automated audit
+PASS 768 home worlds recovery has no unexpected browser failures
+PASS 390 home status failure is announced
+PASS 390 home status failure has no uncaught exception
+PASS 390 home-status-failure: no horizontal overflow
+PASS 390 home-status-failure: WCAG automated audit
+PASS 390 home status retry completes
+PASS 390 home-status-recovered: no horizontal overflow
+PASS 390 home-status-recovered: WCAG automated audit
+PASS 390 home status recovery has no unexpected browser failures
+PASS 390 home status failure is announced (http)
+PASS 390 home status failure has no uncaught exception (http)
+PASS 390 home-status-http-failure: no horizontal overflow
+PASS 390 home-status-http-failure: WCAG automated audit
+PASS 390 home status retry completes (http)
+PASS 390 home-status-http-recovered: no horizontal overflow
+PASS 390 home-status-http-recovered: WCAG automated audit
+PASS 390 home status recovery has no unexpected browser failures (http)
+PASS 390 home status failure is announced (invalid-json)
+PASS 390 home status failure has no uncaught exception (invalid-json)
+PASS 390 home-status-invalid-json-failure: no horizontal overflow
+PASS 390 home-status-invalid-json-failure: WCAG automated audit
+PASS 390 home status retry completes (invalid-json)
+PASS 390 home-status-invalid-json-recovered: no horizontal overflow
+PASS 390 home-status-invalid-json-recovered: WCAG automated audit
+PASS 390 home status recovery has no unexpected browser failures (invalid-json)
+PASS 390 home verify failure is announced
+PASS 390 home verify failure has no uncaught exception
+PASS 390 home-verify-failure: no horizontal overflow
+PASS 390 home-verify-failure: WCAG automated audit
+PASS 390 home verify retry completes
+PASS 390 home-verify-recovered: no horizontal overflow
+PASS 390 home-verify-recovered: WCAG automated audit
+PASS 390 home verify recovery has no unexpected browser failures
+PASS 390 home verify failure is announced (http)
+PASS 390 home verify failure has no uncaught exception (http)
+PASS 390 home-verify-http-failure: no horizontal overflow
+PASS 390 home-verify-http-failure: WCAG automated audit
+PASS 390 home verify retry completes (http)
+PASS 390 home-verify-http-recovered: no horizontal overflow
+PASS 390 home-verify-http-recovered: WCAG automated audit
+PASS 390 home verify recovery has no unexpected browser failures (http)
+PASS 390 home verify failure is announced (invalid-json)
+PASS 390 home verify failure has no uncaught exception (invalid-json)
+PASS 390 home-verify-invalid-json-failure: no horizontal overflow
+PASS 390 home-verify-invalid-json-failure: WCAG automated audit
+PASS 390 home verify retry completes (invalid-json)
+PASS 390 home-verify-invalid-json-recovered: no horizontal overflow
+PASS 390 home-verify-invalid-json-recovered: WCAG automated audit
+PASS 390 home verify recovery has no unexpected browser failures (invalid-json)
+PASS 390 home worlds failure is announced
+PASS 390 home worlds failure has no uncaught exception
+PASS 390 creation recovers after network failure
+PASS 390 creation failure preserves the prompt
+PASS 390 home-worlds-failure: no horizontal overflow
+PASS 390 home-worlds-failure: WCAG automated audit
+PASS 390 home worlds retry completes
+PASS 390 home-worlds-recovered: no horizontal overflow
+PASS 390 home-worlds-recovered: WCAG automated audit
+PASS 390 home worlds recovery has no unexpected browser failures
+PASS 390 home worlds failure is announced (http)
+PASS 390 home worlds failure has no uncaught exception (http)
+PASS 390 creation recovers after network failure (http)
+PASS 390 creation failure preserves the prompt (http)
+PASS 390 home-worlds-http-failure: no horizontal overflow
+PASS 390 home-worlds-http-failure: WCAG automated audit
+PASS 390 home worlds retry completes (http)
+PASS 390 home-worlds-http-recovered: no horizontal overflow
+PASS 390 home-worlds-http-recovered: WCAG automated audit
+PASS 390 home worlds recovery has no unexpected browser failures (http)
+PASS 390 home worlds failure is announced (invalid-json)
+PASS 390 home worlds failure has no uncaught exception (invalid-json)
+PASS 390 creation recovers after network failure (invalid-json)
+PASS 390 creation failure preserves the prompt (invalid-json)
+PASS 390 home-worlds-invalid-json-failure: no horizontal overflow
+PASS 390 home-worlds-invalid-json-failure: WCAG automated audit
+PASS 390 home worlds retry completes (invalid-json)
+PASS 390 home-worlds-invalid-json-recovered: no horizontal overflow
+PASS 390 home-worlds-invalid-json-recovered: WCAG automated audit
+PASS 390 home worlds recovery has no unexpected browser failures (invalid-json)
+PASS 390 creation transport progress failure is announced
+PASS 390 creation transport progress failure permits retry
+PASS 390 creation transport progress failure has no uncaught exception
+PASS 390 creation-progress-transport-failure: no horizontal overflow
+PASS 390 creation-progress-transport-failure: WCAG automated audit
+PASS 390 creation retries after transport progress failure
+PASS 390 creation-progress-transport-recovered: no horizontal overflow
+PASS 390 creation-progress-transport-recovered: WCAG automated audit
+PASS 390 creation transport recovery has no unexpected browser failures
+PASS 390 creation malformed-sse progress failure is announced
+PASS 390 creation malformed-sse progress failure permits retry
+PASS 390 creation malformed-sse progress failure has no uncaught exception
+PASS 390 creation-progress-malformed-sse-failure: no horizontal overflow
+PASS 390 creation-progress-malformed-sse-failure: WCAG automated audit
+PASS 390 creation retries after malformed-sse progress failure
+PASS 390 creation-progress-malformed-sse-recovered: no horizontal overflow
+PASS 390 creation-progress-malformed-sse-recovered: WCAG automated audit
+PASS 390 creation malformed-sse recovery has no unexpected browser failures
+PASS 390 creation error-sse progress failure is announced
+PASS 390 creation error-sse progress failure permits retry
+PASS 390 creation error-sse progress failure has no uncaught exception
+PASS 390 creation-progress-error-sse-failure: no horizontal overflow
+PASS 390 creation-progress-error-sse-failure: WCAG automated audit
+PASS 390 creation retries after error-sse progress failure
+PASS 390 creation-progress-error-sse-recovered: no horizontal overflow
+PASS 390 creation-progress-error-sse-recovered: WCAG automated audit
+PASS 390 creation error-sse recovery has no unexpected browser failures
+PASS 390 401 does not consume the accusation
+PASS 390 verification-required: no horizontal overflow
+PASS 390 verification-required: WCAG automated audit
+PASS 390 incorrect accusation locks and conceals secret
+PASS 390 incorrect: no horizontal overflow
+PASS 390 incorrect: WCAG automated audit
+PASS 390 403 locks repeated accusation without secret
+PASS 390 repeat: no horizontal overflow
+PASS 390 repeat: WCAG automated audit
+{"PASS":293,"FAIL":9,"UNVERIFIED":1}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { PublicManifest } from "@/lib/types";
 import { GameCanvas } from "@/components/GameCanvas";
 import { DialoguePanel } from "@/components/DialoguePanel";
@@ -10,6 +10,7 @@ import { Decoder } from "@/components/Decoder";
 export function WorldView({ manifest }: { manifest: PublicManifest }) {
   const [locationId, setLocationId] = useState<string | null>(null);
   const [clues, setClues] = useState<Set<string>>(new Set());
+  const interiorHeadingRef = useRef<HTMLHeadingElement>(null);
   const { bible, worldId } = manifest;
   const location = bible.locations.find((l) => l.id === locationId);
   const interior = manifest.assets.find((a) => a.id === `interior-${locationId}`);
@@ -18,21 +19,31 @@ export function WorldView({ manifest }: { manifest: PublicManifest }) {
     void fetch(`/api/worlds/${worldId}/visit`, { method: "POST" });
   }, [worldId]);
 
+  useEffect(() => {
+    if (locationId) interiorHeadingRef.current?.focus();
+  }, [locationId]);
+
   return (
     <div className="space-y-6 pt-6">
-      <div className="flex items-end justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">{bible.title}</h1>
           <p className="max-w-2xl text-neutral-500">{bible.premise}</p>
         </div>
-        <p className="shrink-0 text-sm text-neutral-500">Clues {clues.size} / 3</p>
+        <p className="shrink-0 text-sm text-neutral-500">Evidence collected: {clues.size} / 3</p>
       </div>
 
       {location ? (
         <section className="space-y-4 rounded-2xl bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">{location.name}</h2>
-            <button onClick={() => setLocationId(null)} className="text-sm text-accent">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 ref={interiorHeadingRef} tabIndex={-1} className="text-xl font-semibold">
+              {location.name}
+            </h2>
+            <button
+              type="button"
+              onClick={() => setLocationId(null)}
+              className="text-sm text-accent"
+            >
               ← Back to the street
             </button>
           </div>
@@ -81,12 +92,7 @@ export function WorldView({ manifest }: { manifest: PublicManifest }) {
             ))}
         </section>
       ) : (
-        <>
-          <GameCanvas manifest={manifest} onEnter={setLocationId} />
-          <p className="text-sm text-neutral-500">
-            Arrow keys or WASD to move. Stand at a lit door and press E to enter.
-          </p>
-        </>
+        <GameCanvas manifest={manifest} onEnter={setLocationId} />
       )}
       <AccusationPanel manifest={manifest} unlocked={clues.size >= 3} />
     </div>

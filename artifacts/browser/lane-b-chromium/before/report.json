@@ -1,0 +1,1744 @@
+{
+  "phase": "before",
+  "date": "2026-11-06T08:41:55.773Z",
+  "baseURL": "http://127.0.0.1:3000",
+  "browser": "158.0.8127.18",
+  "playwright": "1.65.0",
+  "axe": "4.14.0",
+  "fixtureOnly": true,
+  "checks": [
+    {
+      "name": "landing: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": {
+        "width": 1440,
+        "content": 1440,
+        "height": 900,
+        "contentHeight": 900
+      }
+    },
+    {
+      "name": "landing: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": []
+    },
+    {
+      "name": "ticker: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": {
+        "width": 1440,
+        "content": 1440,
+        "height": 900,
+        "contentHeight": 1062
+      }
+    },
+    {
+      "name": "ticker: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": []
+    },
+    {
+      "name": "fixture creation completes through SSE",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": "/world/fx-world-3901c9d5"
+    },
+    {
+      "name": "street: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": {
+        "width": 1440,
+        "content": 1440,
+        "height": 900,
+        "contentHeight": 1053
+      }
+    },
+    {
+      "name": "street: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": []
+    },
+    {
+      "name": "picker locked before clues",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": null
+    },
+    {
+      "name": "touch movement controls available",
+      "status": "FAIL",
+      "viewport": 1440,
+      "evidence": null
+    },
+    {
+      "name": "walk mask blocks upper boundary",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": {
+        "x": 480,
+        "y": 363.02398681640625,
+        "facing": 1,
+        "now": 2562.60000000149,
+        "source": "http://127.0.0.1:3000/fixtures/sprite.svg",
+        "crop": [
+          0,
+          0,
+          32,
+          48
+        ],
+        "destination": [
+          -32,
+          -96,
+          64,
+          96
+        ]
+      }
+    },
+    {
+      "name": "entering room moves focus off removed canvas",
+      "status": "FAIL",
+      "viewport": 1440,
+      "evidence": {
+        "tag": "BODY",
+        "text": "ETHJasoosCreateGalleryThe Monsoon TiffinRain floods the night market in Dadar. Y"
+      }
+    },
+    {
+      "name": "interior: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": {
+        "width": 1440,
+        "content": 1440,
+        "height": 900,
+        "contentHeight": 1170
+      }
+    },
+    {
+      "name": "interior: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": []
+    },
+    {
+      "name": "first reply preserves clue progression",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": {
+        "reply": "Sakharam looks you over. \"Ask what you came to ask.\"",
+        "clueRevealed": false,
+        "close": false,
+        "event": {
+          "id": "a258f490-04e9-424f-ad79-7ab194138831",
+          "kind": "dialogue",
+          "model": "fixture-dialogue",
+          "startedAt": "2026-11-06T08:42:05.833Z",
+          "latencyMs": 101,
+          "requestId": "fx-2e217afd",
+          "status": "ok"
+        }
+      }
+    },
+    {
+      "name": "second reply reveals clue",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": {
+        "reply": "Sakharam leans in. The code on your tiffin was changed by hand tonight.",
+        "clueRevealed": true,
+        "close": false,
+        "event": {
+          "id": "3d1e1546-e542-40c9-a828-25877ba43061",
+          "kind": "dialogue",
+          "model": "fixture-dialogue",
+          "startedAt": "2026-11-06T08:42:06.052Z",
+          "latencyMs": 101,
+          "requestId": "fx-1750b05b",
+          "status": "ok"
+        }
+      }
+    },
+    {
+      "name": "dialogue: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": {
+        "width": 1440,
+        "content": 1440,
+        "height": 900,
+        "contentHeight": 1286
+      }
+    },
+    {
+      "name": "dialogue: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": []
+    },
+    {
+      "name": "dialogue replies announced to assistive technology",
+      "status": "FAIL",
+      "viewport": 1440,
+      "evidence": null
+    },
+    {
+      "name": "third reply closes dialogue",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": {
+        "reply": "Sakharam leans in. The code on your tiffin was changed by hand tonight.",
+        "clueRevealed": true,
+        "close": true,
+        "event": {
+          "id": "9d91477c-c7a4-417f-9efa-cc4a9e5cec1e",
+          "kind": "dialogue",
+          "model": "fixture-dialogue",
+          "startedAt": "2026-11-06T08:42:06.389Z",
+          "latencyMs": 100,
+          "requestId": "fx-c1d0d2b7",
+          "status": "ok"
+        }
+      }
+    },
+    {
+      "name": "returning to street restores canvas focus",
+      "status": "FAIL",
+      "viewport": 1440,
+      "evidence": null
+    },
+    {
+      "name": "two clues still lock accusation",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": null
+    },
+    {
+      "name": "ordinary note decoder",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": null
+    },
+    {
+      "name": "hidden note decoder",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": null
+    },
+    {
+      "name": "clues: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": {
+        "width": 1440,
+        "content": 1440,
+        "height": 900,
+        "contentHeight": 1510
+      }
+    },
+    {
+      "name": "clues: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": []
+    },
+    {
+      "name": "three distinct clues unlock picker",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": null
+    },
+    {
+      "name": "native picker keyboard selection",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": "npc-meera"
+    },
+    {
+      "name": "accusation: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": {
+        "width": 1440,
+        "content": 1440,
+        "height": 900,
+        "contentHeight": 1510
+      }
+    },
+    {
+      "name": "accusation: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": []
+    },
+    {
+      "name": "correct fixture accusation reveals finale",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": {
+        "correct": true,
+        "finaleUrl": "/fixtures/finale.svg"
+      }
+    },
+    {
+      "name": "accusation locks after success",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": null
+    },
+    {
+      "name": "finale: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": {
+        "width": 1440,
+        "content": 1440,
+        "height": 900,
+        "contentHeight": 2148
+      }
+    },
+    {
+      "name": "finale: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 1440,
+      "evidence": []
+    },
+    {
+      "name": "journey has no unexpected browser failures",
+      "status": "FAIL",
+      "viewport": 1440,
+      "evidence": {
+        "label": "journey-1440",
+        "consoleErrors": [],
+        "pageErrors": [],
+        "failedRequests": [
+          {
+            "url": "http://127.0.0.1:3000/api/worlds/2e64b761-c382-4341-b8ac-dbe94925fe45/events",
+            "error": "net::ERR_ABORTED"
+          }
+        ],
+        "httpErrors": [],
+        "externalRequests": []
+      }
+    },
+    {
+      "name": "landing: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": {
+        "width": 768,
+        "content": 768,
+        "height": 1024,
+        "contentHeight": 1024
+      }
+    },
+    {
+      "name": "landing: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": []
+    },
+    {
+      "name": "street: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": {
+        "width": 768,
+        "content": 768,
+        "height": 1024,
+        "contentHeight": 1024
+      }
+    },
+    {
+      "name": "street: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": []
+    },
+    {
+      "name": "picker locked before clues",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": null
+    },
+    {
+      "name": "touch movement controls available",
+      "status": "FAIL",
+      "viewport": 768,
+      "evidence": null
+    },
+    {
+      "name": "walk mask blocks upper boundary",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": {
+        "x": 480,
+        "y": 363.02398681640625,
+        "facing": 1,
+        "now": 2059.10000000149,
+        "source": "http://127.0.0.1:3000/fixtures/sprite.svg",
+        "crop": [
+          0,
+          0,
+          32,
+          48
+        ],
+        "destination": [
+          -32,
+          -96,
+          64,
+          96
+        ]
+      }
+    },
+    {
+      "name": "entering room moves focus off removed canvas",
+      "status": "FAIL",
+      "viewport": 768,
+      "evidence": {
+        "tag": "BODY",
+        "text": "ETHJasoosCreateGalleryThe Monsoon TiffinRain floods the night market in Dadar. Y"
+      }
+    },
+    {
+      "name": "interior: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": {
+        "width": 768,
+        "content": 768,
+        "height": 1024,
+        "contentHeight": 1026
+      }
+    },
+    {
+      "name": "interior: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": []
+    },
+    {
+      "name": "first reply preserves clue progression",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": {
+        "reply": "Sakharam looks you over. \"Ask what you came to ask.\"",
+        "clueRevealed": false,
+        "close": false,
+        "event": {
+          "id": "01b9d526-f154-499c-9263-03399da24333",
+          "kind": "dialogue",
+          "model": "fixture-dialogue",
+          "startedAt": "2026-11-06T08:42:14.590Z",
+          "latencyMs": 101,
+          "requestId": "fx-1c8b631d",
+          "status": "ok"
+        }
+      }
+    },
+    {
+      "name": "second reply reveals clue",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": {
+        "reply": "Sakharam leans in. The code on your tiffin was changed by hand tonight.",
+        "clueRevealed": true,
+        "close": false,
+        "event": {
+          "id": "121181ad-614e-4103-8d62-290bb8c91f28",
+          "kind": "dialogue",
+          "model": "fixture-dialogue",
+          "startedAt": "2026-11-06T08:42:14.797Z",
+          "latencyMs": 100,
+          "requestId": "fx-cc3da064",
+          "status": "ok"
+        }
+      }
+    },
+    {
+      "name": "dialogue: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": {
+        "width": 768,
+        "content": 768,
+        "height": 1024,
+        "contentHeight": 1142
+      }
+    },
+    {
+      "name": "dialogue: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": []
+    },
+    {
+      "name": "dialogue replies announced to assistive technology",
+      "status": "FAIL",
+      "viewport": 768,
+      "evidence": null
+    },
+    {
+      "name": "third reply closes dialogue",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": {
+        "reply": "Sakharam leans in. The code on your tiffin was changed by hand tonight.",
+        "clueRevealed": true,
+        "close": true,
+        "event": {
+          "id": "a3f8896d-db51-466f-ac59-e4c2488bd927",
+          "kind": "dialogue",
+          "model": "fixture-dialogue",
+          "startedAt": "2026-11-06T08:42:15.091Z",
+          "latencyMs": 100,
+          "requestId": "fx-1c2a6b71",
+          "status": "ok"
+        }
+      }
+    },
+    {
+      "name": "returning to street restores canvas focus",
+      "status": "FAIL",
+      "viewport": 768,
+      "evidence": null
+    },
+    {
+      "name": "two clues still lock accusation",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": null
+    },
+    {
+      "name": "ordinary note decoder",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": null
+    },
+    {
+      "name": "hidden note decoder",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": null
+    },
+    {
+      "name": "clues: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": {
+        "width": 768,
+        "content": 768,
+        "height": 1024,
+        "contentHeight": 1366
+      }
+    },
+    {
+      "name": "clues: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": []
+    },
+    {
+      "name": "three distinct clues unlock picker",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": null
+    },
+    {
+      "name": "native picker keyboard selection",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": "npc-meera"
+    },
+    {
+      "name": "accusation: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": {
+        "width": 768,
+        "content": 768,
+        "height": 1024,
+        "contentHeight": 1366
+      }
+    },
+    {
+      "name": "accusation: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": []
+    },
+    {
+      "name": "correct fixture accusation reveals finale",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": {
+        "correct": true,
+        "finaleUrl": "/fixtures/finale.svg"
+      }
+    },
+    {
+      "name": "accusation locks after success",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": null
+    },
+    {
+      "name": "finale: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": {
+        "width": 768,
+        "content": 768,
+        "height": 1024,
+        "contentHeight": 1860
+      }
+    },
+    {
+      "name": "finale: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": []
+    },
+    {
+      "name": "journey has no unexpected browser failures",
+      "status": "PASS",
+      "viewport": 768,
+      "evidence": {
+        "label": "journey-768",
+        "consoleErrors": [],
+        "pageErrors": [],
+        "failedRequests": [],
+        "httpErrors": [],
+        "externalRequests": []
+      }
+    },
+    {
+      "name": "landing: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": {
+        "width": 390,
+        "content": 390,
+        "height": 844,
+        "contentHeight": 931
+      }
+    },
+    {
+      "name": "landing: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": []
+    },
+    {
+      "name": "street: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": {
+        "width": 390,
+        "content": 390,
+        "height": 844,
+        "contentHeight": 844
+      }
+    },
+    {
+      "name": "street: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": []
+    },
+    {
+      "name": "picker locked before clues",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": null
+    },
+    {
+      "name": "touch movement controls available",
+      "status": "FAIL",
+      "viewport": 390,
+      "evidence": null
+    },
+    {
+      "name": "walk mask blocks upper boundary",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": {
+        "x": 480,
+        "y": 363,
+        "facing": 1,
+        "now": 2322.10000000149,
+        "source": "http://127.0.0.1:3000/fixtures/sprite.svg",
+        "crop": [
+          0,
+          0,
+          32,
+          48
+        ],
+        "destination": [
+          -32,
+          -96,
+          64,
+          96
+        ]
+      }
+    },
+    {
+      "name": "entering room moves focus off removed canvas",
+      "status": "FAIL",
+      "viewport": 390,
+      "evidence": {
+        "tag": "BODY",
+        "text": "ETHJasoosCreateGalleryThe Monsoon TiffinRain floods the night market in Dadar. Y"
+      }
+    },
+    {
+      "name": "interior: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": {
+        "width": 390,
+        "content": 390,
+        "height": 844,
+        "contentHeight": 893
+      }
+    },
+    {
+      "name": "interior: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": []
+    },
+    {
+      "name": "first reply preserves clue progression",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": {
+        "reply": "Sakharam looks you over. \"Ask what you came to ask.\"",
+        "clueRevealed": false,
+        "close": false,
+        "event": {
+          "id": "7ead0e57-0a86-45e7-b3fb-ea763a2a75fe",
+          "kind": "dialogue",
+          "model": "fixture-dialogue",
+          "startedAt": "2026-11-06T08:42:22.818Z",
+          "latencyMs": 101,
+          "requestId": "fx-13f651a1",
+          "status": "ok"
+        }
+      }
+    },
+    {
+      "name": "second reply reveals clue",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": {
+        "reply": "Sakharam leans in. The code on your tiffin was changed by hand tonight.",
+        "clueRevealed": true,
+        "close": false,
+        "event": {
+          "id": "76133bb2-5dfa-4402-a400-9364ddedbf1e",
+          "kind": "dialogue",
+          "model": "fixture-dialogue",
+          "startedAt": "2026-11-06T08:42:23.024Z",
+          "latencyMs": 99,
+          "requestId": "fx-80e655e4",
+          "status": "ok"
+        }
+      }
+    },
+    {
+      "name": "dialogue: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": {
+        "width": 390,
+        "content": 390,
+        "height": 844,
+        "contentHeight": 1069
+      }
+    },
+    {
+      "name": "dialogue: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": []
+    },
+    {
+      "name": "dialogue replies announced to assistive technology",
+      "status": "FAIL",
+      "viewport": 390,
+      "evidence": null
+    },
+    {
+      "name": "third reply closes dialogue",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": {
+        "reply": "Sakharam leans in. The code on your tiffin was changed by hand tonight.",
+        "clueRevealed": true,
+        "close": true,
+        "event": {
+          "id": "ec527b05-635e-4575-97bb-5d19ca55b4a7",
+          "kind": "dialogue",
+          "model": "fixture-dialogue",
+          "startedAt": "2026-11-06T08:42:23.407Z",
+          "latencyMs": 101,
+          "requestId": "fx-b33c7c5c",
+          "status": "ok"
+        }
+      }
+    },
+    {
+      "name": "returning to street restores canvas focus",
+      "status": "FAIL",
+      "viewport": 390,
+      "evidence": null
+    },
+    {
+      "name": "two clues still lock accusation",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": null
+    },
+    {
+      "name": "ordinary note decoder",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": null
+    },
+    {
+      "name": "hidden note decoder",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": null
+    },
+    {
+      "name": "clues: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": {
+        "width": 390,
+        "content": 390,
+        "height": 844,
+        "contentHeight": 1445
+      }
+    },
+    {
+      "name": "clues: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": []
+    },
+    {
+      "name": "three distinct clues unlock picker",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": null
+    },
+    {
+      "name": "native picker keyboard selection",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": "npc-meera"
+    },
+    {
+      "name": "accusation: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": {
+        "width": 390,
+        "content": 390,
+        "height": 844,
+        "contentHeight": 1445
+      }
+    },
+    {
+      "name": "accusation: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": []
+    },
+    {
+      "name": "correct fixture accusation reveals finale",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": {
+        "correct": true,
+        "finaleUrl": "/fixtures/finale.svg"
+      }
+    },
+    {
+      "name": "accusation locks after success",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": null
+    },
+    {
+      "name": "finale: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": {
+        "width": 390,
+        "content": 390,
+        "height": 844,
+        "contentHeight": 1751
+      }
+    },
+    {
+      "name": "finale: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": []
+    },
+    {
+      "name": "journey has no unexpected browser failures",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": {
+        "label": "journey-390",
+        "consoleErrors": [],
+        "pageErrors": [],
+        "failedRequests": [],
+        "httpErrors": [],
+        "externalRequests": []
+      }
+    },
+    {
+      "name": "dialogue recovers from network failure",
+      "status": "FAIL",
+      "viewport": 390,
+      "evidence": null
+    },
+    {
+      "name": "dialogue failure keeps unsent question",
+      "status": "FAIL",
+      "viewport": 390,
+      "evidence": null
+    },
+    {
+      "name": "dialogue failure is announced",
+      "status": "FAIL",
+      "viewport": 390,
+      "evidence": null
+    },
+    {
+      "name": "dialogue failure has no uncaught exception",
+      "status": "FAIL",
+      "viewport": 390,
+      "evidence": [
+        "Failed to fetch"
+      ]
+    },
+    {
+      "name": "cardinal speed is 240 scene pixels per second",
+      "status": "PASS",
+      "evidence": {
+        "distance": 60,
+        "elapsed": 248,
+        "speed": 241.93548387096774
+      }
+    },
+    {
+      "name": "diagonal speed is normalized",
+      "status": "PASS",
+      "evidence": {
+        "distance": 64.0079885984688,
+        "elapsed": 264.40000000596046,
+        "speed": 242.08770271189806,
+        "ratio": 1.0006291712091786
+      }
+    },
+    {
+      "name": "opposing directions cancel",
+      "status": "PASS",
+      "evidence": {
+        "before": {
+          "x": 480,
+          "y": 459,
+          "facing": 1,
+          "now": 519.7999999970198,
+          "source": "http://127.0.0.1:3000/fixtures/sprite.svg",
+          "crop": [
+            0,
+            0,
+            32,
+            48
+          ],
+          "destination": [
+            -32,
+            -96,
+            64,
+            96
+          ]
+        },
+        "after": {
+          "x": 480,
+          "y": 459,
+          "facing": -1,
+          "now": 850.5,
+          "source": "http://127.0.0.1:3000/fixtures/sprite.svg",
+          "crop": [
+            0,
+            0,
+            32,
+            48
+          ],
+          "destination": [
+            -32,
+            -96,
+            64,
+            96
+          ]
+        }
+      }
+    },
+    {
+      "name": "focus changes clear held movement",
+      "status": "PASS",
+      "evidence": {
+        "before": {
+          "x": 504,
+          "y": 459,
+          "facing": 1,
+          "now": 1001.7999999970198,
+          "source": "http://127.0.0.1:3000/fixtures/sprite.svg",
+          "crop": [
+            0,
+            0,
+            32,
+            48
+          ],
+          "destination": [
+            -32,
+            -96,
+            64,
+            96
+          ]
+        },
+        "after": {
+          "x": 504,
+          "y": 459,
+          "facing": 1,
+          "now": 1183.6999999955297,
+          "source": "http://127.0.0.1:3000/fixtures/sprite.svg",
+          "crop": [
+            0,
+            0,
+            32,
+            48
+          ],
+          "destination": [
+            -32,
+            -96,
+            64,
+            96
+          ]
+        }
+      }
+    },
+    {
+      "name": "window blur event clears held movement",
+      "status": "PASS",
+      "evidence": {
+        "before": {
+          "x": 480,
+          "y": 459,
+          "facing": -1,
+          "now": 1350.2999999970198,
+          "source": "http://127.0.0.1:3000/fixtures/sprite.svg",
+          "crop": [
+            0,
+            0,
+            32,
+            48
+          ],
+          "destination": [
+            -32,
+            -96,
+            64,
+            96
+          ]
+        },
+        "after": {
+          "x": 480,
+          "y": 459,
+          "facing": -1,
+          "now": 1500.2999999970198,
+          "source": "http://127.0.0.1:3000/fixtures/sprite.svg",
+          "crop": [
+            0,
+            0,
+            32,
+            48
+          ],
+          "destination": [
+            -32,
+            -96,
+            64,
+            96
+          ]
+        },
+        "event": "synthetic window blur"
+      }
+    },
+    {
+      "name": "real tab blur clears held movement",
+      "status": "UNVERIFIED",
+      "evidence": "Headless Chromium keeps both tabs visible and focused; synthetic handlers tested separately."
+    },
+    {
+      "name": "visibility change clears held movement",
+      "status": "PASS",
+      "evidence": {
+        "before": {
+          "x": 316.0320129394531,
+          "y": 459,
+          "facing": -1,
+          "now": 2250.39999999851,
+          "source": "http://127.0.0.1:3000/fixtures/sprite.svg",
+          "crop": [
+            0,
+            0,
+            32,
+            48
+          ],
+          "destination": [
+            -32,
+            -96,
+            64,
+            96
+          ]
+        },
+        "after": {
+          "x": 316.0320129394531,
+          "y": 459,
+          "facing": -1,
+          "now": 2400.2999999970198,
+          "source": "http://127.0.0.1:3000/fixtures/sprite.svg",
+          "crop": [
+            0,
+            0,
+            32,
+            48
+          ],
+          "destination": [
+            -32,
+            -96,
+            64,
+            96
+          ]
+        },
+        "event": "synthetic visibilitychange"
+      }
+    },
+    {
+      "name": "input does not trigger movement",
+      "status": "PASS",
+      "evidence": {
+        "before": 316.0320129394531,
+        "after": 316.0320129394531
+      }
+    },
+    {
+      "name": "textarea does not trigger movement",
+      "status": "PASS",
+      "evidence": {
+        "before": 316.0320129394531,
+        "after": 316.0320129394531
+      }
+    },
+    {
+      "name": "select does not trigger movement",
+      "status": "PASS",
+      "evidence": {
+        "before": 316.0320129394531,
+        "after": 316.0320129394531
+      }
+    },
+    {
+      "name": "button does not trigger movement",
+      "status": "PASS",
+      "evidence": {
+        "before": 316.0320129394531,
+        "after": 316.0320129394531
+      }
+    },
+    {
+      "name": "a does not trigger movement",
+      "status": "PASS",
+      "evidence": {
+        "before": 316.0320129394531,
+        "after": 316.0320129394531
+      }
+    },
+    {
+      "name": "contenteditable does not trigger movement",
+      "status": "PASS",
+      "evidence": {
+        "before": 316.0320129394531,
+        "after": 316.0320129394531
+      }
+    },
+    {
+      "name": "plaintext-only does not trigger movement",
+      "status": "FAIL",
+      "evidence": {
+        "before": 316.0320129394531,
+        "after": 344.0159912109375
+      }
+    },
+    {
+      "name": "unfocused canvas does not hijack page arrows",
+      "status": "FAIL",
+      "evidence": {
+        "before": {
+          "x": 344.0159912109375,
+          "y": 459,
+          "facing": 1,
+          "now": 3667,
+          "source": "http://127.0.0.1:3000/fixtures/sprite.svg",
+          "crop": [
+            0,
+            0,
+            32,
+            48
+          ],
+          "destination": [
+            -32,
+            -96,
+            64,
+            96
+          ]
+        },
+        "after": {
+          "x": 344.0159912109375,
+          "y": 502.99200439453125,
+          "facing": 1,
+          "now": 3900.1999999955297,
+          "source": "http://127.0.0.1:3000/fixtures/sprite.svg",
+          "crop": [
+            0,
+            0,
+            32,
+            48
+          ],
+          "destination": [
+            -32,
+            -96,
+            64,
+            96
+          ]
+        }
+      }
+    },
+    {
+      "name": "blocked vertical movement slides along wall",
+      "status": "FAIL",
+      "evidence": {
+        "before": {
+          "x": 480,
+          "y": 363.0480041503906,
+          "facing": 1,
+          "now": 1363.8999999985099,
+          "source": "http://127.0.0.1:3000/fixtures/sprite.svg",
+          "crop": [
+            0,
+            0,
+            32,
+            48
+          ],
+          "destination": [
+            -32,
+            -96,
+            64,
+            96
+          ]
+        },
+        "after": {
+          "x": 530.8947143554688,
+          "y": 360.21392822265625,
+          "facing": 1,
+          "now": 1713.8999999985099,
+          "source": "http://127.0.0.1:3000/fixtures/sprite.svg",
+          "crop": [
+            0,
+            0,
+            32,
+            48
+          ],
+          "destination": [
+            -32,
+            -96,
+            64,
+            96
+          ]
+        }
+      }
+    },
+    {
+      "name": "map boundaries constrain feet",
+      "status": "PASS",
+      "evidence": {
+        "left": {
+          "x": 0,
+          "y": 360.21392822265625,
+          "facing": -1,
+          "now": 4563.5999999940395,
+          "source": "http://127.0.0.1:3000/fixtures/sprite.svg",
+          "crop": [
+            0,
+            0,
+            32,
+            48
+          ],
+          "destination": [
+            -32,
+            -96,
+            64,
+            96
+          ]
+        },
+        "bottom": {
+          "x": 0,
+          "y": 536.2059326171875,
+          "facing": -1,
+          "now": 5730.39999999851,
+          "source": "http://127.0.0.1:3000/fixtures/sprite.svg",
+          "crop": [
+            0,
+            0,
+            32,
+            48
+          ],
+          "destination": [
+            -32,
+            -96,
+            64,
+            96
+          ]
+        },
+        "right": {
+          "x": 959.9760131835938,
+          "y": 536.2059326171875,
+          "facing": 1,
+          "now": 10280.19999999553,
+          "source": "http://127.0.0.1:3000/fixtures/sprite.svg",
+          "crop": [
+            0,
+            0,
+            32,
+            48
+          ],
+          "destination": [
+            -32,
+            -96,
+            64,
+            96
+          ]
+        }
+      }
+    },
+    {
+      "name": "home status failure is announced",
+      "status": "FAIL",
+      "viewport": 390,
+      "evidence": null
+    },
+    {
+      "name": "home status failure has no uncaught exception",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": []
+    },
+    {
+      "name": "home verify failure is announced",
+      "status": "FAIL",
+      "viewport": 390,
+      "evidence": null
+    },
+    {
+      "name": "home verify failure has no uncaught exception",
+      "status": "FAIL",
+      "viewport": 390,
+      "evidence": [
+        "Failed to fetch"
+      ]
+    },
+    {
+      "name": "home worlds failure is announced",
+      "status": "FAIL",
+      "viewport": 390,
+      "evidence": null
+    },
+    {
+      "name": "home worlds failure has no uncaught exception",
+      "status": "FAIL",
+      "viewport": 390,
+      "evidence": [
+        "Failed to fetch"
+      ]
+    },
+    {
+      "name": "home worlds failure suite completed",
+      "status": "FAIL",
+      "viewport": 390,
+      "evidence": "locator.isEnabled: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Create world', exact: true })\u001b[22m\n"
+    },
+    {
+      "name": "401 does not consume the accusation",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": null
+    },
+    {
+      "name": "verification-required: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": {
+        "width": 390,
+        "content": 390,
+        "height": 844,
+        "contentHeight": 1008
+      }
+    },
+    {
+      "name": "verification-required: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": []
+    },
+    {
+      "name": "incorrect accusation locks and conceals secret",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": null
+    },
+    {
+      "name": "incorrect: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": {
+        "width": 390,
+        "content": 390,
+        "height": 844,
+        "contentHeight": 1008
+      }
+    },
+    {
+      "name": "incorrect: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": []
+    },
+    {
+      "name": "403 locks repeated accusation without secret",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": null
+    },
+    {
+      "name": "repeat: no horizontal overflow",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": {
+        "width": 390,
+        "content": 390,
+        "height": 844,
+        "contentHeight": 984
+      }
+    },
+    {
+      "name": "repeat: WCAG automated audit",
+      "status": "PASS",
+      "viewport": 390,
+      "evidence": []
+    }
+  ],
+  "accessibility": [
+    {
+      "stage": "landing",
+      "width": 1440,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "stage": "ticker",
+      "width": 1440,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "stage": "street",
+      "width": 1440,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "stage": "interior",
+      "width": 1440,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "stage": "dialogue",
+      "width": 1440,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "stage": "clues",
+      "width": 1440,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "stage": "accusation",
+      "width": 1440,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "stage": "finale",
+      "width": 1440,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "stage": "landing",
+      "width": 768,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "stage": "street",
+      "width": 768,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "stage": "interior",
+      "width": 768,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "stage": "dialogue",
+      "width": 768,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "stage": "clues",
+      "width": 768,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "stage": "accusation",
+      "width": 768,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "stage": "finale",
+      "width": 768,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "stage": "landing",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "stage": "street",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "stage": "interior",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "stage": "dialogue",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "stage": "clues",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "stage": "accusation",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "stage": "finale",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "stage": "verification-required",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "stage": "incorrect",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "stage": "repeat",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    }
+  ],
+  "diagnostics": [
+    {
+      "label": "journey-1440",
+      "consoleErrors": [],
+      "pageErrors": [],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3000/api/worlds/2e64b761-c382-4341-b8ac-dbe94925fe45/events",
+          "error": "net::ERR_ABORTED"
+        }
+      ],
+      "httpErrors": [],
+      "externalRequests": []
+    },
+    {
+      "label": "journey-768",
+      "consoleErrors": [],
+      "pageErrors": [],
+      "failedRequests": [],
+      "httpErrors": [],
+      "externalRequests": []
+    },
+    {
+      "label": "journey-390",
+      "consoleErrors": [],
+      "pageErrors": [],
+      "failedRequests": [],
+      "httpErrors": [],
+      "externalRequests": []
+    },
+    {
+      "label": "dialogue-network-failure",
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_FAILED"
+      ],
+      "pageErrors": [
+        "Failed to fetch"
+      ],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3000/api/dialogue",
+          "error": "net::ERR_FAILED"
+        }
+      ],
+      "httpErrors": [],
+      "externalRequests": []
+    },
+    {
+      "label": "movement",
+      "consoleErrors": [],
+      "pageErrors": [],
+      "failedRequests": [],
+      "httpErrors": [],
+      "externalRequests": []
+    },
+    {
+      "label": "home-status-failure",
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_FAILED"
+      ],
+      "pageErrors": [],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3000/api/status",
+          "error": "net::ERR_FAILED"
+        }
+      ],
+      "httpErrors": [],
+      "externalRequests": []
+    },
+    {
+      "label": "home-verify-failure",
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_FAILED"
+      ],
+      "pageErrors": [
+        "Failed to fetch"
+      ],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3000/api/verify",
+          "error": "net::ERR_FAILED"
+        }
+      ],
+      "httpErrors": [],
+      "externalRequests": []
+    },
+    {
+      "label": "home-worlds-failure",
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_FAILED"
+      ],
+      "pageErrors": [
+        "Failed to fetch"
+      ],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3000/api/worlds",
+          "error": "net::ERR_FAILED"
+        }
+      ],
+      "httpErrors": [],
+      "externalRequests": []
+    },
+    {
+      "label": "accusation-401-incorrect-403",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+      ],
+      "pageErrors": [],
+      "failedRequests": [],
+      "httpErrors": [
+        {
+          "url": "http://127.0.0.1:3000/api/worlds/fixture-monsoon-tiffin/accuse",
+          "status": 401
+        },
+        {
+          "url": "http://127.0.0.1:3000/api/worlds/fixture-monsoon-tiffin/accuse",
+          "status": 403
+        }
+      ],
+      "externalRequests": []
+    }
+  ],
+  "summary": {
+    "PASS": 106,
+    "FAIL": 26,
+    "UNVERIFIED": 1
+  }
+}
