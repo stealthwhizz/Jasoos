@@ -114,3 +114,20 @@ export interface Accusation {
   humanHash: string;
   culpritId: string;
 }
+
+/** One row in the gallery, read from a live Arkiv `world` entity. */
+export interface WorldSummary {
+  worldKey: string;
+  title: string;
+  premise: string;
+  thumbnailUrl: string;
+  createdAt: string;
+  visits: number;
+}
+
+/** Messages on the GET /api/worlds/[jobId]/events stream. */
+export type JobEvent =
+  | { type: "ticker"; event: TickerEvent }
+  | { type: "asset"; asset: Asset }
+  | { type: "done"; worldId: string }
+  | { type: "error"; message: string };
