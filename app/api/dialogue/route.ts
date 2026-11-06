@@ -18,6 +18,8 @@ type DialogueRequest = {
   inventory?: string[];
   /** Current danger-meter value 0..100. */
   heat?: number;
+  /** An inventory item the player shows this turn; ignored unless it is in `inventory`. */
+  shownItem?: string;
 };
 
 export async function POST(req: NextRequest) {
@@ -45,6 +47,7 @@ export async function POST(req: NextRequest) {
           body.exchanges ?? (body.history ?? []).filter((t) => t.speaker === "player").length,
         inventory: body.inventory ?? [],
         heat: body.heat ?? 0,
+        shownItem: body.shownItem && body.inventory?.includes(body.shownItem) ? body.shownItem : undefined,
       })
     );
     return NextResponse.json({ ...reply, requestIds });

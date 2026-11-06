@@ -252,8 +252,11 @@ npx vitest run
   world is saved with `ARKIV_SIGNER_KEY` set.
 - **No World ID debrief yet**, although the IDKit track requires one.
 - **Dialogue trusts the client for everything except the answer.**
-  `/api/dialogue` takes the world plan from the request body. A player can
-  edit that plan, but cannot read or change the sealed secret and culprit.
+  `/api/dialogue` takes the world plan, `clueFound`, `exchanges`, `heat` and
+  `inventory` from the request body. The clue and close rules run on the
+  server (`applyDialogueRules`), but on the numbers the client sends. A player
+  can edit those, and can get a clue early that way. They cannot read or
+  change the sealed secret, culprit or key.
 - **Changing `SESSION_SECRET` locks saved worlds.** Their sealed answers can
   no longer be opened, so they can't be played to the end.
 

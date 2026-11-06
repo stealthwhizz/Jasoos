@@ -1054,6 +1054,8 @@ export async function generateDialogue(
     inventory?: string[];
     /** Current danger-meter value 0..100. */
     heat?: number;
+    /** An inventory item the player holds up this turn ("Show item"). */
+    shownItem?: string;
   }
 ): Promise<DialogueResponse> {
   const npc = bible.npcs[npcIndex];
@@ -1070,6 +1072,11 @@ export async function generateDialogue(
   if (storyCtx?.inventory?.length) {
     lines.push(
       `THE PLAYER VISIBLY CARRIES: ${storyCtx.inventory.join(", ")} — react to these when it makes sense.`
+    );
+  }
+  if (storyCtx?.shownItem) {
+    lines.push(
+      `THE PLAYER SHOWS YOU: ${storyCtx.shownItem}. React to it. If it touches what you WANT (${npc.wants}), drop your guard and answer more openly.`
     );
   }
   const heat = storyCtx?.heat ?? 0;
@@ -1119,13 +1126,35 @@ export async function generateDialogue(
     },
   });
   if (!res.text) throw new Error("Empty dialogue from text model.");
-  const out = JSON.parse(res.text) as DialogueResponse;
+  return applyDialogueRules(JSON.parse(res.text) as DialogueResponse, {
+    clue: clue ?? "",
+    clueFound: Boolean(storyCtx?.clueFound),
+    exchanges,
+  });
+}
+
+/**
+ * R7 in code, not only in the prompt: the clue comes out by the player's second line (unless the
+ * offense is grave), it comes out once, and the chat closes by the third line or once the clue is
+ * already found. `exchanges` counts the player's lines including this one.
+ */
+export function applyDialogueRules(
+  out: DialogueResponse,
+  { clue, clueFound, exchanges }: { clue: string; clueFound: boolean; exchanges: number }
+): DialogueResponse {
   if (out.offense !== "minor" && out.offense !== "grave") out.offense = "none";
   // A grave offense always slams the conversation shut and keeps the clue.
   if (out.offense === "grave") {
     out.done = true;
     out.clueRevealed = false;
+  } else if (clueFound) {
+    out.clueRevealed = false;
+  } else if (exchanges >= 2 && !out.clueRevealed) {
+    // The model held the clue too long: say it plainly so the case stays solvable.
+    out.line = `${out.line} ${clue}`.trim();
+    out.clueRevealed = true;
   }
+  if (exchanges >= 3 || clueFound) out.done = true;
   if (out.done) {
     out.options = [];
   } else {
