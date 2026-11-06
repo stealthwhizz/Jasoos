@@ -1183,12 +1183,13 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
     [bible, finale, finaleLoading, speak, fetchVoice, stopVoice, addCalls, noteRequests, cluesFound, genCalls, screensDreamed]
   );
 
+  // `!error` spaces out retries: a failed ending shows its error for 4 s before this fires again.
   useEffect(() => {
-    if (heat >= 100 && bible && !finale && !finaleLoading) {
+    if (heat >= 100 && bible && !finale && !finaleLoading && !error) {
       const hard = bible.failStates.find((f) => f.kind === "hard");
       runFinale({ reason: hard?.trigger ?? `the ${bible.heatLabel} meter reached 100` });
     }
-  }, [heat, bible, finale, finaleLoading, runFinale]);
+  }, [heat, bible, finale, finaleLoading, error, runFinale]);
 
   /** Pause the session clock while generation/loading overlays block movement. */
   const timerPaused =
@@ -1220,10 +1221,10 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
 
   /** Session over — trigger defeat when the wall clock hits zero. */
   useEffect(() => {
-    if (secondsLeft === 0 && bible && !finale && !finaleLoading) {
+    if (secondsLeft === 0 && bible && !finale && !finaleLoading && !error) {
       runFinale({ reason: "time ran out" });
     }
-  }, [secondsLeft, bible, finale, finaleLoading, runFinale]);
+  }, [secondsLeft, bible, finale, finaleLoading, error, runFinale]);
 
   const closeDialogue = useCallback(() => {
     stopVoice();
