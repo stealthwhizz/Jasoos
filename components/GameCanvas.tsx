@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { PublicManifest } from "@/lib/types";
 import { isWalkable } from "@/lib/engine/walkMap";
 import { keySprite } from "@/lib/engine/sprite";
@@ -24,6 +24,43 @@ function loadImage(src: string): HTMLImageElement {
 }
 
 /** R5: draws the street and sprite; arrows or WASD move, E enters the nearest door. */
+/** A labelled schematic of the actual saved walk grid and doors, never substitute generated art. */
+function navigationSketch(manifest: PublicManifest): HTMLCanvasElement {
+  const image = document.createElement("canvas");
+  image.width = W;
+  image.height = H;
+  const context = image.getContext("2d");
+  if (!context) return image;
+  context.fillStyle = "#171717";
+  context.fillRect(0, 0, W, H);
+  const { cols, rows, cells } = manifest.walkMap;
+  context.fillStyle = "#35483e";
+  if (cols > 0 && rows > 0)
+    cells.forEach((walkable, index) => {
+      if (walkable)
+        context.fillRect(
+          ((index % cols) * W) / cols,
+          (Math.floor(index / cols) * H) / rows,
+          W / cols + 1,
+          H / rows + 1,
+        );
+    });
+  context.font = "bold 18px sans-serif";
+  context.textAlign = "center";
+  for (const door of manifest.doors) {
+    context.fillStyle = "#f4c542";
+    context.fillRect(door.x * W, door.y * H, door.w * W, door.h * H);
+    context.fillStyle = "#fff4d6";
+    context.fillText(
+      manifest.bible.locations.find((location) => location.id === door.locationId)?.name ?? "Door",
+      (door.x + door.w / 2) * W,
+      Math.max(24, door.y * H - 12),
+      Math.max(120, door.w * W * 2),
+    );
+  }
+  return image;
+}
+
 export function GameCanvas({
   manifest,
   onEnter,
@@ -32,6 +69,21 @@ export function GameCanvas({
   onEnter: (locationId: string) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streetImageRef = useRef<HTMLImageElement | null>(null);
+  const [streetLoad, setStreetLoad] = useState<{ url: string; state: "ready" | "failed" } | null>(
+    null,
+  );
+  const sceneAsset = manifest.assets.find((asset) => asset.kind === "street");
+  const streetSource = sceneAsset?.url ?? "";
+  const streetPending = sceneAsset?.status === "pending";
+  const streetMissing =
+    !streetPending &&
+    (!streetSource ||
+      sceneAsset?.status === "failed" ||
+      (streetLoad?.url === streetSource && streetLoad.state === "failed"));
+  const streetLoading =
+    streetPending ||
+    (!streetMissing && !(streetLoad?.url === streetSource && streetLoad.state === "ready"));
   const heldRef = useRef(new Set<string>());
   const pointerKeysRef = useRef(new Map<number, string>());
   const enterRef = useRef<() => void>(() => {});
@@ -48,6 +100,11 @@ export function GameCanvas({
     canvas.focus({ preventScroll: true });
     const url = (kind: string) => manifest.assets.find((a) => a.kind === kind)?.url ?? "";
     const street = loadImage(url("street"));
+    const sketch = navigationSketch(manifest);
+    const streetAsset = manifest.assets.find((asset) => asset.kind === "street");
+    streetImageRef.current = street;
+    street.onload = () => setStreetLoad({ url: url("street"), state: "ready" });
+    street.onerror = () => setStreetLoad({ url: url("street"), state: "failed" });
     const sprite = loadImage(url("sprite"));
     const fallbackSprite = loadImage("/fixtures/sprite.svg");
     let useFallback = false;
@@ -133,7 +190,9 @@ export function GameCanvas({
       if (dx) pos.facing = dx < 0 ? -1 : 1;
 
       ctx.clearRect(0, 0, W, H);
-      if (street.complete && street.naturalWidth) ctx.drawImage(street, 0, 0, W, H);
+      if (street.complete && street.naturalWidth && streetAsset?.status !== "failed")
+        ctx.drawImage(street, 0, 0, W, H);
+      else ctx.drawImage(sketch, 0, 0, W, H);
       const door = nearDoor();
       if (door) {
         ctx.strokeStyle = "#0071e3";
@@ -172,6 +231,9 @@ export function GameCanvas({
 
     return () => {
       cancelAnimationFrame(frame);
+      street.onload = null;
+      street.onerror = null;
+      streetImageRef.current = null;
       sprite.onload = null;
       sprite.onerror = null;
       clearHeld();
@@ -186,6 +248,35 @@ export function GameCanvas({
 
   return (
     <div className="scene-frame">
+      {(streetMissing || streetLoading) && (
+        <div role="status" className="border-b-2 border-neutral-900 bg-amber-50 p-4 text-sm">
+          <p>
+            {streetMissing
+              ? "Street artwork is unavailable. A navigation sketch shows the saved walkable ground and doors."
+              : "Loading street artwork. A navigation sketch keeps the case playable."}
+          </p>
+          {sceneAsset && (
+            <p className="mt-1 break-words font-mono text-xs text-neutral-600">
+              {sceneAsset.model} · {sceneAsset.requestId}
+            </p>
+          )}
+          {streetMissing && sceneAsset?.status === "ready" && streetSource && (
+            <button
+              type="button"
+              className="case-button secondary mt-3"
+              onClick={() => {
+                const image = streetImageRef.current;
+                if (image) {
+                  setStreetLoad(null);
+                  image.src = streetSource;
+                }
+              }}
+            >
+              Retry street image
+            </button>
+          )}
+        </div>
+      )}
       <canvas
         ref={canvasRef}
         width={W}

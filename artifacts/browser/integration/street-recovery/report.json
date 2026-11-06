@@ -1,0 +1,563 @@
+{
+  "date": "2026-11-06T11:04:24.865Z",
+  "baseURL": "http://127.0.0.1:3003",
+  "fixtureOnly": true,
+  "browser": "158.0.8127.18",
+  "checks": [
+    {
+      "name": "missing street has a labelled navigation sketch",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "street-navigation-sketch: no horizontal overflow",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "street-navigation-sketch: automated accessibility",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "street image retry preserves player position",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": {
+        "before": 516,
+        "after": 516
+      }
+    },
+    {
+      "name": "street recovery preserves door interaction",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "street recovery has no uncaught errors",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "street-recovered-interior: no horizontal overflow",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": null
+    },
+    {
+      "name": "street-recovered-interior: automated accessibility",
+      "status": "PASS",
+      "width": 1440,
+      "evidence": []
+    },
+    {
+      "name": "missing street has a labelled navigation sketch",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "street-navigation-sketch: no horizontal overflow",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "street-navigation-sketch: automated accessibility",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "street image retry preserves player position",
+      "status": "PASS",
+      "width": 768,
+      "evidence": {
+        "before": 516.0239868164062,
+        "after": 516.0239868164062
+      }
+    },
+    {
+      "name": "street recovery preserves door interaction",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "street recovery has no uncaught errors",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "street-recovered-interior: no horizontal overflow",
+      "status": "PASS",
+      "width": 768,
+      "evidence": null
+    },
+    {
+      "name": "street-recovered-interior: automated accessibility",
+      "status": "PASS",
+      "width": 768,
+      "evidence": []
+    },
+    {
+      "name": "missing street has a labelled navigation sketch",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "street-navigation-sketch: no horizontal overflow",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "street-navigation-sketch: automated accessibility",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    },
+    {
+      "name": "street image retry preserves player position",
+      "status": "PASS",
+      "width": 390,
+      "evidence": {
+        "before": 516,
+        "after": 516
+      }
+    },
+    {
+      "name": "street recovery preserves door interaction",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "street recovery has no uncaught errors",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    },
+    {
+      "name": "street-recovered-interior: no horizontal overflow",
+      "status": "PASS",
+      "width": 390,
+      "evidence": null
+    },
+    {
+      "name": "street-recovered-interior: automated accessibility",
+      "status": "PASS",
+      "width": 390,
+      "evidence": []
+    }
+  ],
+  "diagnostics": [
+    {
+      "label": "street-download-1440",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_FAILED"
+      ],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3003/fixtures/street.svg",
+          "error": "net::ERR_FAILED"
+        }
+      ]
+    },
+    {
+      "label": "street-download-768",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_FAILED"
+      ],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3003/fixtures/street.svg",
+          "error": "net::ERR_FAILED"
+        }
+      ]
+    },
+    {
+      "label": "street-download-390",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_FAILED"
+      ],
+      "failedRequests": [
+        {
+          "url": "http://127.0.0.1:3003/fixtures/street.svg",
+          "error": "net::ERR_FAILED"
+        }
+      ]
+    }
+  ],
+  "accessibility": [
+    {
+      "name": "street-navigation-sketch",
+      "width": 1440,
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "tags": [
+            "cat.color",
+            "wcag2aa",
+            "wcag143",
+            "TTv5",
+            "TT13.c",
+            "EN-301-549",
+            "EN-9.1.4.3",
+            "ACT",
+            "RGAAv4",
+            "RGAA-3.2.1"
+          ],
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "messageKey": "nonBmp"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element content contains only non-text characters"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button type=\"button\" aria-label=\"Move up\" class=\"col-start-2 row-start-1 h-12 w-14 touch-none select-none rounded-xl border border-neutral-300 bg-white text-xl hover:bg-neutral-100 active:bg-blue-100\">↑</button>",
+              "target": [
+                ".row-start-1"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "messageKey": "nonBmp"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element content contains only non-text characters"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button type=\"button\" aria-label=\"Move left\" class=\"col-start-1 row-start-2 h-12 w-14 touch-none select-none rounded-xl border border-neutral-300 bg-white text-xl hover:bg-neutral-100 active:bg-blue-100\">←</button>",
+              "target": [
+                ".col-start-1"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "messageKey": "nonBmp"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element content contains only non-text characters"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button type=\"button\" aria-label=\"Move right\" class=\"col-start-3 row-start-2 h-12 w-14 touch-none select-none rounded-xl border border-neutral-300 bg-white text-xl hover:bg-neutral-100 active:bg-blue-100\">→</button>",
+              "target": [
+                ".col-start-3"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "messageKey": "nonBmp"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element content contains only non-text characters"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button type=\"button\" aria-label=\"Move down\" class=\"col-start-2 row-start-3 h-12 w-14 touch-none select-none rounded-xl border border-neutral-300 bg-white text-xl hover:bg-neutral-100 active:bg-blue-100\">↓</button>",
+              "target": [
+                ".row-start-3"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "street-recovered-interior",
+      "width": 1440,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "street-navigation-sketch",
+      "width": 768,
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "tags": [
+            "cat.color",
+            "wcag2aa",
+            "wcag143",
+            "TTv5",
+            "TT13.c",
+            "EN-301-549",
+            "EN-9.1.4.3",
+            "ACT",
+            "RGAAv4",
+            "RGAA-3.2.1"
+          ],
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "messageKey": "nonBmp"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element content contains only non-text characters"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button type=\"button\" aria-label=\"Move up\" class=\"col-start-2 row-start-1 h-12 w-14 touch-none select-none rounded-xl border border-neutral-300 bg-white text-xl hover:bg-neutral-100 active:bg-blue-100\">↑</button>",
+              "target": [
+                ".row-start-1"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "messageKey": "nonBmp"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element content contains only non-text characters"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button type=\"button\" aria-label=\"Move left\" class=\"col-start-1 row-start-2 h-12 w-14 touch-none select-none rounded-xl border border-neutral-300 bg-white text-xl hover:bg-neutral-100 active:bg-blue-100\">←</button>",
+              "target": [
+                ".col-start-1"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "messageKey": "nonBmp"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element content contains only non-text characters"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button type=\"button\" aria-label=\"Move right\" class=\"col-start-3 row-start-2 h-12 w-14 touch-none select-none rounded-xl border border-neutral-300 bg-white text-xl hover:bg-neutral-100 active:bg-blue-100\">→</button>",
+              "target": [
+                ".col-start-3"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "messageKey": "nonBmp"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element content contains only non-text characters"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button type=\"button\" aria-label=\"Move down\" class=\"col-start-2 row-start-3 h-12 w-14 touch-none select-none rounded-xl border border-neutral-300 bg-white text-xl hover:bg-neutral-100 active:bg-blue-100\">↓</button>",
+              "target": [
+                ".row-start-3"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "street-recovered-interior",
+      "width": 768,
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "name": "street-navigation-sketch",
+      "width": 390,
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "tags": [
+            "cat.color",
+            "wcag2aa",
+            "wcag143",
+            "TTv5",
+            "TT13.c",
+            "EN-301-549",
+            "EN-9.1.4.3",
+            "ACT",
+            "RGAAv4",
+            "RGAA-3.2.1"
+          ],
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "messageKey": "nonBmp"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element content contains only non-text characters"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button type=\"button\" aria-label=\"Move up\" class=\"col-start-2 row-start-1 h-12 w-14 touch-none select-none rounded-xl border border-neutral-300 bg-white text-xl hover:bg-neutral-100 active:bg-blue-100\">↑</button>",
+              "target": [
+                ".row-start-1"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "messageKey": "nonBmp"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element content contains only non-text characters"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button type=\"button\" aria-label=\"Move left\" class=\"col-start-1 row-start-2 h-12 w-14 touch-none select-none rounded-xl border border-neutral-300 bg-white text-xl hover:bg-neutral-100 active:bg-blue-100\">←</button>",
+              "target": [
+                ".col-start-1"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "messageKey": "nonBmp"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element content contains only non-text characters"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button type=\"button\" aria-label=\"Move right\" class=\"col-start-3 row-start-2 h-12 w-14 touch-none select-none rounded-xl border border-neutral-300 bg-white text-xl hover:bg-neutral-100 active:bg-blue-100\">→</button>",
+              "target": [
+                ".col-start-3"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "messageKey": "nonBmp"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element content contains only non-text characters"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button type=\"button\" aria-label=\"Move down\" class=\"col-start-2 row-start-3 h-12 w-14 touch-none select-none rounded-xl border border-neutral-300 bg-white text-xl hover:bg-neutral-100 active:bg-blue-100\">↓</button>",
+              "target": [
+                ".row-start-3"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "street-recovered-interior",
+      "width": 390,
+      "violations": [],
+      "incomplete": []
+    }
+  ],
+  "summary": {
+    "PASS": 24,
+    "FAIL": 0,
+    "UNVERIFIED": 0
+  }
+}

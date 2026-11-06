@@ -366,6 +366,67 @@ try {
         await context.close();
       }
     }
+  if (suites.includes("street"))
+    for (const viewport of viewports) {
+      const { page, context, diagnostics } = await pageFor(
+        viewport,
+        `street-download-${viewport.width}`,
+      );
+      try {
+        await page.addInitScript(() => {
+          const draw = CanvasRenderingContext2D.prototype.drawImage;
+          CanvasRenderingContext2D.prototype.drawImage = function (...args) {
+            const result = draw.apply(this, args);
+            if (this.canvas.isConnected && this.canvas.width === 960 && args.length === 9)
+              window.__streetProbeX = this.getTransform().e;
+            return result;
+          };
+        });
+        await page.route("**/fixtures/street.svg", (route) => route.abort("failed"));
+        await page.goto("/world/fixture-monsoon-tiffin");
+        await page
+          .getByText(
+            "Street artwork is unavailable. A navigation sketch shows the saved walkable ground and doors.",
+            { exact: true },
+          )
+          .waitFor();
+        await page.waitForFunction(() => typeof window.__streetProbeX === "number");
+        check("missing street has a labelled navigation sketch", true, null, viewport.width);
+        await page.locator("canvas").focus();
+        await page.keyboard.down("ArrowRight");
+        await page.waitForTimeout(150);
+        await page.keyboard.up("ArrowRight");
+        const before = await page.evaluate(() => window.__streetProbeX);
+        await capture(page, "street-navigation-sketch", viewport.width);
+        await page.unroute("**/fixtures/street.svg");
+        await page.getByRole("button", { name: "Retry street image" }).click();
+        await page
+          .getByRole("button", { name: "Retry street image" })
+          .waitFor({ state: "detached" });
+        await page.waitForTimeout(80);
+        const after = await page.evaluate(() => window.__streetProbeX);
+        check(
+          "street image retry preserves player position",
+          Math.abs(before - after) < 1,
+          { before, after },
+          viewport.width,
+        );
+        await page.getByRole("button", { name: "Enter nearest door" }).click();
+        await page.getByRole("heading", { name: "Dabba Depot", exact: true }).waitFor();
+        check("street recovery preserves door interaction", true, null, viewport.width);
+        check(
+          "street recovery has no uncaught errors",
+          diagnostics.pageErrors.length === 0,
+          diagnostics.pageErrors,
+          viewport.width,
+        );
+        await capture(page, "street-recovered-interior", viewport.width);
+      } catch (error) {
+        check("street recovery completed", false, error.message, viewport.width);
+      } finally {
+        await context.close();
+      }
+    }
 } finally {
   await browser.close();
   report.summary = report.checks.reduce((summary, check) => (summary[check.status]++, summary), {
