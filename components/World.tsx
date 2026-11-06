@@ -298,7 +298,12 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
   const [ambient, setAmbient] = useState<string | null>(null);
   const [inspection, setInspection] = useState<{ name: string; hint: string } | null>(null);
   const [searchedRooms, setSearchedRooms] = useState<Set<number>>(() => new Set());
-  const [searchedObject, setSearchedObject] = useState<{ name: string; description: string; evidence: boolean } | null>(null);
+  const [searchedObject, setSearchedObject] = useState<{
+    name: string;
+    description: string;
+    note?: string;
+    evidence: boolean;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [voiceOn, setVoiceOn] = useState(true);
   // Music preference persists across sessions; SSR renders no HUD, so the
@@ -664,6 +669,9 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
     setPremise(null);
     setBible(null);
     setCluesFound([false, false, false]);
+    setSearchedRooms(new Set());
+    setSearchedObject(null);
+    setInspection(null);
     setHeat(0);
     setFinale(null);
     setFinaleLoading(false);
@@ -1316,7 +1324,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
       {scene.kind === "interior" && typeof scene.clueIndex === "number" && bible?.rooms[scene.clueIndex]?.object && (
         <Button
           type="button"
-          className="pointer-events-auto absolute bottom-5 left-1/2 z-20 -translate-x-1/2"
+          className="pointer-events-auto absolute bottom-16 left-1/2 z-20 -translate-x-1/2"
           disabled={searchedRooms.has(scene.clueIndex)}
           onClick={() => {
             const index = scene.clueIndex!;
@@ -1326,6 +1334,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
             setSearchedObject({
               name: object.name,
               description: object.description,
+              note: object.note,
               evidence: bible.evidenceRoom === index,
             });
             playSfx("click");
@@ -1350,6 +1359,12 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
             <DialogTitle className="text-center font-display text-xl">{searchedObject?.name}</DialogTitle>
           </DialogHeader>
           <p className="text-center text-sm">{searchedObject?.description}</p>
+          {searchedObject?.note && (
+            // The note may hide the culprit's code; nothing marks which one (the Decoder is #13).
+            <blockquote className="rounded-md border border-border bg-secondary-background p-3 text-sm italic">
+              {searchedObject.note}
+            </blockquote>
+          )}
           {searchedObject?.evidence && (
             <p role="status" className="rounded-md border border-main/40 bg-main/10 p-3 text-center text-sm">
               Evidence box discovered. Its contents remain sealed until verified access is available.
