@@ -12,6 +12,27 @@ See [schema.md](schema.md) for the current contract.
 
 - **2026-11-06:** Asking for `.limit(200)` fails with node maximum 100. The store now
   reads all pages in batches of 100, including before deleting saved scenes.
+  *Expected:* the SDK to page for us, or a typed limit. *Happened:* the whole gallery query
+  failed at runtime ("limit 200 exceeds the node maximum of 100. Page through the results with
+  an offset instead"), so the home page showed "Failed to list games". The message itself was
+  excellent: it told us the fix. *Ask:* export `MAX_LIMIT` as the type of `.limit()`, or add a
+  `fetchAll()` that pages with `$key` for you. *Reproduce:* `select().where(…).limit(200).fetch()`.
+- **2026-11-07. We leaked the answer through a public attribute.** Our `accusation` stored the
+  guessed suspect and `correct` in the clear, so selecting `correct = true` gave away every
+  case's culprit. We now store the guess sealed (`sealedAccused`). Nothing in the SDK was wrong,
+  but nothing warned us either. *Ask:* a short "every attribute is public; here is how to seal
+  one" section next to the schema docs, with an example.
+- **2026-11-07. Optional columns made the schema change painless.** Adding `sealedAccused` as
+  `str().optional()` and making the old `accused` optional let one query read both old and new
+  records, and schema mismatch rows were reported as `skipped` instead of failing the read.
+- **2026-11-06. Reads sometimes stall inside our server.** The same `game` listing that a
+  plain Node script answers in about 0.5 s occasionally took 20 s to 3 min inside the Next.js
+  server (0% CPU, waiting on the request), then went back to 0.4 s. We did not find the cause.
+  *Ask:* a recommended HTTP timeout and retry setting for `rabdi()` transports, and a status
+  page we can check when reads slow down.
+- **2026-11-06. `bigint` everywhere is right, but bites in logs.** `count()` and `u64` values
+  are `bigint`, so `JSON.stringify` on a query result throws "Do not know how to serialize a
+  BigInt". *Ask:* a `toJSON`-friendly helper, or a note in the query docs.
 
 ## Setup
 

@@ -11,7 +11,7 @@ Use the same project value when querying. All new entities expire 90 days after 
 | `scene` | `gameId`, `sceneId`, `createdAt` | `record`: gzipped interior scene row without store ids |
 | `screen` | `gameId`, `sceneId`, `createdAt`, `worldKey`, signed `x`, `y` | `data`: gzipped scene metadata; `record`: compatibility scene row with image URLs |
 | `unlock` | `worldKey`, `humanHash` | No key or plaintext evidence is stored here |
-| `accusation` | `gameId`, `humanHash` | `accused` (u64 index 0–2), `correct` (bool) |
+| `accusation` | `gameId`, `humanHash` | `sealedAccused` (AES-GCM sealed suspect index), `correct` (bool). Records written before 7 Nov 2026 carry a plain `accused` u64 instead |
 
 Screens use coordinates -1..1, id `s<x>_<y>`, with at most nine total (origin plus
 eight additional screens). Existing street `scene` entities remain readable and count
@@ -24,8 +24,10 @@ The player id is `sha256("ETH Jasoos:" + nullifier)` from [worldid.ts](../lib/wo
 This is a namespaced hash, not a secret salt. Raw proofs and nullifiers are not stored.
 Game ideas, generated story text and asset URLs **are public**. The mystery (including
 culprit and key) and victory finale are AES-256-GCM sealed using `SESSION_SECRET`.
-Accusations expose the guessed index and correctness, so a correct public accusation
-can reveal the answer to someone querying the chain; sealing the bible does not hide that.
+Accusations seal the guessed suspect (`sealedAccused`) and publish only `correct`, so
+reading the chain shows how many detectives solved a case but not who they named.
+Until 7 Nov 2026 the index was stored in the clear, which let anyone read the answer from a
+correct accusation; those older records are still read for the one-accusation rule.
 
 ## Queries anyone can run
 

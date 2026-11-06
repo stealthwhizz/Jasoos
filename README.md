@@ -87,7 +87,8 @@ Sponsors are ordered by how much of the game stops working without them.
   - `scene`: saved interiors (and legacy street tiles), indexed by `gameId`, `sceneId`, `createdAt`.
   - `screen`: street tiles, also indexed by `worldKey`, `x`, `y`; gzipped metadata and asset URLs.
   - `unlock`: evidence opens, indexed by `worldKey`, `humanHash`.
-  - `accusation`: one guess per human/game, including guessed index and correctness (public).
+  - `accusation`: one guess per human/game. `correct` is public; the guessed suspect is sealed
+    (`sealedAccused`), so the chain shows a case's solve rate without revealing the answer.
   All new entities use a 90-day lifetime.
 - **Reads that players see:** the home gallery (`GET /api/games`), replaying a
   world (`/play/[gameId]`), and the per-player creation limit

@@ -20,7 +20,7 @@ import type {
 } from "./universe";
 import { normalizeScreenEdges, type Direction } from "./screen-edges";
 import { serverSecret } from "./worldid";
-import { ALPHABET, SECRET_LEN, encodeNote, scrubNote } from "./engine/codec";
+import { ALPHABET, SECRET_LEN, encodeNote, plainNote, scrubNote } from "./engine/codec";
 import { CODEBOOK } from "./engine/codebook";
 
 export type { Direction } from "./screen-edges";
@@ -478,6 +478,10 @@ export function plantClues(
   const others = [0, 1, 2]
     .filter((i) => i !== evidenceRoom)
     .sort((a, b) => Number(a === culprit) - Number(b === culprit));
+  // Clean model formatting first: encoding then works on the text the player actually sees.
+  for (const room of bible.rooms) {
+    if (room.object?.note) room.object.note = plainNote(room.object.note);
+  }
   let hiddenIn = -1;
   for (const i of others) {
     const object = bible.rooms[i]!.object!;

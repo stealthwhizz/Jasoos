@@ -34,6 +34,7 @@ import type {
   SceneData,
 } from "@/lib/universe";
 import { repairLoadedStreetEdges, streetCoordKeys } from "@/lib/screen-edges";
+import { plainNote } from "@/lib/engine/codec";
 import { GEN_CALL_COST, MAX_GAME_TITLE_LENGTH, SESSION_TIME_LIMIT_SEC } from "@/lib/constants";
 import { MusicEngine, getMusicTheme, pickMusicTheme } from "@/lib/music";
 import { playSfx, setSoundMuted, narrate, cancelNarration } from "@/lib/sfx";
@@ -1308,7 +1309,8 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
             setSearchedObject({
               name: object.name,
               description: object.description,
-              note: object.note,
+              // Worlds made before notes were cleaned may still carry **bold** markers.
+              note: object.note ? plainNote(object.note) : object.note,
               evidence: bible.evidenceRoom === index,
             });
             playSfx("click");

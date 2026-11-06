@@ -15,6 +15,7 @@ import { hexToBytes, http, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { withRetry, DEFAULT_RETRY_OPTS } from "@/lib/retry";
 import { MAX_STREET_SCREENS } from "@/lib/constants";
+import { seal, unseal } from "@/lib/world-engine";
 import type { Accusation, GameRecord, GameSceneRow } from "@/lib/types/server";
 
 /** Fields set when a game is created; the rest are filled in by the store. */
@@ -111,8 +112,14 @@ const ScreenEntity = defineSchema({
 });
 
 const UnlockEntity = defineSchema({ ...base, worldKey: str().indexed(), humanHash: str().indexed() });
+/**
+ * One accusation per human per world. The guessed suspect is sealed (`sealedAccused`): stored in
+ * the clear, a correct accusation would publish the culprit to anyone querying the chain.
+ * `accused` is only read from records written before sealing.
+ */
 const AccusationEntity = defineSchema({
-  ...base, gameId: str().indexed(), humanHash: str().indexed(), accused: u64(), correct: bool(),
+  ...base, gameId: str().indexed(), humanHash: str().indexed(), correct: bool(),
+  sealedAccused: str().optional(), accused: u64().optional(),
 });
 
 const pack = (value: unknown) => gzipSync(JSON.stringify(value));
@@ -163,13 +170,19 @@ function createArkivStore(signerKey: string): GameStore {
     async recordAccusation(accusation) {
       // Keep check + write in the same queue: concurrent requests cannot both win the check.
       return serial(async () => {
-        const page = await withRetry(() => reader.select({ accused: true }).from(AccusationEntity).where(and(
+        const page = await withRetry(() => reader.select({ accused: true, sealedAccused: true }).from(AccusationEntity).where(and(
           scope("accusation"), eq("gameId", accusation.gameId), eq("humanHash", accusation.humanHash)
         )).limit(1).fetch(), DEFAULT_RETRY_OPTS);
         const existing = page.entities[0];
-        if (existing) return { accused: Number(existing.accused.value), created: false };
+        if (existing) {
+          const accused = existing.sealedAccused?.value
+            ? unseal<number>(existing.sealedAccused.value)
+            : Number(existing.accused?.value);
+          return { accused, created: false };
+        }
+        const { accused, ...rest } = accusation;
         await withRetry(() => writer.createEntity(AccusationEntity, {
-          project, entityType: "accusation", ...accusation, accused: u64(accusation.accused),
+          project, entityType: "accusation", ...rest, sealedAccused: seal(accused),
         }, { expiration: ExpirationTime.fromDays(GAME_DAYS) }), DEFAULT_RETRY_OPTS);
         return { accused: accusation.accused, created: true };
       });

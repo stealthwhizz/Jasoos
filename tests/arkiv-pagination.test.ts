@@ -21,8 +21,10 @@ vi.mock("@arkiv-network/sdk", async (original) => ({
   createWalletClient: () => ({
     async createEntity(_schema: unknown, attributes: Record<string, unknown>) {
       state.writes.push(attributes); state.count++;
-      // Written accusations become readable rows, as on the node (the suspect read back as u64).
-      if (attributes.entityType === "accusation") state.rows.push({ accused: { value: BigInt(1) } } as never);
+      // Written accusations become readable rows, as on the node (the suspect read back sealed).
+      if (attributes.entityType === "accusation") {
+        state.rows.push({ sealedAccused: { value: attributes.sealedAccused } } as never);
+      }
       return { entityKey: `0x${"ab".repeat(32)}` };
     },
     async deleteEntity({ entityKey }: { entityKey: string }) { state.deleted.push(entityKey); } }),
@@ -60,5 +62,15 @@ it("serializes live accusation checks and writes the exact public contract once"
   ]);
   expect(state.writes).toHaveLength(1);
   expect(state.writes[0]).toMatchObject({ entityType: "accusation", gameId: "world", humanHash: "human", correct: true });
-  expect(state.writes[0].accused).toBeDefined();
+  // The guessed suspect must never be public: a correct accusation would reveal the culprit.
+  expect(state.writes[0].accused).toBeUndefined();
+  expect(typeof state.writes[0].sealedAccused).toBe("string");
+  expect(String(state.writes[0].sealedAccused)).not.toMatch(/^\d+$/);
+});
+
+it("still reads the plain suspect index of accusations written before sealing", async () => {
+  state.rows = [{ accused: { value: BigInt(2) } } as never];
+  const again = { gameId: "world", humanHash: "human", accused: 2, correct: false };
+  expect(await gameStore().recordAccusation(again)).toEqual({ accused: 2, created: false });
+  expect(state.writes).toHaveLength(0);
 });

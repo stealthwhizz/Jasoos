@@ -81,6 +81,20 @@ export function decodeNote(text: string, key: string = NO_KEY): DecodeResult {
   };
 }
 
+/**
+ * Removes Markdown the model sometimes adds (`**word**`, `__word__`, `` `word` ``, `# heading`).
+ * Models tend to bold exactly the codebook words, which both looks broken and gives the puzzle
+ * away. Only formatting characters go; words stay, so the hidden code decodes the same.
+ */
+export function plainNote(text: string): string {
+  return text
+    .replace(/\*\*|__|`/g, "")
+    .replace(/(^|[\s(])[*_]([^\s*_][^*_\n]*?)[*_](?=[\s.,;:!?)]|$)/g, "$1$2")
+    .replace(/^\s*#+\s*/gm, "")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+}
+
 /** Makes sure an ordinary note does not decode by chance under `key`, by flipping its last check bit. */
 export function scrubNote(text: string, key: string = NO_KEY): string {
   if (!decodeNote(text, key).hidden) return text;
