@@ -46,6 +46,11 @@ export function GameCanvas({
     const url = (kind: string) => manifest.assets.find((a) => a.kind === kind)?.url ?? "";
     const street = loadImage(url("street"));
     const sprite = loadImage(url("sprite"));
+    const fallbackSprite = loadImage("/fixtures/sprite.svg");
+    let useFallback = false;
+    sprite.onerror = () => {
+      useFallback = true;
+    };
     const pos = { x: 0.5, y: 0.85, facing: 1 }; // feet position, 0..1
     const held = new Set<string>();
     let spriteSource: CanvasImageSource = sprite;
@@ -62,13 +67,14 @@ export function GameCanvas({
         // Already transparent fixture sprites must retain their authored colors.
         if (pixels.data[3] !== 0) {
           trim = keySprite(pixels.data, buffer.width, buffer.height);
+          if (!trim) useFallback = true;
           if (trim) {
             context.putImageData(pixels, 0, 0);
             spriteSource = buffer;
           }
         }
       } catch {
-        // Cross-origin images without CORS remain drawable in their original form.
+        useFallback = true;
       }
     };
 
@@ -81,9 +87,13 @@ export function GameCanvas({
       );
 
     const typing = (e: KeyboardEvent) =>
-      e.target instanceof HTMLElement && e.target.closest("input, textarea") !== null;
+      e.target instanceof HTMLElement &&
+      e.target.closest("input, textarea, select, button, a, [contenteditable=true]") !== null;
     const down = (e: KeyboardEvent) => {
-      if (typing(e)) return;
+      if (typing(e)) {
+        held.clear();
+        return;
+      }
       const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
       if (key in KEYS) {
         held.add(key);
@@ -99,6 +109,8 @@ export function GameCanvas({
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     window.addEventListener("blur", clearHeld);
+    window.addEventListener("focusin", clearHeld);
+    document.addEventListener("visibilitychange", clearHeld);
 
     let last = performance.now();
     let frame = 0;
@@ -130,14 +142,30 @@ export function GameCanvas({
         ctx.lineWidth = 4;
         ctx.strokeRect(door.x * W, door.y * H, door.w * W, door.h * H);
       }
-      if (sprite.complete && sprite.naturalWidth) {
-        const source = trim ?? { x: 0, y: 0, w: sprite.naturalWidth, h: sprite.naturalHeight };
+      const activeSprite = useFallback ? fallbackSprite : sprite;
+      if (activeSprite.complete && activeSprite.naturalWidth) {
+        const source = (!useFallback && trim) || {
+          x: 0,
+          y: 0,
+          w: activeSprite.naturalWidth,
+          h: activeSprite.naturalHeight,
+        };
         const sh = SPRITE_HEIGHT;
-        const sw = source.w / source.h * sh;
+        const sw = (source.w / source.h) * sh;
         ctx.save();
         ctx.translate(pos.x * W, pos.y * H);
         ctx.scale(pos.facing, 1);
-        ctx.drawImage(spriteSource, source.x, source.y, source.w, source.h, -sw / 2, -sh, sw, sh);
+        ctx.drawImage(
+          useFallback ? fallbackSprite : spriteSource,
+          source.x,
+          source.y,
+          source.w,
+          source.h,
+          -sw / 2,
+          -sh,
+          sw,
+          sh,
+        );
         ctx.restore();
       }
       frame = requestAnimationFrame(tick);
@@ -147,9 +175,12 @@ export function GameCanvas({
     return () => {
       cancelAnimationFrame(frame);
       sprite.onload = null;
+      sprite.onerror = null;
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
       window.removeEventListener("blur", clearHeld);
+      window.removeEventListener("focusin", clearHeld);
+      document.removeEventListener("visibilitychange", clearHeld);
     };
   }, [manifest]);
 
@@ -159,6 +190,8 @@ export function GameCanvas({
       width={W}
       height={H}
       role="img"
+      tabIndex={0}
+      onPointerDown={(e) => e.currentTarget.focus()}
       aria-label={manifest.bible.streetDescription}
       className="aspect-video w-full rounded-2xl bg-neutral-900"
     />

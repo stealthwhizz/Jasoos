@@ -72,3 +72,12 @@ This file is the shared handoff for the team. The PRD remains the source of trut
 - Sequential checks: 31 tests passed / 3 TODO; typecheck, lint, production build and diff check passed. Journey pageerror collection was empty; full console collection was performed for sprite test only.
 - Existing PR #1 is now accessible; update it rather than opening another.
 - Remaining: live World ID flow (C), atomic accusation persistence (C), server-side clue gating (not enforced by existing route), generated worlds without finale assets (A/C), null-trim sprite fallback, blur/diagonal measurements and responsive/accessibility review. Browser checks use Chromium only.
+
+### 2026-11-06 — B / final review checkpoint (browser blocked)
+- Inspected clean branch at 157fad3, PR #1 and engine delivery path.
+- R5 code fix: null keying, image load failure and canvas pixel-read failure now select the existing fixture detective sprite. Form controls (including select/buttons/links/contenteditable) no longer trigger movement; focus and visibility changes clear held keys. Canvas is keyboard-focusable.
+- Sequential verification: 31 tests passed / 3 TODO; typecheck, lint, production build and diff check passed. These checks do not validate the new browser behavior.
+- Current audit browser host is unavailable. Local Playwright fallback permission was requested under Product Design skill; no new screenshots or movement measurements captured in this checkpoint.
+- Live transition blocker: scheduler awaits all branches before publication, Home enters only on done, and the event contract lacks a playable public snapshot. No local environment file or process 0G key is configured. No real integration run attempted.
+- Coordination posted to A/C on PR #1: https://github.com/stealthwhizz/ETHJasoos/pull/1#issuecomment-6679636903 . Requests public playable snapshot/asset-update agreement, live environment, atomic accusation reservation and server clue gating, plus correct-accusation finale generation. No A/C files or shared contracts changed.
+- Next: approved browser fallback or restored in-app browser; measure speed/blur/focus/collision, capture desktop/mobile journey and perform screenshot-backed visual/accessibility review. Audit remains incomplete.
