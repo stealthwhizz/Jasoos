@@ -52,8 +52,8 @@ export async function scheduler(job: Job, emit: (e: JobEvent) => void): Promise<
       ...bible.locations.map((l) => image(`interior-${l.id}`, "interior", l.interiorDescription)),
     ]),
     street.then(async (s) => {
-      const r = await analyzeStreet(s.url);
-      emit({ type: "ticker", event: r.event });
+      const r = await analyzeStreet(s, bible.locations);
+      for (const event of r.events) emit({ type: "ticker", event });
       return r;
     }),
   ]);
