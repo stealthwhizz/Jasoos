@@ -51,7 +51,8 @@ export type WorldHudProps = {
   voiceOn: boolean;
   onToggleVoice: () => void;
   onLeaveWorld: () => void;
-  onRunFinale: (outcome: "victory") => void;
+  /** Accuse one of the bible's 3 characters (index 0–2); the server judges it. */
+  onAccuse: (npcIndex: number) => void;
   dialogue: unknown;
   knownStreets: MinimapCell[];
   walkedStreets: string[];
@@ -108,7 +109,7 @@ export function WorldHud({
   voiceOn,
   onToggleVoice,
   onLeaveWorld,
-  onRunFinale,
+  onAccuse,
   dialogue,
   knownStreets,
   walkedStreets,
@@ -118,6 +119,33 @@ export function WorldHud({
   const [questOpen, setQuestOpen] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  /** After all clues: first click opens the suspect list, second picks the culprit. */
+  const [accusing, setAccusing] = useState(false);
+
+  const accuseControls = (buttonClass: string, labelClass: string) =>
+    accusing ? (
+      <span className="pointer-events-auto flex flex-wrap items-center gap-1">
+        <span className={`font-bold text-foreground ${labelClass}`}>
+          {finaleLoading ? "Judging…" : "Who did it?"}
+        </span>
+        {bible?.npcs.map((npc, i) => (
+          <Button
+            key={npc.name}
+            size="sm"
+            variant="neutral"
+            className={buttonClass}
+            onClick={() => onAccuse(i)}
+            disabled={finaleLoading}
+          >
+            {npc.name}
+          </Button>
+        ))}
+      </span>
+    ) : (
+      <Button size="sm" className={`pointer-events-auto ${buttonClass}`} onClick={() => setAccusing(true)}>
+        Accuse
+      </Button>
+    );
 
   const timeLabel = formatSessionTime(secondsLeft);
   const lowTime = secondsLeft <= 60;
@@ -178,16 +206,7 @@ export function WorldHud({
           <span className="text-[11px] font-bold tabular-nums text-foreground">
             {cluesFound.filter(Boolean).length}/{cluesFound.length} clues
           </span>
-          {allCluesFound && !finale && (
-            <Button
-              size="sm"
-              className="pointer-events-auto ml-1 h-7 px-3 text-[11px]"
-              onClick={() => onRunFinale("victory")}
-              disabled={finaleLoading}
-            >
-              {finaleLoading ? "Unraveling…" : "Unravel the truth"}
-            </Button>
-          )}
+          {allCluesFound && !finale && accuseControls("ml-1 h-7 px-3 text-[11px]", "text-[11px]")}
         </Card>
       )}
       {bible && heat > 0 && (
@@ -371,16 +390,7 @@ export function WorldHud({
                   <span className="text-[10px] font-bold tabular-nums text-foreground">
                     {cluesCount}/{cluesFound.length}
                   </span>
-                  {allCluesFound && !finale && (
-                    <Button
-                      size="sm"
-                      className="h-6 px-2 text-[10px]"
-                      onClick={() => onRunFinale("victory")}
-                      disabled={finaleLoading}
-                    >
-                      {finaleLoading ? "…" : "Unravel"}
-                    </Button>
-                  )}
+                  {allCluesFound && !finale && accuseControls("h-6 px-2 text-[10px]", "text-[10px]")}
                 </Card>
               )}
               {bible && heat > 0 && (

@@ -316,7 +316,6 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
   const placedRoomsRef = useRef<Set<number>>(new Set());
   const voiceCache = useRef<Map<string, Promise<string | null>>>(new Map());
   const dialogueCache = useRef<Map<string, Promise<DialogueResponse>>>(new Map());
-  const finalePromise = useRef<Promise<FinaleData | null> | null>(null);
   const defeatFinalePromise = useRef<Promise<FinaleData | null> | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const musicRef = useRef<MusicEngine | null>(null);
@@ -653,7 +652,6 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
     placedRoomsRef.current = new Set();
     voiceCache.current = new Map();
     dialogueCache.current = new Map();
-    finalePromise.current = null;
     defeatFinalePromise.current = null;
     savedFinalesRef.current = {};
     setScene(null);
@@ -710,9 +708,6 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
     setKnownStreets(streetsFromScenes(game.scenes));
     setWalkedStreets([]);
 
-    if (game.finales.victory) {
-      finalePromise.current = Promise.resolve(game.finales.victory);
-    }
     if (game.finales.defeat) {
       defeatFinalePromise.current = Promise.resolve(game.finales.defeat);
     }
@@ -740,41 +735,21 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
     [addCalls, saveSprite]
   );
 
+  /** Prefetch only the defeat finale: the victory one reveals the secret and stays on the server. */
   const startFinales = useCallback(
     (theBible: GameBible) => {
-      if (!canGenerateRef.current) return;
-      if (!savedFinalesRef.current.victory) {
-        finalePromise.current = post<{ finale: FinaleData }>("/api/finale", {
-          bible: theBible,
-          outcome: "victory",
+      if (!canGenerateRef.current || savedFinalesRef.current.defeat) return;
+      defeatFinalePromise.current = post<{ finale: FinaleData }>("/api/finale", {
+        bible: theBible,
+      })
+        .then(({ finale: f }) => {
+          addCalls(GEN_CALL_COST.finale);
+          saveFinale("defeat", f);
+          return f;
         })
-          .then(({ finale: f }) => {
-            addCalls(GEN_CALL_COST.finale);
-            saveFinale("victory", f);
-            fetchVoice(
-              f.resolution,
-              NARRATOR_VOICE,
-              NARRATOR_PARAMS.pace,
-              NARRATOR_PARAMS.temperature
-            );
-            return f;
-          })
-          .catch(() => null);
-      }
-      if (!savedFinalesRef.current.defeat) {
-        defeatFinalePromise.current = post<{ finale: FinaleData }>("/api/finale", {
-          bible: theBible,
-          outcome: "defeat",
-        })
-          .then(({ finale: f }) => {
-            addCalls(GEN_CALL_COST.finale);
-            saveFinale("defeat", f);
-            return f;
-          })
-          .catch(() => null);
-      }
+        .catch(() => null);
     },
-    [addCalls, fetchVoice, saveFinale]
+    [addCalls, saveFinale]
   );
 
   /** Paint origin, sprite, neighbors, and finales for a newly created game row. */
@@ -1161,39 +1136,40 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
 
   const allCluesFound = bible ? cluesFound.every(Boolean) : false;
 
+  /** Ends the run: `accused` asks the server to judge an accusation; otherwise a defeat for `reason`. */
   const runFinale = useCallback(
-    async (outcome: "victory" | "defeat" = "victory", reason?: string) => {
+    async ({ accused, reason }: { accused?: number; reason?: string }) => {
       if (!bible || finaleLoading || finale) return;
       stopVoice();
       setDialogue(null);
       setFinaleLoading(true);
-      posthog.capture("game_ended", {
-        outcome,
-        reason: reason ?? null,
-        clues_found: cluesFound.filter(Boolean).length,
-        total_clues: cluesFound.length,
-        gen_calls: genCalls,
-        screens_dreamed: screensDreamed,
-      });
       try {
-        let f: FinaleData | null = savedFinalesRef.current[outcome] ?? null;
-        if (!f && outcome === "victory" && finalePromise.current) {
-          f = await finalePromise.current;
-        }
-        if (!f && outcome === "defeat" && defeatFinalePromise.current) {
-          f = await defeatFinalePromise.current;
-        }
-        if (!f && canGenerateRef.current) {
-          const res = await post<{ finale: FinaleData }>("/api/finale", {
+        let f: FinaleData | null =
+          accused === undefined
+            ? (savedFinalesRef.current.defeat ?? (await defeatFinalePromise.current) ?? null)
+            : null;
+        // Accusations always go to the server, which alone knows the culprit.
+        if (!f && (accused !== undefined || canGenerateRef.current)) {
+          const res = await post<{ finale: FinaleData; generated: boolean }>("/api/finale", {
             bible,
-            outcome,
+            accused,
             reason,
+            gameId: gameIdRef.current,
           });
           f = res.finale;
-          addCalls(GEN_CALL_COST.finale);
-          saveFinale(outcome, f);
+          if (res.generated) addCalls(GEN_CALL_COST.finale);
+          if (accused === undefined) saveFinale("defeat", f);
         }
         if (!f) throw new Error("Finale unavailable.");
+        posthog.capture("game_ended", {
+          outcome: f.outcome ?? "defeat",
+          accused: accused ?? null,
+          reason: reason ?? null,
+          clues_found: cluesFound.filter(Boolean).length,
+          total_clues: cluesFound.length,
+          gen_calls: genCalls,
+          screens_dreamed: screensDreamed,
+        });
         if (voiceOnRef.current) {
           await fetchVoice(
             f.resolution,
@@ -1202,7 +1178,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
             NARRATOR_PARAMS.temperature
           );
         }
-        setFinale({ ...f, outcome: f.outcome ?? outcome });
+        setFinale({ ...f, outcome: f.outcome ?? "defeat" });
         void speak(
           f.resolution,
           NARRATOR_VOICE,
@@ -1222,7 +1198,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
   useEffect(() => {
     if (heat >= 100 && bible && !finale && !finaleLoading) {
       const hard = bible.failStates.find((f) => f.kind === "hard");
-      runFinale("defeat", hard?.trigger ?? `the ${bible.heatLabel} meter reached 100`);
+      runFinale({ reason: hard?.trigger ?? `the ${bible.heatLabel} meter reached 100` });
     }
   }, [heat, bible, finale, finaleLoading, runFinale]);
 
@@ -1257,7 +1233,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
   /** Session over — trigger defeat when the wall clock hits zero. */
   useEffect(() => {
     if (secondsLeft === 0 && bible && !finale && !finaleLoading) {
-      runFinale("defeat", "time ran out");
+      runFinale({ reason: "time ran out" });
     }
   }, [secondsLeft, bible, finale, finaleLoading, runFinale]);
 
@@ -1367,7 +1343,7 @@ export function World({ mode, gameId: routeGameId, initialIdea }: WorldProps) {
         voiceOn={voiceOn}
         onToggleVoice={() => setVoiceOn((v) => !v)}
         onLeaveWorld={leaveWorld}
-        onRunFinale={(outcome) => runFinale(outcome)}
+        onAccuse={(accused) => runFinale({ accused })}
         dialogue={dialogue}
         knownStreets={knownStreets}
         walkedStreets={walkedStreets}

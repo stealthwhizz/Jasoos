@@ -1,3 +1,4 @@
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import { generateContentWithRetry, generateImage, toDataUrl, Type } from "./zg-client";
 import {
   resolveSpeaker,
@@ -10,6 +11,7 @@ import type {
   DialogueTurn,
   EdgeOpenness,
   GameBible,
+  Mystery,
   Hotspot,
   PlannedAction,
   PlannedItem,
@@ -17,6 +19,7 @@ import type {
   SceneData,
 } from "./universe";
 import { normalizeScreenEdges, type Direction } from "./screen-edges";
+import { serverSecret } from "./worldid";
 
 export type { Direction } from "./screen-edges";
 
@@ -202,7 +205,12 @@ const bibleSchema = {
         secret: {
           type: Type.STRING,
           description:
-            "The hidden truth behind the goal, 1-2 sentences. Revealed only at the finale.",
+            "The hidden truth behind the goal, 1-2 sentences, naming the culprit. Revealed only at the finale.",
+        },
+        culprit: {
+          type: Type.INTEGER,
+          description:
+            "Which character (1, 2 or 3, in the order of npcs) is behind the secret. The three clues must point at them, and the player wins only by accusing them.",
         },
         clues: {
           type: Type.ARRAY,
@@ -211,7 +219,7 @@ const bibleSchema = {
             "Exactly 3 concrete clues that together expose the secret. Clue i is guarded by NPC i in room i. Each one line.",
         },
       },
-      required: ["goal", "secret", "clues"],
+      required: ["goal", "secret", "culprit", "clues"],
     },
     beats: {
       type: Type.ARRAY,
@@ -315,6 +323,33 @@ function clampSuspicion(v: unknown): number {
   return Math.max(0, Math.min(40, n));
 }
 
+/* ------------------------------------------------------------------ */
+/* Sealing: the answer travels and persists encrypted                  */
+/* ------------------------------------------------------------------ */
+
+// Derived per call so a missing SESSION_SECRET fails at use, not at import.
+const sealKey = () => createHash("sha256").update(`ETH Jasoos seal:${serverSecret()}`).digest();
+
+/** Encrypts `value` (AES-256-GCM) with a server-only key: base64url of iv | tag | ciphertext. */
+export function seal(value: unknown): string {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv("aes-256-gcm", sealKey(), iv);
+  const body = Buffer.concat([cipher.update(JSON.stringify(value), "utf8"), cipher.final()]);
+  return Buffer.concat([iv, cipher.getAuthTag(), body]).toString("base64url");
+}
+
+/** Decrypts a `seal` output. Throws if it was altered or sealed under another key. */
+export function unseal<T>(sealed: string): T {
+  const raw = Buffer.from(sealed, "base64url");
+  const decipher = createDecipheriv("aes-256-gcm", sealKey(), raw.subarray(0, 12));
+  decipher.setAuthTag(raw.subarray(12, 28));
+  const plain = Buffer.concat([decipher.update(raw.subarray(28)), decipher.final()]);
+  return JSON.parse(plain.toString("utf8")) as T;
+}
+
+/** The planner's raw story: the answer is still in the clear until `generateBible` seals it. */
+type PlannedStory = { goal: string; secret: string; culprit: number; clues: string[] };
+
 /**
  * The planner: expand a player's freeform idea into the complete game —
  * universe, story spine, every room, every NPC, every fail state. Made once;
@@ -332,7 +367,7 @@ export async function generateBible(idea: string): Promise<GameBible> {
     },
   });
   if (!res.text) throw new Error("Empty game bible from text model.");
-  const bible = JSON.parse(res.text) as GameBible;
+  const bible = JSON.parse(res.text) as Omit<GameBible, "story"> & { story: PlannedStory };
 
   // Normalize: the world engine hard-depends on 3 rooms / 3 NPCs / 3 clues.
   bible.story.clues = (bible.story.clues ?? []).slice(0, 3);
@@ -358,7 +393,16 @@ export async function generateBible(idea: string): Promise<GameBible> {
   for (const npc of bible.npcs) {
     npc.voice = resolveSpeaker(npc.voice);
   }
-  return bible;
+
+  // The model numbers characters from 1; fall back to whoever the secret names.
+  const { goal, secret, culprit, clues } = bible.story;
+  const culpritIndex =
+    Number.isInteger(culprit) && culprit >= 1 && culprit <= 3
+      ? culprit - 1
+      : bible.npcs.findIndex((npc) => secret.includes(npc.name));
+  if (culpritIndex < 0) throw new Error("Planner named no culprit.");
+  const mystery: Mystery = { secret, culprit: culpritIndex };
+  return { ...bible, story: { goal, clues, sealed: seal(mystery) } };
 }
 
 /**
@@ -368,12 +412,14 @@ export async function generateBible(idea: string): Promise<GameBible> {
  * inventing the world.
  */
 export function bibleBrief(b: GameBible): string {
+  const { secret, culprit } = unseal<Mystery>(b.story.sealed);
   const lines: string[] = [
     `=== GAME BIBLE: ${b.title} ===`,
     `SETTING: ${b.setting}`,
     `PROTAGONIST: ${b.protagonist}`,
     `GOAL: ${b.story.goal}`,
-    `THE HIDDEN SECRET (spoiler — see rules below): ${b.story.secret}`,
+    `THE HIDDEN SECRET (spoiler — see rules below): ${secret}`,
+    `THE CULPRIT (spoiler): ${b.npcs[culprit]?.name}. They still guard their own clue, but lie about their part.`,
     `STORY BEATS: ${b.beats.map((x, i) => `(${i + 1}) ${x}`).join(" ")}`,
     `WIN CONDITION: ${b.winCondition}`,
     `DANGER METER — "${b.heatLabel}" (0-100): careless play raises it; at 100 the run ends in defeat.`,
@@ -391,7 +437,7 @@ export function bibleBrief(b: GameBible): string {
     );
   });
   lines.push(
-    `RULES: never reveal or foreshadow the hidden secret before the finale; never hand a clue to the player outside its keeper; stay consistent with every fact above.`
+    `RULES: never reveal or foreshadow the hidden secret or the culprit before the finale; never hand a clue to the player outside its keeper; stay consistent with every fact above.`
   );
   return lines.join("\n");
 }
@@ -999,7 +1045,9 @@ export async function generateFinale(
       bibleBrief(bible),
       "",
       outcome === "victory"
-        ? "Write the VICTORY finale: the moment the three clues converge and the hidden secret finally comes out, plainly stated."
+        ? `Write the VICTORY finale: the player accused ${
+            bible.npcs[unseal<Mystery>(bible.story.sealed).culprit]?.name
+          } and was right. The three clues converge and the hidden secret finally comes out, plainly stated.`
         : `Write the DEFEAT finale: the run has ended because ${
             reason || `the ${bible.heatLabel} meter reached 100`
           }. Show the consequence landing; the secret stays buried — do NOT reveal it.`,

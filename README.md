@@ -14,7 +14,8 @@ rain-flooded night market in Mumbai, I'm a courier carrying a tiffin box
 someone will kill for"*. Seconds later you are **walking through that world
 with the arrow keys**: a top-down retro-RPG street painted live on 0G Private
 Computer, a player sprite in the same art style, buildings you can enter,
-characters who talk back out loud, and one mystery that ends in a finale.
+characters who talk back out loud, and one mystery with a culprit you have to
+name.
 
 Every world is saved on Arkiv, so anyone can replay it from the gallery. Every
 player is one verified human, through World ID.
@@ -32,26 +33,33 @@ The game cannot exist without fast, cheap, high-volume generation:
   run makes about 20 or more model calls: the world plan, screen images, vision
   passes, dialogue turns and the finale.
 
-## How a scene is made
-
-<img width="765" height="645" alt="Generation pipeline for one scene" src="https://github.com/user-attachments/assets/655d9215-4dc4-4542-a39e-68899f742593" />
+## How a run plays out
 
 **Dialogue:** each character guards one clue to the world's single mystery.
 Conversations are short: the clue comes out by the second exchange, and the
 chat closes by the third. Character lines are voiced with Sarvam Bulbul v3.
-Once you hold all 3 clues, **"Unravel the truth"** generates a finale frame
-and speaks the secret aloud.
+
+**Accusation:** one of the three characters is the culprit, and they lie about
+their own part. Once you hold all 3 clues, **Accuse** lets you name one of
+them. Name the right one and the victory finale reveals the secret, out loud.
+Name the wrong one and the culprit walks free (defeat). Running out of time or
+maxing out the danger meter is also a defeat.
+
+**The answer never reaches the browser.** The world plan's secret and culprit
+are encrypted (AES-256-GCM) with a key derived from `SESSION_SECRET`, both in
+the browser and on Arkiv. Only the server can open them. `/api/finale` judges
+each accusation against the saved plan, and keeps the victory finale sealed
+until someone accuses correctly.
 
 ## Sponsors, by weight
 
-Sponsors are ordered by how much of a run depends on them. We picked the
-partner prizes where each sponsor does a job the game cannot do without.
+Sponsors are ordered by how much of the game stops working without them.
 
-| Weight | Sponsor | Prize track we enter | How often one run uses it | What breaks without it |
-| --- | --- | --- | --- | --- |
-| **1 · Core** | **0G Private Computer** | Build with 0G Private Computer, $5,000 (1st $2,500 · 2nd $1,500 · 3rd $1,000) | **Every model call**: world plan, each screen image and its vision pass, interiors, sprite, every dialogue turn, the finale | Nothing can be generated, so there is no world to play |
-| **2 · State** | **Arkiv** | Build on Arkiv (from scratch), $4,000 (1st $3,000 · 2nd $1,000) | **Every save and load**: 1 `game` entity per world, 1 `scene` entity per screen, plus the sprite and finale updates; the home gallery and replays read them back | Worlds disappear on restart, and nobody else can play or list them without our server |
-| **3 · Gate** | **World ID** | Best Use of IDKit, $2,500 (up to 2 teams × $1,250) | **Once per sign-in** (30-day session); the creation limit counts per verified human | One person with throwaway accounts could create unlimited worlds and use up the shared 0G credits |
+| Weight | Sponsor | What happens without it |
+| --- | --- | --- |
+| **1 · Core** | **0G Private Computer** | No world exists. The world plan, every screen image and its vision pass, the interiors, the sprite, every line of dialogue and the finale are all 0G calls, so there is nothing to walk through, talk to or solve |
+| **2 · State** | **Arkiv** | Worlds disappear on restart. There is no shared gallery and no replays, and nobody else can play or list a world without our server |
+| **3 · Gate** | **World ID** | One person with throwaway accounts could create unlimited worlds, use up the shared 0G credits and flood the gallery |
 
 ### 1 · 0G Private Computer (core)
 
@@ -81,7 +89,8 @@ partner prizes where each sponsor does a job the game cannot do without.
   world (`/play/[gameId]`), and the per-player creation limit
   (`GET /api/profile`).
 - **Kept off Arkiv:** image bytes (files under `ASSET_DIR`), World ID proofs,
-  and model calls.
+  and model calls. The mystery's answer and the victory finale are stored only
+  encrypted, because Arkiv entities are public.
 - **Signer wallet** recorded in [`arkiv/how-you-use-arkiv.md`](arkiv/how-you-use-arkiv.md):
   [`0xf9976C655C3f61f5C7b0E8a0655d6c2195F483b5`](https://rabdi.explorer.arkiv.network/address/0xf9976C655C3f61f5C7b0E8a0655d6c2195F483b5).
 - **A query anyone can run** (newest worlds, the same query as the gallery):
@@ -151,14 +160,13 @@ type anything to any character · **Esc** leave.
 | `ZG_CHAT_MODEL` · `ZG_VISION_MODEL` · `ZG_IMAGE_MODEL` | model ids | `0gm-1.0-35b-a3b` · `qwen3-vl-plus` · `bytedance/seedream-5.0-flash` |
 | `WORLD_APP_ID` · `WORLD_RP_ID` · `WORLD_RP_SIGNING_KEY` | real World ID sign-in | dev builds sign in one local test player |
 | `WORLD_ACTION_ID` · `WORLD_ENVIRONMENT` | World ID action and proof environment | `sign-in` · `staging` (simulator proofs) |
-| `SESSION_SECRET` | signing the session cookie | fixed dev secret; **required in production** |
+| `SESSION_SECRET` | signing the session cookie and sealing each world's answer (keep it stable) | fixed dev secret; **required in production** |
 | `ARKIV_SIGNER_KEY` · `ARKIV_RPC_URL` · `ARKIV_ACCESS_KEY` · `ARKIV_PROJECT_ID` | saving worlds on Arkiv | in-memory store, lost on restart |
 | `UNLIMITED_PLAYERS` | comma-separated player ids that skip `FREE_GAME_LIMIT` | none |
 | `ASSET_DIR` | where generated images are saved | `.data/assets` |
 | `SARVAM_API_KEY` (+ `SARVAM_TTS_MODEL`, `SARVAM_TTS_LANGUAGE`) | character voices | characters are silent |
 | `NEXT_PUBLIC_SESSION_TIME_LIMIT_SEC` | play-session timer, in seconds | `300` |
 | `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` · `NEXT_PUBLIC_POSTHOG_HOST` | analytics | no events sent |
-| `OPENAI_API_KEY` · `ZG_MANAGEMENT_KEY` · `MYSTERY_SEAL_KEY` | the older `lib/zg` / `lib/arkiv/` code only (see Known issues) | not used by the game on `/` |
 
 Keep real keys in `.env.local` only; `.env.example` holds placeholders.
 
@@ -171,7 +179,7 @@ proofs from the [simulator](https://simulator.worldcoin.org).
 ([faucet](https://hub.arkiv.network/faucet)), and set `ARKIV_ACCESS_KEY` for the
 RPC endpoint without rate limits.
 
-## Other services (not sponsor tracks)
+## Other services (not sponsors)
 
 | Service | Job |
 | --- | --- |
@@ -206,6 +214,8 @@ lakhs of rupees to paise.
 | `components/World.tsx` | runs a world: scene cache, prefetch, clues, finale, saving |
 | `components/GameCanvas.tsx` | canvas loop: movement, collision, hotspots, sprite |
 | `components/DialogueBox.tsx` | voiced conversations |
+| `lib/engine/codec.ts` · `components/Decoder.tsx` | the hidden-note codec and Decoder, not wired into the game yet |
+| `app/api/finale` | judges accusations; seals and saves the victory finale |
 
 ## Docs
 
@@ -231,13 +241,6 @@ npx vitest run
 
 ## Known issues
 
-- **`main` does not build.** `lib/arkiv.ts`, `lib/worldid.ts` and
-  `lib/types.ts` take over the import paths of the older `lib/arkiv/`,
-  `lib/worldid/` and `lib/types/index.ts`. The older engine and routes
-  (`lib/engine/`, `lib/zg/`, `/api/worlds/*`, `/api/verify`, `/api/gallery`,
-  `/api/status`, `app/world/`) no longer typecheck, so `npm run build` fails.
-  In `npm run dev`, opening one of those routes shows a build-error overlay on
-  every page. The game on `/` and `/play/[id]` does not use them.
 - **0G request IDs are not shown in the game yet.** `lib/zg-client.ts` returns
   them, but the HUD shows only the call count. The 0G track asks for request
   IDs in the main flow.
@@ -248,17 +251,17 @@ npx vitest run
 - **No `game` entities on rabdi yet.** The query above returns `[]` until a
   world is saved with `ARKIV_SIGNER_KEY` set.
 - **No World ID debrief yet**, although the IDKit track requires one.
-- **Dialogue trusts the client.** `/api/dialogue` takes the world plan,
-  mystery included, from the request body.
-- **No OpenAI fallback in the game.** Only the older `lib/zg` falls back to
-  OpenAI; the game needs `ZG_COMPUTE_API_KEY`.
+- **Dialogue trusts the client for everything except the answer.**
+  `/api/dialogue` takes the world plan from the request body. A player can
+  edit that plan, but cannot read or change the sealed secret and culprit.
+- **Changing `SESSION_SECRET` locks saved worlds.** Their sealed answers can
+  no longer be opened, so they can't be played to the end.
 
 ## Team
 
 | Lane | Who | Owns |
 | --- | --- | --- |
-| Lead | [@stealthwhizz](https://github.com/stealthwhizz) | task assignment |
-| A | Amogh Sunil | engine and 0G generation |
+| A | Amogh Sunil ([@stealthwhizz](https://github.com/stealthwhizz))| engine and 0G generation |
 | B | Suraj ([@surajgojanur](https://github.com/surajgojanur)) | game client |
 | C | Kishore ([@kishikishore2863](https://github.com/kishikishore2863)) | World ID, Arkiv |
 

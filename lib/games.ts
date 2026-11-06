@@ -35,7 +35,7 @@ const ASSET_URL_PREFIX = "/api/assets/";
  * @param scenes - Saved scene rows or client scene list (only `kind` is read).
  */
 export function computeGenCallsFromAssets(
-  game: Pick<GameRecord, "sprite_url" | "finale">,
+  game: Pick<GameRecord, "sprite_url" | "finale" | "sealed_victory">,
   scenes: Array<Pick<GameSceneRow, "kind">>
 ): number {
   const streetCount = scenes.filter((s) => s.kind === "street").length;
@@ -44,7 +44,7 @@ export function computeGenCallsFromAssets(
   total += streetCount * GEN_CALL_COST.screen;
   total += interiorCount * GEN_CALL_COST.interior;
   if (game.sprite_url) total += GEN_CALL_COST.sprite;
-  if (game.finale?.victory) total += GEN_CALL_COST.finale;
+  if (game.sealed_victory) total += GEN_CALL_COST.finale;
   if (game.finale?.defeat) total += GEN_CALL_COST.finale;
   return total;
 }

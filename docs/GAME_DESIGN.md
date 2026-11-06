@@ -21,6 +21,10 @@ in real time as the player explores.
    picking a line (1–3) or typing anything.
 6. NPCs advance a light **quest thread** that follows you across buildings.
    Esc / the door returns you to the street. Free roam, no rails.
+7. One NPC is the **culprit** and lies about their part. With all 3 clues,
+   **Accuse** one of the three: right is victory (the secret is revealed), wrong
+   is defeat. The answer is sealed with a server-only key, and `/api/finale`
+   judges it.
 
 ## Tech mapping (the hackathon story)
 

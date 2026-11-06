@@ -42,7 +42,10 @@ export type GameRecord = {
   bible: GameBible;
   premise: Premise;
   sprite_url: string | null;
+  /** Only `defeat` is stored here; the victory finale spells out the secret, see `sealed_victory`. */
   finale: Partial<Record<FinaleOutcome, FinaleData>>;
+  /** Victory `FinaleData`, sealed; `/api/finale` saves it after the owner's first correct accusation. */
+  sealed_victory?: string;
   thumbnail_url: string | null;
   created_at: string;
   updated_at: string;

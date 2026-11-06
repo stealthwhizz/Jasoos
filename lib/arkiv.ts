@@ -19,7 +19,9 @@ import type { GameRecord, GameSceneRow } from "@/lib/types/server";
 /** Fields set when a game is created; the rest are filled in by the store. */
 export type NewGame = Pick<GameRecord, "owner" | "title" | "idea" | "bible" | "premise">;
 /** Fields that change after creation. */
-export type GamePatch = Partial<Pick<GameRecord, "sprite_url" | "finale" | "thumbnail_url">>;
+export type GamePatch = Partial<
+  Pick<GameRecord, "sprite_url" | "finale" | "thumbnail_url" | "sealed_victory">
+>;
 /** A scene as saved, before the store assigns ids. */
 export type NewScene = Omit<GameSceneRow, "id" | "game_id">;
 

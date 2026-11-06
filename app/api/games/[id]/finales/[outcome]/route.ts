@@ -1,5 +1,6 @@
 /**
- * `PUT /api/games/[id]/finales/[outcome]` — upsert victory or defeat finale.
+ * `PUT /api/games/[id]/finales/[outcome]` — save the defeat finale.
+ * Victory finales reveal the secret, so `/api/finale` stores them sealed instead.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -17,9 +18,9 @@ import type {
 
 export const runtime = "nodejs";
 
-const OUTCOMES = new Set<FinaleOutcome>(["victory", "defeat"]);
+const OUTCOMES = new Set<FinaleOutcome>(["defeat"]);
 
-/** Save one finale variant into the game's `finale` jsonb column. */
+/** Save the defeat finale into the game's `finale` record. */
 export async function PUT(req: NextRequest, context: FinaleRouteContext) {
   const user = await requireUser();
   if (!user) {

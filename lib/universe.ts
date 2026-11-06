@@ -39,14 +39,22 @@ export type Hotspot = {
   risk?: string;
 };
 
-/** The hidden arc the whole world converges toward. */
+/** The arc the whole world converges toward. The answer is sealed; see `Mystery`. */
 export type StoryArc = {
   /** Player-facing objective. */
   goal: string;
-  /** The hidden truth, revealed only at the finale. */
-  secret: string;
   /** Three clues, each guarded by one NPC. */
   clues: string[];
+  /** `Mystery`, encrypted with a server-only key. The browser carries it but cannot read it. */
+  sealed: string;
+};
+
+/** The answer to a world's mystery. Server-only: lives inside `StoryArc.sealed`. */
+export type Mystery = {
+  /** The hidden truth, revealed only at the victory finale. */
+  secret: string;
+  /** Index (0–2) of the NPC behind the secret. */
+  culprit: number;
 };
 
 /* ------------------------------------------------------------------ */

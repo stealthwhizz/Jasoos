@@ -98,7 +98,8 @@ export function hashHuman(nullifier: string): string {
   return createHash("sha256").update(`ETH Jasoos:${nullifier}`).digest("hex");
 }
 
-function secret(): string {
+/** The server-only secret behind session cookies and sealed mysteries (`SESSION_SECRET`). */
+export function serverSecret(): string {
   const s = process.env.SESSION_SECRET;
   if (s) return s;
   if (process.env.NODE_ENV === "production") throw new Error("SESSION_SECRET is not set.");
@@ -106,7 +107,8 @@ function secret(): string {
   return "ETH Jasoos-dev-only-session-secret";
 }
 
-const sign = (payload: string) => createHmac("sha256", secret()).update(payload).digest("base64url");
+const sign = (payload: string) =>
+  createHmac("sha256", serverSecret()).update(payload).digest("base64url");
 
 /**
  * Reads a session cookie value: `<humanHash>.<expiresMs>.<hmac>`.
