@@ -18,11 +18,22 @@ const config = {
   action: process.env.WORLD_ACTION_ID || "sign-in",
   rpId: process.env.WORLD_RP_ID ?? "",
   rpSigningKey: process.env.WORLD_RP_SIGNING_KEY ?? "",
-  // "staging" accepts simulator proofs; set "production" for real World App users.
-  environment: (process.env.WORLD_ENVIRONMENT === "production" ? "production" : "staging") as
-    | "production"
-    | "staging",
+  environment: worldEnvironment(process.env.WORLD_ENVIRONMENT),
 };
+
+/**
+ * Which World ID network proofs come from (WORLD_ENVIRONMENT):
+ * - "staging": the web simulator (https://simulator.worldcoin.org). The default.
+ * - "sandbox": the World ID Sandbox test app on a phone (TestFlight / Play test track). Turn off
+ *   its fraud/risk/attestation enforcement under "World ID Sandbox" in the Developer Portal, or
+ *   World refuses its proofs with 403 integrity_verification_failed.
+ * - "production": the real World App.
+ * Proofs are verified at the same endpoint; their `environment` must match this value.
+ */
+export type WorldEnvironment = "production" | "staging" | "sandbox";
+export function worldEnvironment(value: string | undefined): WorldEnvironment {
+  return value === "production" || value === "sandbox" ? value : "staging";
+}
 
 /** True when World ID keys are set. Without them, dev builds offer a local test sign-in. */
 export const worldIdConfigured = Boolean(config.appId && config.rpId && config.rpSigningKey);
@@ -61,7 +72,8 @@ export async function verifyProof(
 ): Promise<{ ok: true; nullifier: string } | { ok: false; reason: string }> {
   if (!isRecord(proof)) return { ok: false, reason: "Proof is not an object." };
   if (proof.action !== action) return { ok: false, reason: "Proof is for another action." };
-  // The simulator issues "staging" proofs. Production must never accept them.
+  // The simulator issues "staging" proofs and the Sandbox app "sandbox" ones. Production must
+  // never accept either, so the proof's environment must match WORLD_ENVIRONMENT exactly.
   if (proof.environment !== config.environment) {
     return { ok: false, reason: `Proof environment is not ${config.environment}.` };
   }
