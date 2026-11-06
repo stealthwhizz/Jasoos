@@ -12,8 +12,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body className="font-sans">
-        <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-6">
-          <Link href="/" className="text-lg font-semibold tracking-tight">
+        <header className="site-header">
+          <Link href="/" className="brand">
+            <span aria-hidden="true" className="brand-mark">
+              E.
+            </span>{" "}
             ETHJasoos
           </Link>
           <nav className="flex gap-6 text-sm text-neutral-500">
@@ -25,7 +28,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             </Link>
           </nav>
         </header>
-        <main className="mx-auto max-w-5xl px-6 pb-24">{children}</main>
+        <main className="site-main">{children}</main>
       </body>
     </html>
   );
