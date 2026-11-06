@@ -1,18 +1,64 @@
 import { createHash, randomUUID } from "node:crypto";
 import { cookies } from "next/headers";
+import { signRequest } from "@worldcoin/idkit/signing";
 import { env, processStore } from "@/lib/env";
+import { checkIdkitResult, checkPortalReply } from "./proof";
+
+const VERIFY_URL = "https://developer.world.org/api/v4/verify";
+
+/** What the browser needs to open the IDKit widget. Signing happens here; the key never leaves. */
+export function createRpContext() {
+  const { appId, action, rpId, rpSigningKey, environment } = env.worldId;
+  if (!appId || !rpId || !rpSigningKey) {
+    throw new Error(
+      "World ID is not configured: set WORLD_APP_ID, WORLD_RP_ID, WORLD_RP_SIGNING_KEY",
+    );
+  }
+  const sig = signRequest({ action, signingKeyHex: rpSigningKey });
+  return {
+    app_id: appId as `app_${string}`,
+    action,
+    environment,
+    rp_context: {
+      rp_id: rpId,
+      nonce: sig.nonce,
+      created_at: sig.createdAt,
+      expires_at: sig.expiresAt,
+      signature: sig.sig,
+    },
+  };
+}
 
 /**
- * Verifies an IDKit result on the server (R10).
- * TODO(C): forward the payload as-is to POST https://developer.world.org/api/v4/verify/{rp_id},
- *   require success === true and the expected environment ("staging" only for the simulator),
- *   and return the nullifier. Sign requests with @worldcoin/idkit-core/signing.
+ * Verifies an IDKit result on the server (R10). Checks action and environment locally, then
+ * forwards the result unchanged to the Developer Portal and requires success === true.
  */
-export async function verifyProof(proof: unknown): Promise<{ ok: boolean; nullifier?: string }> {
-  if (!env.useFixtures)
-    throw new Error("verifyProof: real World ID check not implemented (TODO(C))");
-  void proof;
-  return { ok: true, nullifier: randomUUID() };
+export async function verifyProof(
+  proof: unknown,
+): Promise<{ ok: true; nullifier: string } | { ok: false; reason: string }> {
+  if (env.useFixtures) return { ok: true, nullifier: randomUUID() };
+
+  const { action, environment, rpId } = env.worldId;
+  const local = checkIdkitResult(proof, { action, environment });
+  if (!local.ok) return local;
+
+  let res: Response;
+  try {
+    res = await fetch(`${VERIFY_URL}/${encodeURIComponent(rpId)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(proof),
+      signal: AbortSignal.timeout(15_000),
+    });
+  } catch {
+    return { ok: false, reason: "Could not reach World ID. Try again." };
+  }
+  const reply = checkPortalReply(res.status, await res.json().catch(() => null));
+  if (!reply.ok) {
+    console.warn("[worldid] verify rejected", res.status, "reason" in reply ? reply.reason : "");
+    return reply;
+  }
+  return local;
 }
 
 /** The only per-person value stored on Arkiv. Never store the nullifier itself. */

@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { JobEvent, TickerEvent } from "@/lib/types";
 import { Gallery } from "./Gallery";
 import { Ticker } from "./Ticker";
+import { WorldIdButton } from "./WorldIdButton";
 import { fetchClientJson } from "./clientRequest";
 
 interface Status {
@@ -49,7 +50,7 @@ export function Home() {
     return () => sourceRef.current?.close();
   }, [loadStatus]);
 
-  // TODO(C): replace with IDKitRequestWidget from @worldcoin/idkit; post its result here as-is.
+  // Fixture verification never substitutes for a live World ID proof.
   async function verify() {
     if (verifying) return;
     setVerifying(true);
@@ -194,20 +195,30 @@ export function Home() {
               Retry creation status
             </button>
           )}
-          {status && !status.verified && (
-            <button
-              type="button"
-              onClick={verify}
-              disabled={verifying}
-              className="case-button secondary"
-            >
-              {verifying
-                ? "Verifying…"
-                : status.fixtures
-                  ? "Verify demo session"
-                  : "Verify with World ID"}
-            </button>
-          )}
+          {status &&
+            !status.verified &&
+            (status.fixtures ? (
+              <button
+                type="button"
+                onClick={verify}
+                disabled={verifying}
+                className="case-button secondary"
+              >
+                {verifying
+                  ? "Verifying…"
+                  : status.fixtures
+                    ? "Verify demo session"
+                    : "Verify with World ID"}
+              </button>
+            ) : (
+              <WorldIdButton
+                onVerified={() => {
+                  setCheckingStatus(true);
+                  void loadStatus();
+                }}
+                onError={setMessage}
+              />
+            ))}
           <button
             type="submit"
             disabled={!canCreate || busy || !prompt.trim()}
