@@ -9,3 +9,4 @@ next-env.d.ts
 progress.md
 .DS_Store
 .data/
+.claude/

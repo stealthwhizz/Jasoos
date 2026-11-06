@@ -14,7 +14,8 @@
     "format": "prettier --write .",
     "smoke:0g": "tsx scripts/smoke-0g.ts",
     "smoke:arkiv": "tsx scripts/smoke-arkiv.ts",
-    "smoke:worldid": "tsx scripts/smoke-worldid.ts"
+    "smoke:worldid": "tsx scripts/smoke-worldid.ts",
+    "arkiv:query": "tsx scripts/arkiv-query.ts"
   },
   "dependencies": {
     "@arkiv-network/sdk": "^1.0.1",

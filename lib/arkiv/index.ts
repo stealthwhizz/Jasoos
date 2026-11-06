@@ -1,86 +1,146 @@
-import { randomUUID } from "node:crypto";
 import type { Accusation, Manifest, PublicManifest, WorldSummary } from "@/lib/types";
 import { env, processStore } from "@/lib/env";
 import { fixtureManifest } from "@/fixtures/world";
+import type { ArkivBackend } from "./backend";
+import { createLiveBackend } from "./live";
+import { memoryBackend } from "./memory";
 
-// Fixture stand-in for Arkiv. Every entity carries project + entityType attributes on the real chain.
-// TODO(C): replace each function body with @arkiv-network/sdk reads/writes on rabdi; keep the signatures.
-const DAY_MS = 24 * 60 * 60 * 1000;
+/**
+ * Arkiv entities: worlds, creations (daily quota), visits, accusations (one per human per case).
+ * With ARKIV_SIGNER_KEY set, every call reads or writes the rabdi testnet; without it, an
+ * in-memory store with the same expiry rules stands in. The fixture world is always readable as
+ * the labelled backup world.
+ */
 
-interface Store {
-  worlds: Map<string, { manifest: Manifest; visits: number }>;
-  creations: Array<{ humanHash: string; worldKey: string; at: number }>;
-  accusations: Array<Accusation & { correct: boolean }>;
-}
+const backend = (): ArkivBackend =>
+  env.arkiv.live ? processStore("arkivLive", createLiveBackend) : memoryBackend();
 
-const store = processStore<Store>("arkiv", () => ({
-  worlds: new Map([[fixtureManifest.worldId, { manifest: fixtureManifest, visits: 0 }]]),
-  creations: [],
-  accusations: [],
-}));
+export const arkivMode = () => backend().name;
 
-function fixturesOnly(fn: string): void {
-  if (!env.useFixtures) throw new Error(`arkiv.${fn}: real Arkiv calls not implemented (TODO(C))`);
-}
+const GALLERY_LIMIT = 24;
 
 /** Writes the `world` and `creation` entities. Returns their keys. */
 export async function publishWorld(
   manifest: Manifest,
   humanHash: string,
 ): Promise<{ worldKey: string; creationKey: string }> {
-  fixturesOnly("publishWorld");
-  // TODO(C): upload manifest to 0G Storage first; the entity holds only references (R14).
-  const worldKey = `fx-world-${randomUUID().slice(0, 8)}`;
-  store.worlds.set(worldKey, { manifest: { ...manifest, worldId: worldKey }, visits: 0 });
-  store.creations.push({ humanHash, worldKey, at: Date.now() });
-  return { worldKey, creationKey: `fx-creation-${randomUUID().slice(0, 8)}` };
+  return backend().publishWorld(manifest, humanHash);
 }
 
-/** Live worlds, newest first. TODO(C): Arkiv query entityType = world; sort in app if needed. */
+/** Live worlds, newest first. The fixture backup world is listed only without Arkiv. */
 export async function listWorlds(): Promise<WorldSummary[]> {
-  fixturesOnly("listWorlds");
-  return [...store.worlds.entries()]
-    .map(([worldKey, { manifest: m, visits }]) => ({
-      worldKey,
+  const worlds = await backend().listWorlds(GALLERY_LIMIT);
+  if (env.arkiv.live) return worlds;
+  const m = fixtureManifest;
+  return [
+    ...worlds,
+    {
+      worldKey: m.worldId,
       title: m.bible.title,
       premise: m.bible.premise,
       thumbnailUrl: m.assets.find((a) => a.kind === "street")?.url ?? "",
       createdAt: m.createdAt,
-      visits,
-    }))
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      visits: 0,
+    },
+  ];
 }
 
 /** Full manifest, mystery included. Server-only: strip `mystery` before sending to a browser. */
 export async function getWorld(worldKey: string): Promise<Manifest | undefined> {
-  fixturesOnly("getWorld");
-  return store.worlds.get(worldKey)?.manifest;
+  if (worldKey === fixtureManifest.worldId) return fixtureManifest;
+  return backend().getWorld(worldKey);
 }
 
 /** R12: live `creation` entities for one human. Expiry after 24h is the quota window. */
 export async function countCreations(humanHash: string): Promise<number> {
-  fixturesOnly("countCreations");
-  const since = Date.now() - DAY_MS;
-  return store.creations.filter((c) => c.humanHash === humanHash && c.at > since).length;
+  return backend().countCreations(humanHash);
+}
+
+// Jobs that passed the quota check but have not written their `creation` entity yet. Counted
+// against the limit so parallel requests cannot start more jobs than the quota allows.
+const pending = processStore("pendingCreations", () => new Map<string, number>());
+
+export type QuotaCheck =
+  | { allowed: true; release: () => void }
+  | { allowed: false; used: number; limit: number; nextSlotAt: Date | null };
+
+/**
+ * Checks the daily limit and, if there is room, reserves a slot until the world is published or
+ * the job fails. Call `release()` exactly once when the job ends either way.
+ */
+export async function reserveCreation(humanHash: string, limit: number): Promise<QuotaCheck> {
+  const live = await backend().countCreations(humanHash);
+  const inFlight = pending.get(humanHash) ?? 0;
+  const used = live + inFlight;
+  if (used >= limit) {
+    const nextSlotAt = live > 0 ? await backend().nextSlotAt(humanHash) : null;
+    return { allowed: false, used, limit, nextSlotAt };
+  }
+  pending.set(humanHash, inFlight + 1);
+  let released = false;
+  return {
+    allowed: true,
+    release: () => {
+      if (released) return;
+      released = true;
+      const n = (pending.get(humanHash) ?? 1) - 1;
+      if (n > 0) pending.set(humanHash, n);
+      else pending.delete(humanHash);
+    },
+  };
+}
+
+// A reservation belongs to a job. If the job's stream is never opened, it still frees itself.
+const held = processStore("heldReservations", () => new Map<string, () => void>());
+const HOLD_MAX_MS = 10 * 60 * 1000;
+
+export function holdReservation(jobId: string, release: () => void): void {
+  const timer = setTimeout(() => releaseReservation(jobId), HOLD_MAX_MS);
+  timer.unref?.();
+  held.set(jobId, () => {
+    clearTimeout(timer);
+    release();
+  });
+}
+
+export function releaseReservation(jobId: string): void {
+  held.get(jobId)?.();
+  held.delete(jobId);
 }
 
 /** Writes a short-lived `visit` entity. Returns the live visit count. */
 export async function recordVisit(worldKey: string): Promise<number> {
-  fixturesOnly("recordVisit");
-  const world = store.worlds.get(worldKey);
-  if (!world) return 0;
-  return ++world.visits;
+  return backend().recordVisit(worldKey);
 }
 
 export async function recordAccusation(acc: Accusation, correct: boolean): Promise<void> {
-  fixturesOnly("recordAccusation");
-  store.accusations.push({ ...acc, correct });
+  return backend().recordAccusation(acc, correct);
 }
 
 /** R24: is there a live `accusation` entity for this world key and human? */
 export async function hasAccused(worldKey: string, humanHash: string): Promise<boolean> {
-  fixturesOnly("hasAccused");
-  return store.accusations.some((a) => a.worldKey === worldKey && a.humanHash === humanHash);
+  return backend().hasAccused(worldKey, humanHash);
+}
+
+const accusing = processStore("accusing", () => new Set<string>());
+
+/**
+ * Runs `fn` only if this human has no accusation in progress for this case, so two parallel
+ * requests cannot both pass the `hasAccused` check before either writes. Returns null if busy.
+ */
+export async function oneAccusationAtATime<T>(
+  worldKey: string,
+  humanHash: string,
+  fn: () => Promise<T>,
+): Promise<T | null> {
+  const k = `${worldKey}:${humanHash}`;
+  if (accusing.has(k)) return null;
+  accusing.add(k);
+  try {
+    return await fn();
+  } finally {
+    accusing.delete(k);
+  }
 }
 
 /** Removes the mystery (secret and culprit) so the manifest is safe to send to a browser. */

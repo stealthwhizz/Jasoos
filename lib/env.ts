@@ -6,6 +6,14 @@ export const env = {
   creationLimitPerDay: Number(process.env.CREATION_LIMIT_PER_DAY ?? 3),
   creditCapPerMaker: Number(process.env.CREDIT_CAP_PER_MAKER ?? 50),
   projectId: process.env.ARKIV_PROJECT_ID ?? "ethjasoos",
+  arkiv: {
+    // Real Arkiv writes need a funded testnet key. Without one, an in-memory store stands in.
+    live: Boolean(process.env.ARKIV_SIGNER_KEY),
+    signerKey: process.env.ARKIV_SIGNER_KEY ?? "",
+    accessKey: process.env.ARKIV_ACCESS_KEY ?? "",
+    /** Optional override; by default the rabdi URL is built from the access key. */
+    rpcUrl: process.env.ARKIV_RPC_URL || undefined,
+  },
   worldId: {
     appId: process.env.WORLD_APP_ID ?? "",
     action: process.env.WORLD_ACTION_ID ?? "create-world",

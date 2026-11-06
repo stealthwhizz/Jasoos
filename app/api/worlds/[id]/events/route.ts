@@ -1,10 +1,11 @@
 import type { JobEvent } from "@/lib/types";
 import { scheduler, takeJob } from "@/lib/engine";
-import { publishWorld } from "@/lib/arkiv";
+import { publishWorld, releaseReservation } from "@/lib/arkiv";
 
 /** Server-sent events for one creation job. `id` here is the jobId from POST /api/worlds. */
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const job = takeJob((await params).id);
+  const jobId = (await params).id;
+  const job = takeJob(jobId);
   if (!job) return Response.json({ error: "Unknown or already started job." }, { status: 404 });
 
   const encoder = new TextEncoder();
@@ -23,6 +24,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         emit({ type: "done", worldId: worldKey });
       } catch (err) {
         emit({ type: "error", message: err instanceof Error ? err.message : "Generation failed." });
+      } finally {
+        // Published worlds now count through their `creation` entity; failed ones free the slot.
+        releaseReservation(jobId);
       }
       try {
         controller.close();
