@@ -16,3 +16,7 @@
 /app/api/      @KISHORE_GITHUB
 /arkiv/        @KISHORE_GITHUB
 /README.md     @KISHORE_GITHUB
+
+# Engine routes inside app/api go back to A (later rules win).
+/app/api/dialogue/          @AMOGH_GITHUB
+/app/api/worlds/*/events/   @AMOGH_GITHUB
