@@ -6,7 +6,7 @@ import { fixtureBible } from "@/fixtures/world";
 export async function planWorld(
   prompt: string,
 ): Promise<{ bible: WorldBible; event: TickerEvent }> {
-  const { event } = await zgCall("plan", { prompt });
+  const { event } = await zgCall("plan", { messages: [{ role: "user", content: prompt }] });
   // TODO(A): validate zgCall data against the bible schema; retry once if invalid.
   return { bible: fixtureBible, event };
 }

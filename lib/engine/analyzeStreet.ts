@@ -6,7 +6,7 @@ import { fixtureManifest } from "@/fixtures/world";
 export async function analyzeStreet(
   streetUrl: string,
 ): Promise<{ walkMap: WalkMap; doors: Door[]; event: TickerEvent }> {
-  const { event } = await zgCall("vision", { streetUrl });
+  const { event } = await zgCall("vision", { messages: [{ role: "user", content: streetUrl }] });
   // TODO(A): rasterize the returned polygons onto a 96x54 grid; retry once; on failure use the
   //   fallback (lower third walkable, doors in bible location order).
   return { walkMap: fixtureManifest.walkMap, doors: fixtureManifest.doors, event };

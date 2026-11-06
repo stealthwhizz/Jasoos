@@ -10,7 +10,9 @@ export async function dialogueTurn(
   req: DialogueRequest,
 ): Promise<DialogueResponse & { event: TickerEvent }> {
   const npcTurns = req.history.filter((m) => m.role === "npc").length;
-  const { event } = await zgCall("dialogue", { persona: npc.persona, message: req.message });
+  const { event } = await zgCall("dialogue", {
+    messages: [{ role: "user", content: req.message }],
+  });
   // TODO(A): build the prompt from persona + clue (never the secret), cap reply length,
   //   force the clue on the second reply if the model skipped it, moderate the line.
   const clueRevealed = npcTurns >= 1;

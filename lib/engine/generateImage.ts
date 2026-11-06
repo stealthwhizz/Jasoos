@@ -9,7 +9,7 @@ export async function generateImage(
   prompt: string,
   artStyle: string,
 ): Promise<{ asset: Asset; event: TickerEvent }> {
-  const { event } = await zgCall("image", { kind, prompt: `${artStyle}. ${prompt}` });
+  const { event } = await zgCall("image", { prompt: `${artStyle}. ${prompt}`, size: "1280x720" });
   // TODO(A): store real bytes (0G Storage is C's helper) and set url/storageRoot from them.
   // TODO(A): sprite — ask for a flat background, key it out, trim, flip for left/right.
   const url = fixtureManifest.assets.find((a) => a.id === id)?.url ?? "/fixtures/street.svg";
