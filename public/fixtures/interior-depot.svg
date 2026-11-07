@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540">
-  <rect width="960" height="540" fill="#2f4a3b"/>
-  <rect y="400" width="960" height="140" fill="#00000033"/>
-  <text x="480" y="270" fill="#f2f2f2" font-family="system-ui, sans-serif" font-size="36" text-anchor="middle">Dabba Depot</text>
-  <text x="480" y="310" fill="#cfcfcf" font-family="system-ui, sans-serif" font-size="16" text-anchor="middle">placeholder interior (fixture)</text>
-</svg>
