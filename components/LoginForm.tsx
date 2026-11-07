@@ -83,11 +83,12 @@ export function LoginForm() {
     >
       <BrandBanner />
       <p className="mt-3 text-lg font-semibold text-foreground">
-        An AI story you play.
+        An AI detective story you play.
       </p>
       <p className="mt-4 max-w-sm text-base font-medium leading-relaxed text-inksoft">
-        A fast, image-first game set in India — every scene generated as you
-        play. Prove you&apos;re human with World ID to get started.
+        A mystery set in India, painted live as you play. Question suspects,
+        unlock evidence and name the culprit. Prove you&apos;re human with
+        World ID to start.
       </p>
 
       {error ? (

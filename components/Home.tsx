@@ -325,7 +325,7 @@ export function Home() {
                     ) : (
                       <div className="absolute inset-0 bg-foreground/10" />
                     )}
-                    <div className="absolute inset-0 bg-linear-to-t from-foreground/80 via-foreground/20 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-t from-ink/90 via-ink/30 to-transparent" />
                     <p className="absolute inset-x-0 bottom-0 px-3 pb-3 font-display text-sm font-bold text-white">
                       {game.title}
                     </p>

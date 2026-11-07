@@ -14,10 +14,34 @@ const bricolage = Bricolage_Grotesque({
   weight: ["500", "600", "700", "800"],
 });
 
+const DESCRIPTION =
+  "A detective game set in India. Question AI suspects, unlock evidence with World ID and crack the case. Every scene is generated live on 0G.";
+
+/**
+ * Site metadata. Link previews (WhatsApp, X, Telegram) use app/opengraph-image.png and
+ * app/twitter-image.png; they need absolute URLs, so metadataBase points at the production
+ * domain on Vercel and at localhost in dev.
+ */
 export const metadata: Metadata = {
-  title: "ETH Jasoos - an AI story you play",
-  description:
-    "A fast, image-first choice game set in India. Every scene is generated in real time.",
+  metadataBase: new URL(
+    process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "http://localhost:3000"
+  ),
+  title: "ETH Jasoos - an AI detective story you play",
+  description: DESCRIPTION,
+  applicationName: "ETH Jasoos",
+  openGraph: {
+    title: "ETH Jasoos - an AI detective story you play",
+    description: DESCRIPTION,
+    siteName: "ETH Jasoos",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ETH Jasoos - an AI detective story you play",
+    description: DESCRIPTION,
+  },
 };
 
 export default function RootLayout({
