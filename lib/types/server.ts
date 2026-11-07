@@ -1,5 +1,5 @@
 /**
- * Server-side types for ETH Jasoos.
+ * Server-side types for Jasoos.
  *
  * Database row shapes, API route request bodies, and internal helpers belong
  * here. Route handlers and `lib/games.ts` import from this module.

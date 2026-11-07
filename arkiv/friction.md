@@ -1,6 +1,6 @@
 # Arkiv friction log
 
-Honest notes from building ETHJasoos on rabdi with `@arkiv-network/sdk` 1.0.1, Node 20.19.
+Honest notes from building Jasoos on rabdi with `@arkiv-network/sdk` 1.0.1, Node 20.19.
 Dated entries, newest decisions marked with what we did about each.
 
 ## Current implementation note

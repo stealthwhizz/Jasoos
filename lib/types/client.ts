@@ -1,5 +1,5 @@
 /**
- * Client-side types for ETH Jasoos.
+ * Client-side types for Jasoos.
  *
  * All types consumed by React components, client pages, and fetch calls belong
  * here. Do not define duplicate shapes in component files.

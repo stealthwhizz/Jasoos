@@ -349,6 +349,7 @@ function clampSuspicion(v: unknown): number {
 /* ------------------------------------------------------------------ */
 
 // Derived per call so a missing SESSION_SECRET fails at use, not at import.
+// Legacy "ETH Jasoos" prefix kept on purpose: changing it makes every sealed mystery unreadable.
 const sealKey = () => createHash("sha256").update(`ETH Jasoos seal:${serverSecret()}`).digest();
 
 /** Encrypts `value` (AES-256-GCM) with a server-only key: base64url of iv | tag | ciphertext. */

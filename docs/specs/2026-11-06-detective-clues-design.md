@@ -116,7 +116,7 @@ copied; if any is, its MIT notice goes with it.
 
 ## Part 2: the wider game (added 2026-11-06)
 
-Everything below is designed for ETHJasoos and written fresh in this repo.
+Everything below is designed for Jasoos and written fresh in this repo.
 
 ### Overworld: a 3x3 grid of screens (lanes A + B + C)
 
