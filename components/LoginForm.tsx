@@ -114,7 +114,7 @@ export function LoginForm() {
           environment={config.environment}
           allow_legacy_proofs={false}
           preset={proofOfHuman()}
-          action_description="Prove you are human to play ETH Jasoos"
+          action_description="Prove you are human to play Jasoos"
           handleVerify={async (result: IDKitResult) => {
             try {
               await postSession(result);

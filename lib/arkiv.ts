@@ -129,6 +129,7 @@ const unpack = <T>(hex: Hex): T => JSON.parse(gunzipSync(hexToBytes(hex)).toStri
 const isEntityKey = (k: string) => /^0x[0-9a-fA-F]{64}$/.test(k);
 
 function createArkivStore(signerKey: string): GameStore {
+  // Legacy default kept on purpose: saved worlds are filed under this project id on Arkiv.
   const project = process.env.ARKIV_PROJECT_ID || "ETH Jasoos";
   const chain = rabdi({ accessKey: process.env.ARKIV_ACCESS_KEY ?? "" });
   // withRetry (RETRY_MAX) already wraps every read and write, so viem must not retry too: nested

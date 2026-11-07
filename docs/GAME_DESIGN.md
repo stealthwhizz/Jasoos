@@ -1,4 +1,4 @@
-# ETH Jasoos World — an AI-generated universe you walk through
+# Jasoos World — an AI-generated universe you walk through
 
 **Pivot:** not a branching storybook. A **playable world**. The game studio *is*
 the AI: every street, interior, character, and line of dialogue is manufactured

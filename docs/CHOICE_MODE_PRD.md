@@ -1,4 +1,4 @@
-# ETH Jasoos — Choice Mode PRD (v1)
+# Jasoos — Choice Mode PRD (v1)
 
 > The turn-based choice mode that came before the explorable world. Its code is still in the repo (`components/Game.tsx`, `/api/turn`), but no page renders it. The main product is the walkable detective world in [PRD.md](PRD.md).
 

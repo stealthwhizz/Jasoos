@@ -1,4 +1,4 @@
-# ETH Jasoos: Product Requirements, HLD and LLD\
+# Jasoos: Product Requirements, HLD and LLD\
 
 Nov 6, 2026 · @Amogh Sunil
 
@@ -6,7 +6,7 @@ Nov 6, 2026 · @Amogh Sunil
 
 ## Overview
 
-ETH Jasoos turns one sentence into a world you can walk through. The player types a scene, such as "a rain-flooded night market where I carry a tiffin box someone will kill for", and soon after walks its streets with the arrow keys, enters buildings, talks to characters, and solves one hidden mystery.
+Jasoos turns one sentence into a world you can walk through. The player types a scene, such as "a rain-flooded night market where I carry a tiffin box someone will kill for", and soon after walks its streets with the arrow keys, enters buildings, talks to characters, and solves one hidden mystery.
 
 ### The problem
 

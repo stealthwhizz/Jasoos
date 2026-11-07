@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/jasoos-banner.png" alt="ETH Jasoos" width="720">
+  <img src="public/jasoos-banner.png" alt="Jasoos" width="720">
 </p>
 
 <p align="center">
@@ -7,7 +7,7 @@
   0G Private Computer · Arkiv · World ID
 </p>
 
-# ETH Jasoos: describe a scene, then walk into it and solve it
+# Jasoos: describe a scene, then walk into it and solve it
 
 *Jasoos* is Hindi for "detective". Type one sentence, for example *"a
 rain-flooded night market in Mumbai, I'm a courier carrying a tiffin box
@@ -50,6 +50,19 @@ are encrypted (AES-256-GCM) with a key derived from `SESSION_SECRET`, both in
 the browser and on Arkiv. Only the server can open them. `/api/finale` judges
 each accusation against the saved plan, and keeps the victory finale sealed
 until someone accuses correctly.
+
+## Architecture
+
+<p align="center">
+  <img src="docs/architecture.svg" alt="Jasoos architecture: World ID with IDKit verifies one human per player; 0G Private Computer writes, paints and maps each world; Arkiv stores games, screens, unlocks, sealed accusations and votes." width="680">
+</p>
+
+1. **World ID + IDKit decide who is playing.** A Proof of Human check at sign-in gives one
+   detective per person, and a second per-case check unlocks the sealed evidence box.
+2. **0G Private Computer paints the world.** `0gm-1.0` writes the case, `seedream` paints it,
+   and `qwen3-vl` reads each painting into walls, doors and paths.
+3. **Arkiv remembers it.** Games, screens, unlocks, sealed accusations and votes are Arkiv
+   entities with a 90-day expiry. Images live in Vercel Blob.
 
 ## Sponsors, by weight
 

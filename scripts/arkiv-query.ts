@@ -1,4 +1,4 @@
-// The query anyone can run: lists ETHJasoos's live worlds and counts every entity type, straight
+// The query anyone can run: lists Jasoos's live worlds and counts every entity type, straight
 // from the Arkiv rabdi testnet. Needs no keys, no wallet, and none of our servers.
 //
 //   npx tsx scripts/arkiv-query.ts            (or: npm run arkiv:query)

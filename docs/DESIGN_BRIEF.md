@@ -1,4 +1,4 @@
-# ETH Jasoos — Game Design Brief
+# Jasoos — Game Design Brief
 
 **One-liner:** A fast, image-first mobile choice-game set in India, where every
 scene is AI-generated in real time and every decision is answered by a fresh

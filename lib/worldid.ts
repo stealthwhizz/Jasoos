@@ -115,6 +115,7 @@ export async function verifyProof(
 
 /** The player id stored in games and on Arkiv. Never store the nullifier itself. */
 export function hashHuman(nullifier: string): string {
+  // Legacy "ETH Jasoos" prefix kept on purpose: changing it would give every player a new id.
   return createHash("sha256").update(`ETH Jasoos:${nullifier}`).digest("hex");
 }
 

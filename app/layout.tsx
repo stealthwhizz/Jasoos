@@ -28,18 +28,18 @@ export const metadata: Metadata = {
       ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
       : "http://localhost:3000"
   ),
-  title: "ETH Jasoos - an AI detective story you play",
+  title: "Jasoos - an AI detective story you play",
   description: DESCRIPTION,
-  applicationName: "ETH Jasoos",
+  applicationName: "Jasoos",
   openGraph: {
-    title: "ETH Jasoos - an AI detective story you play",
+    title: "Jasoos - an AI detective story you play",
     description: DESCRIPTION,
-    siteName: "ETH Jasoos",
+    siteName: "Jasoos",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "ETH Jasoos - an AI detective story you play",
+    title: "Jasoos - an AI detective story you play",
     description: DESCRIPTION,
   },
 };
