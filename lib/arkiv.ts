@@ -14,7 +14,7 @@ import { bool, bytes, defineSchema, i32, str, u64 } from "@arkiv-network/sdk/sch
 import { hexToBytes, http, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { withRetry, DEFAULT_RETRY_OPTS } from "@/lib/retry";
-import { MAX_STREET_SCREENS } from "@/lib/constants";
+import { ARKIV_TIMEOUT_MS, MAX_STREET_SCREENS } from "@/lib/constants";
 import type { Accusation, GameRecord, GameSceneRow, Vote, VoteValue } from "@/lib/types/server";
 
 /** Fields set when a game is created; the rest are filled in by the store. */
@@ -131,7 +131,9 @@ const isEntityKey = (k: string) => /^0x[0-9a-fA-F]{64}$/.test(k);
 function createArkivStore(signerKey: string): GameStore {
   const project = process.env.ARKIV_PROJECT_ID || "ETH Jasoos";
   const chain = rabdi({ accessKey: process.env.ARKIV_ACCESS_KEY ?? "" });
-  const transport = http(process.env.ARKIV_RPC_URL || undefined);
+  // withRetry (RETRY_MAX) already wraps every read and write, so viem must not retry too: nested
+  // retries turned one slow node into 16 attempts x 10 s (~160 s hangs). One bounded try per attempt.
+  const transport = http(process.env.ARKIV_RPC_URL || undefined, { retryCount: 0, timeout: ARKIV_TIMEOUT_MS });
   const reader = createPublicClient({ chain, transport });
   const writer = createWalletClient({
     chain,
@@ -158,12 +160,12 @@ function createArkivStore(signerKey: string): GameStore {
   const toGame = (key: string, hex: Hex): GameRecord => ({ ...unpack<Omit<GameRecord, "id">>(hex), id: key });
 
   async function findScene(gameId: string, sceneId: string) {
-    const page = await reader
+    const page = await withRetry(() => reader
       .select({ $key: true })
       .from(SceneEntity)
       .where(and(or(scope("scene"), scope("screen")), eq("gameId", gameId), eq("sceneId", sceneId)))
       .limit(1)
-      .fetch();
+      .fetch(), DEFAULT_RETRY_OPTS);
     return page.entities[0]?.$key as Hex | undefined;
   }
 
@@ -239,15 +241,16 @@ function createArkivStore(signerKey: string): GameStore {
     },
 
     async countGames(owner) {
-      return Number(
-        await reader.count().from(GameEntity).where(and(scope("game"), eq("owner", owner))).fetch()
-      );
+      return Number(await withRetry(
+        () => reader.count().from(GameEntity).where(and(scope("game"), eq("owner", owner))).fetch(),
+        DEFAULT_RETRY_OPTS
+      ));
     },
 
     async getGame(id) {
       if (!isEntityKey(id)) return null;
       try {
-        const row = await reader.getEntity(id as Hex, GameEntity);
+        const row = await withRetry(() => reader.getEntity(id as Hex, GameEntity), DEFAULT_RETRY_OPTS);
         if (row.project.value !== project || row.entityType.value !== "game") return null;
         return toGame(id, row.record.value);
       } catch {
