@@ -1,5 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720">
-  <rect width="1280" height="720" fill="#2a2f36"/>
-  <text x="640" y="350" fill="#e8edf3" font-family="system-ui, sans-serif" font-size="40" text-anchor="middle">This image failed to generate</text>
-  <text x="640" y="400" fill="#9aa7b8" font-family="system-ui, sans-serif" font-size="22" text-anchor="middle">The request ID is shown below the scene</text>
-</svg>
