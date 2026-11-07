@@ -35,3 +35,21 @@ it("counts one vote per human, lets them switch or withdraw it, and blocks self-
   const [item] = await listVisibleGames("carol");
   expect(item.votes).toEqual({ up: 0, down: 1, mine: -1 });
 });
+
+it("hides worlds whose first screen image is not stored on this server", async () => {
+  const { uploadDataUrl, assetAvailable } = await import("@/lib/games");
+  const here = await newWorld("alice", "Built here");
+  const elsewhere = await newWorld("alice", "Built on another laptop");
+  const onBlob = await newWorld("alice", "On Blob");
+  const png = `data:image/png;base64,${Buffer.from("png").toString("base64")}`;
+  const localUrl = await uploadDataUrl(`test-owner/${here.id}/s0_0/image`, png);
+  await gameStore().updateGame(here.id, { thumbnail_url: localUrl });
+  await gameStore().updateGame(elsewhere.id, { thumbnail_url: "/api/assets/someone/else/s0_0/image.jpg" });
+  await gameStore().updateGame(onBlob.id, { thumbnail_url: "https://abc.public.blob.vercel-storage.com/x/s0_0/image.png" });
+
+  expect((await listVisibleGames("bob")).map((g) => g.title).sort()).toEqual(["Built here", "On Blob"]);
+  expect(await assetAvailable("/api/assets/../../etc/passwd")).toBe(false);
+  expect(await assetAvailable(null)).toBe(true); // not built yet: the owner's boot flow handles it
+  const { deleteGameAssets } = await import("@/lib/games");
+  await deleteGameAssets("test-owner", here.id);
+});

@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   assertGameOwner,
+  assetAvailable,
   buildFullGameResponse,
   canViewGame,
   deleteGameAssets,
@@ -32,6 +33,12 @@ export async function GET(_req: NextRequest, context: GameIdRouteContext) {
   // Someone else's private world reads as missing, so its existence is not revealed.
   if (!game || !canViewGame(game, user.id)) {
     return NextResponse.json({ error: "Game not found." }, { status: 404 });
+  }
+  if (!(await assetAvailable(game.thumbnail_url))) {
+    return NextResponse.json(
+      { error: "This world's pictures are stored on another server, so it can't be played here." },
+      { status: 404 }
+    );
   }
 
   try {
