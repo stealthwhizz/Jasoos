@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <b>Built at ETHGlobal Mumbai · November 5–7, 2026 · Mumbai, India</b><br>
+  <[![Jasoos on Medalist](https://medalist.build/badge/projects/ethglobal/jasoos-vrojw.svg?size=md)](https://medalist.build/projects/ethglobal/jasoos-vrojw)
   0G Private Computer · Arkiv · World ID
 </p>
 
