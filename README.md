@@ -3,8 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://medalist.build/projects/ethglobal/air-agents-eqoim"><img src="https://medalist.build/badge/projects/ethglobal/air-agents-eqoim.svg" alt="Air Agents on Medalist"></a>
-  0G Private Computer · Arkiv · World ID
+<a href="https://medalist.build/projects/ethglobal/jasoos-vrojw"><img src="https://medalist.build/badge/projects/ethglobal/jasoos-vrojw.svg?size=md" alt="Jasoos on Medalist"></a>
 </p>
 
 # Jasoos: describe a scene, then walk into it and solve it
